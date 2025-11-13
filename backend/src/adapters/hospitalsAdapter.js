@@ -110,6 +110,7 @@ class HospitalsAdapter extends BaseAdapter {
       // XML 파싱 후 데이터 구조에 맞게 필드 매핑
       // 공공데이터 API XML 응답 필드명 확인 필요
       return {
+        // ykiho는 암호화된 요양기호로, 비급여 가격 API에서 필수 파라미터로 사용됨
         id: item.ykiho || item.hospCd || item.ykihoEncpt || `hosp_${Date.now()}_${Math.random()}`,
         name: item.yadmNm || item.hospNm || item.yadmNm || '병원명 없음',
         address: item.addr || item.roadAddr || item.addr || '',
@@ -121,6 +122,8 @@ class HospitalsAdapter extends BaseAdapter {
         sidoCd: item.sidoCd,
         sgguCd: item.sgguCd,
         clCdNm: item.clCdNm, // 의료기관 종별명 (예: "상급종합")
+        // ykiho를 별도로 저장 (비급여 가격 API에서 사용)
+        ykiho: item.ykiho, // 암호화된 요양기호
       };
     });
   }

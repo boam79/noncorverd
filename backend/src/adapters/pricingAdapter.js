@@ -99,9 +99,17 @@ class PricingAdapter extends BaseAdapter {
 
   /**
    * API 응답 데이터를 표준 형식으로 변환
+   * 
+   * API 응답 필드:
+   * - ykiho: 암호화된 요양기호
+   * - yadmNm: 병원명
+   * - npayKorNm: 비급여한글명 (항목명)
+   * - yadmNpayCdNm: 요양기관비급여코드명 (병원별 항목명)
+   * - curAmt: 현재금액 (가격)
+   * - npayCd: 비급여코드
    */
   transformPricingData(hospitalId, apiData) {
-    if (!Array.isArray(apiData)) {
+    if (!Array.isArray(apiData) || apiData.length === 0) {
       return {
         hospitalId,
         hospitalName: '병원명 없음',
@@ -110,11 +118,14 @@ class PricingAdapter extends BaseAdapter {
       };
     }
 
+    // 병원명 추출 (첫 번째 항목에서)
+    const hospitalName = apiData[0]?.yadmNm || '병원명 없음';
+
     const items = apiData.map((item) => ({
-      id: item.itemCd || `item_${Date.now()}_${Math.random()}`,
-      name: item.itemNm || item.itemName || '항목명 없음',
-      price: parseInt(item.amt || item.price || 0, 10),
-      unit: item.unit || '회',
+      id: item.npayCd || item.sno || `item_${Date.now()}_${Math.random()}`,
+      name: item.npayKorNm || item.yadmNpayCdNm || '항목명 없음',
+      price: parseInt(item.curAmt || item.amt || 0, 10),
+      unit: '회', // API 응답에 unit 정보가 없으므로 기본값
     }));
 
     const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
