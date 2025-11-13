@@ -81,28 +81,14 @@ export class BaseAdapter {
         headers: {
           'Accept': 'application/json, application/xml',
         },
+        // XML 응답을 문자열로 받기 위해 responseType 설정
+        responseType: 'text',
       });
 
-      // 응답 데이터 검증
-      if (response.data && response.data.response) {
-        const responseData = response.data.response;
-        
-        // 에러 체크
-        if (responseData.header && responseData.header.resultCode !== '00') {
-          return this.formatError(
-            'API_ERROR',
-            responseData.header.resultMsg || 'API 호출 실패'
-          );
-        }
-
-        // 성공 응답
-        const items = responseData.body?.items || [];
-        return this.formatResponse(items, {
-          total: responseData.body?.totalCount || items.length,
-          page: requestParams.pageNo,
-          limit: requestParams.numOfRows,
-        });
-      }
+      // 응답 데이터 타입 확인 및 로깅
+      console.log(`📊 [${this.provider}] 응답 타입:`, typeof response.data);
+      console.log(`📊 [${this.provider}] 응답 길이:`, response.data?.length || 0);
+      console.log(`📊 [${this.provider}] 응답 시작 부분:`, response.data?.substring(0, 200) || '');
 
       // XML 응답인 경우 (일부 API는 XML만 지원)
       if (typeof response.data === 'string' && response.data.includes('<?xml')) {
@@ -140,6 +126,13 @@ export class BaseAdapter {
             }
             
             console.log(`✅ [${this.provider}] XML 파싱 성공: ${items.length}개 항목`);
+            console.log(`📊 [${this.provider}] XML 파싱 상세:`, {
+              hasItems: !!body.items,
+              itemsType: body.items ? typeof body.items : 'null',
+              itemType: body.items?.item ? typeof body.items.item : 'null',
+              isArray: Array.isArray(body.items?.item),
+              totalCount: body.totalCount,
+            });
             
             return this.formatResponse(items, {
               total: body.totalCount || items.length,
@@ -156,6 +149,40 @@ export class BaseAdapter {
         }
       }
 
+      // JSON 응답인 경우 (axios가 자동 파싱한 경우)
+      // response.data가 이미 객체로 변환되었을 수 있음
+      if (response.data && typeof response.data === 'object') {
+        // JSON 응답 구조 확인
+        console.log(`📄 [${this.provider}] JSON 응답을 받았습니다.`);
+        console.log(`📊 [${this.provider}] JSON 구조:`, {
+          hasResponse: !!response.data.response,
+          hasData: !!response.data.data,
+          keys: Object.keys(response.data),
+        });
+      }
+
+      // 응답 데이터 검증
+      if (response.data && response.data.response) {
+        const responseData = response.data.response;
+        
+        // 에러 체크
+        if (responseData.header && responseData.header.resultCode !== '00') {
+          return this.formatError(
+            'API_ERROR',
+            responseData.header.resultMsg || 'API 호출 실패'
+          );
+        }
+
+        // 성공 응답
+        const items = responseData.body?.items || [];
+        return this.formatResponse(items, {
+          total: responseData.body?.totalCount || items.length,
+          page: requestParams.pageNo,
+          limit: requestParams.numOfRows,
+        });
+      }
+
+      // 위에서 XML 파싱이 완료되었으므로 여기서는 JSON 응답만 처리
       return this.formatResponse(response.data);
     } catch (error) {
       console.error(`❌ [${this.provider}] API 오류:`, error.message);
