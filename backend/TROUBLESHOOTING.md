@@ -7,11 +7,29 @@
 
 ## 원인 분석
 13ms만에 실패 = 연결이 즉시 거부됨
+- **가장 흔한 원인: 포트 불일치** ⚠️
+  - 서버가 포트 3001에서 실행 중
+  - Vercel은 포트 3000으로 연결 시도
 - 백엔드 서버가 다운되었거나
 - 포트 3000이 닫혀있거나
 - EC2 보안 그룹에서 Vercel IP 미허용
 
 ## 해결 방법
+
+### 0️⃣ 포트 불일치 확인 (가장 흔한 원인!)
+```bash
+# PM2 상태 확인
+pm2 status
+
+# 서버가 실행 중인 포트 확인
+pm2 info nonvovered-backend
+
+# .env 파일에서 PORT 확인
+cat /var/www/nonvovered/backend/.env | grep PORT
+```
+**문제 발견 시:**
+- 서버가 포트 3001에서 실행 중이면 포트 3000으로 변경 필요
+- 해결: `cd /var/www/nonvovered/backend && sudo sed -i 's/PORT=3001/PORT=3000/' .env && pm2 restart nonvovered-backend`
 
 ### 1️⃣ EC2 서버 접속
 ```bash
