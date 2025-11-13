@@ -49,6 +49,13 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[API Proxy] Backend Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText.substring(0, 200),
+        url,
+      });
+      
       return NextResponse.json(
         {
           ok: false,
@@ -64,13 +71,52 @@ export async function GET(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('API Proxy Error:', error);
+    // 더 상세한 에러 로깅
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorName = error instanceof Error ? error.name : 'Unknown';
+    
+    console.error('[API Proxy] Fetch Error:', {
+      name: errorName,
+      message: errorMessage,
+      backendUrl: BACKEND_URL,
+      hasToken: !!CLIENT_TOKEN,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // 타임아웃 에러인 경우
+    if (errorName === 'AbortError' || errorMessage.includes('timeout')) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'TIMEOUT_ERROR',
+            message: '백엔드 서버 응답 시간이 초과되었습니다.',
+          },
+        },
+        { status: 504 }
+      );
+    }
+
+    // 네트워크 에러인 경우
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Failed to fetch')) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'CONNECTION_ERROR',
+            message: '백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.',
+          },
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json(
       {
         ok: false,
         error: {
           code: 'PROXY_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: errorMessage,
         },
       },
       { status: 502 }
@@ -119,6 +165,13 @@ export async function POST(
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[API Proxy] Backend Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText.substring(0, 200),
+        url,
+      });
+      
       return NextResponse.json(
         {
           ok: false,
@@ -134,17 +187,51 @@ export async function POST(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('API Proxy Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorName = error instanceof Error ? error.name : 'Unknown';
+    
+    console.error('[API Proxy] Fetch Error:', {
+      name: errorName,
+      message: errorMessage,
+      backendUrl: BACKEND_URL,
+      hasToken: !!CLIENT_TOKEN,
+    });
+
+    if (errorName === 'AbortError' || errorMessage.includes('timeout')) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'TIMEOUT_ERROR',
+            message: '백엔드 서버 응답 시간이 초과되었습니다.',
+          },
+        },
+        { status: 504 }
+      );
+    }
+
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Failed to fetch')) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'CONNECTION_ERROR',
+            message: '백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.',
+          },
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json(
       {
         ok: false,
         error: {
           code: 'PROXY_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: errorMessage,
         },
       },
       { status: 502 }
     );
   }
 }
-
