@@ -307,10 +307,14 @@
   - GitHub 저장소 연결 완료
   - 프로젝트 설정 중 (Framework: Next.js)
   - ✅ vercel.json 수정 완료 (Secret 참조 제거)
+  - ✅ Mixed Content 에러 해결 완료:
+    - next.config.ts에 API 프록시 설정 추가 (rewrites)
+    - lib/api.ts에서 Vercel 배포 시 자동 프록시 사용
+    - HTTPS(Vercel) → HTTP(백엔드) Mixed Content 에러 해결
   - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
   - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
-  - 환경변수 설정 필요:
-    - NEXT_PUBLIC_API_BASE_URL=http://54.180.251.93:3000/opendata
+  - 환경변수 설정:
+    - NEXT_PUBLIC_API_BASE_URL: 제거 또는 빈 값 (프록시 사용 시 불필요)
     - NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
   - ⚠️ 참고: 공공데이터 API 키는 백엔드(EC2)에만 필요, 프론트엔드에는 불필요
 

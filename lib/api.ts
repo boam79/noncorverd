@@ -1,10 +1,26 @@
 import type { ApiResponse } from "@/types";
 
 // Vercel 배포 시 API 프록시 사용, 로컬 개발 시 직접 연결
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 
-  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
-    ? '/api/opendata'  // Vercel 배포 시 프록시 사용
-    : 'http://localhost:3001/opendata');  // 로컬 개발 시 직접 연결
+// 환경변수가 설정되어 있으면 사용, 없으면 자동 감지
+const getApiBaseUrl = () => {
+  // 환경변수가 명시적으로 설정되어 있으면 사용
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+  
+  // 클라이언트 사이드에서 Vercel 배포인지 확인
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('vercel.app') || hostname.includes('vercel.com')) {
+      return '/api/opendata';  // Vercel 배포 시 프록시 사용
+    }
+  }
+  
+  // 서버 사이드 또는 로컬 개발
+  return 'http://localhost:3001/opendata';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const CLIENT_TOKEN = process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || process.env.CLIENT_OPENDATA_TOKEN || "";
 
