@@ -1,14 +1,13 @@
 /**
  * PM2 Ecosystem 설정 파일
  * 환경변수를 명시적으로 로드하여 PM2에서 사용
+ * 
+ * CommonJS 형식으로 작성 (PM2 호환성)
  */
 
-import dotenv from 'dotenv';
+require('dotenv').config();
 
-// .env 파일 로드
-dotenv.config();
-
-export default {
+module.exports = {
   apps: [
     {
       name: 'nonvovered-backend',
