@@ -83,6 +83,39 @@ NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
 2. 배포 완료 대기 (약 2-3분)
 3. Production URL 확인
 
+### 5. Function 로그 확인
+
+배포 후 API 호출 에러가 발생하면 Function 로그를 확인하세요:
+
+#### 방법 A: Deployments 탭
+1. Vercel Dashboard → 프로젝트 선택
+2. 좌측 메뉴에서 **"Deployments"** 클릭
+3. 최신 배포 항목 클릭
+4. **"Functions"** 탭 클릭
+5. `/api/opendata/[...path]` 함수 선택
+6. **"Logs"** 섹션에서 실시간 로그 확인
+
+#### 방법 B: Functions 탭 (직접 접근)
+1. Vercel Dashboard → 프로젝트 선택
+2. 좌측 메뉴에서 **"Functions"** 클릭
+3. `/api/opendata/[...path]` 함수 선택
+4. **"Logs"** 섹션에서 로그 확인
+
+#### 방법 C: Vercel CLI (터미널)
+```bash
+# 실시간 로그 확인
+vercel logs --follow
+
+# 특정 함수 로그만 확인
+vercel logs --follow /api/opendata
+```
+
+#### 로그에서 확인할 내용
+- `[API Proxy] GET Request`: 요청 정보 (URL, 백엔드 URL, 토큰 존재 여부)
+- `[API Proxy] Backend Error`: 백엔드 서버 에러 (상태 코드, 에러 메시지)
+- `[API Proxy] Fetch Error`: 프록시 에러 (연결 실패, 타임아웃 등)
+- 에러 스택 트레이스
+
 ## 🔧 고급 설정
 
 ### 커스텀 도메인 연결
