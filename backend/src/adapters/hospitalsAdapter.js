@@ -75,15 +75,23 @@ class HospitalsAdapter extends BaseAdapter {
       return [];
     }
 
-    return apiData.map((item) => ({
-      id: item.ykiho || item.hospCd || `hosp_${Date.now()}_${Math.random()}`,
-      name: item.yadmNm || item.hospNm || '병원명 없음',
-      address: item.addr || item.roadAddr || '',
-      type: this.mapHospitalType(item.clCd || item.hospTyCd),
-      departments: this.parseDepartments(item.dgsbjtCd || item.deptCd),
-      phone: item.telno || item.tel || '',
-      rating: item.evalScore ? parseFloat(item.evalScore) : undefined,
-    }));
+    return apiData.map((item) => {
+      // XML 파싱 후 데이터 구조에 맞게 필드 매핑
+      // 공공데이터 API XML 응답 필드명 확인 필요
+      return {
+        id: item.ykiho || item.hospCd || item.ykihoEncpt || `hosp_${Date.now()}_${Math.random()}`,
+        name: item.yadmNm || item.hospNm || item.yadmNm || '병원명 없음',
+        address: item.addr || item.roadAddr || item.addr || '',
+        type: this.mapHospitalType(item.clCd || item.hospTyCd || item.clCdNm),
+        departments: this.parseDepartments(item.dgsbjtCd || item.deptCd),
+        phone: item.telno || item.tel || item.telno || '',
+        rating: item.evalScore ? parseFloat(item.evalScore) : undefined,
+        // 추가 필드 (XML 응답에서 확인된 필드)
+        sidoCd: item.sidoCd,
+        sgguCd: item.sgguCd,
+        clCdNm: item.clCdNm, // 의료기관 종별명 (예: "상급종합")
+      };
+    });
   }
 
   /**

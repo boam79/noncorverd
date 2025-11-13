@@ -1,4 +1,5 @@
 import axios from 'axios';
+import xml2js from 'xml2js';
 import { API_BASE_URL } from '../config/apiEndpoints.js';
 
 /**
@@ -97,9 +98,54 @@ export class BaseAdapter {
 
       // XML 응답인 경우 (일부 API는 XML만 지원)
       if (typeof response.data === 'string' && response.data.includes('<?xml')) {
-        console.warn(`⚠️ [${this.provider}] XML 응답을 받았습니다. JSON 파서가 필요합니다.`);
-        // TODO: XML 파싱 로직 추가 (xml2js 등)
-        return this.formatError('XML_RESPONSE', 'XML 응답은 아직 지원하지 않습니다.');
+        console.log(`📄 [${this.provider}] XML 응답을 받았습니다. 파싱 중...`);
+        try {
+          const parser = new xml2js.Parser({
+            explicitArray: false,
+            mergeAttrs: true,
+            ignoreAttrs: false,
+          });
+          
+          const parsed = await parser.parseStringPromise(response.data);
+          
+          // 공공데이터 API 표준 응답 구조: response.header, response.body
+          if (parsed.response) {
+            const header = parsed.response.header || {};
+            const body = parsed.response.body || {};
+            
+            // 에러 체크
+            if (header.resultCode && header.resultCode !== '00') {
+              return this.formatError(
+                'API_ERROR',
+                header.resultMsg || 'API 호출 실패'
+              );
+            }
+            
+            // items 추출 (단일 객체 또는 배열)
+            let items = [];
+            if (body.items) {
+              if (Array.isArray(body.items.item)) {
+                items = body.items.item;
+              } else if (body.items.item) {
+                items = [body.items.item];
+              }
+            }
+            
+            console.log(`✅ [${this.provider}] XML 파싱 성공: ${items.length}개 항목`);
+            
+            return this.formatResponse(items, {
+              total: body.totalCount || items.length,
+              page: body.pageNo || requestParams.pageNo,
+              limit: body.numOfRows || requestParams.numOfRows,
+            });
+          }
+          
+          // 표준 구조가 아닌 경우 전체 반환
+          return this.formatResponse(parsed);
+        } catch (xmlError) {
+          console.error(`❌ [${this.provider}] XML 파싱 오류:`, xmlError.message);
+          return this.formatError('XML_PARSE_ERROR', `XML 파싱 실패: ${xmlError.message}`);
+        }
       }
 
       return this.formatResponse(response.data);
