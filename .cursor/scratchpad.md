@@ -318,6 +318,12 @@
       - Next.js API Route로 프록시 구현 (app/api/opendata/[...path]/route.ts)
       - 서버사이드에서 HTTP 요청 처리하여 Mixed Content 및 502 에러 해결
       - Next.js 15 타입 호환성 수정 (params Promise 처리)
+      - ✅ API Route 개선:
+        - 환경변수 처리 개선 (BACKEND_URL, CLIENT_TOKEN 여러 이름 지원)
+        - 에러 핸들링 강화 (타임아웃, 연결 에러 구분)
+        - 디버깅 로그 추가 (개발 환경)
+        - AbortController로 타임아웃 처리 개선
+        - 더 명확한 에러 메시지 제공
   - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
   - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
   - 환경변수 설정:
