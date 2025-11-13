@@ -23,6 +23,51 @@ class HospitalsAdapter extends BaseAdapter {
   }
 
   /**
+   * 행정안전부 시도 코드를 HIRA API 시도 코드로 변환
+   * 프론트엔드에서 받은 행정안전부 코드(예: 26=부산)를 HIRA 코드(예: 21=부산)로 변환
+   */
+  convertSidoCodeToHIRA(sidoCode) {
+    if (!sidoCode) {
+      return null;
+    }
+
+    // 행정안전부 시도 코드 → HIRA 시도 코드 매핑 테이블
+    // 주의: 행정안전부와 HIRA의 시도 코드 체계가 다릅니다!
+    const sidoMap = {
+      '11': '110000', // 서울특별시
+      '21': '210000', // 부산광역시 (행정안전부에서는 26이지만 HIRA는 21)
+      '26': '210000', // 부산광역시 (행정안전부 코드 26 → HIRA 코드 21)
+      '27': '270000', // 대구광역시
+      '28': '280000', // 인천광역시
+      '29': '290000', // 광주광역시
+      '30': '300000', // 대전광역시
+      '31': '260000', // 울산광역시 (행정안전부 코드 31 → HIRA 코드 26)
+      '36': '360000', // 세종특별자치시
+      '41': '310000', // 경기도 (행정안전부 코드 41 → HIRA 코드 31)
+      '43': '430000', // 충청북도
+      '44': '440000', // 충청남도
+      '46': '460000', // 전라남도
+      '47': '470000', // 경상북도
+      '48': '480000', // 경상남도
+      '50': '500000', // 제주특별자치도
+      '51': '510000', // 강원특별자치도
+      '52': '520000', // 전북특별자치도
+    };
+
+    const sidoStr = String(sidoCode).padStart(2, '0');
+    const hiraCode = sidoMap[sidoStr];
+
+    if (hiraCode) {
+      console.log(`🔄 시도 코드 변환: ${sidoStr} (행정안전부) → ${hiraCode} (HIRA)`);
+      return hiraCode;
+    }
+
+    // 매핑이 없으면 기본 변환 (하위 호환성)
+    console.warn(`⚠️ 시도 코드 매핑 없음: ${sidoStr}, 기본 변환 사용`);
+    return String(sidoCode).padEnd(6, '0');
+  }
+
+  /**
    * 행정안전부 시군구 코드를 HIRA API 코드로 변환
    * 프론트엔드에서 받은 행정안전부 코드(예: 111100)를 HIRA 코드(예: 110016)로 변환
    */
@@ -114,13 +159,20 @@ class HospitalsAdapter extends BaseAdapter {
       const params = {};
       
       // 지역 필터 (공공데이터 API 파라미터명)
-      // sido: 시도 코드 (2자리: 11=서울, 26=부산, 28=인천, 41=경기)
-      // API는 6자리 코드를 요구하므로 변환 필요 (예: 11 → 110000)
+      // sido: 시도 코드 (2자리: 11=서울, 26=부산(행정안전부), 21=부산(HIRA))
+      // 주의: 행정안전부 코드와 HIRA 코드 체계가 다릅니다!
       if (sido) {
-        // 2자리 코드를 6자리로 변환 (예: "11" → "110000")
-        const sidoCode = String(sido).padEnd(6, '0');
-        params.sidoCd = sidoCode;
-        console.log('📍 지역 필터 적용:', { sido, sidoCd: params.sidoCd });
+        // 행정안전부 시도 코드를 HIRA 시도 코드로 변환
+        const hiraSidoCode = this.convertSidoCodeToHIRA(sido);
+        if (hiraSidoCode) {
+          params.sidoCd = hiraSidoCode;
+          console.log('📍 지역 필터 적용:', { sido, sidoCd: params.sidoCd });
+        } else {
+          // 변환 실패 시 기본 변환 사용 (하위 호환성)
+          const sidoCode = String(sido).padEnd(6, '0');
+          params.sidoCd = sidoCode;
+          console.log('📍 지역 필터 적용 (기본 변환):', { sido, sidoCd: params.sidoCd });
+        }
       }
       if (sigungu) {
         // 행정안전부 코드를 HIRA 코드로 변환

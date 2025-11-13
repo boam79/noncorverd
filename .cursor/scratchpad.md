@@ -429,12 +429,21 @@
     - ✅ `backend/.env` 및 `ecosystem.config.cjs`에 `CORS_ORIGINS=http://localhost:3000,https://noncorverd.vercel.app` 추가
     - ✅ 배포 가이드 작성 (`docs/DEPLOY_CORS_FIX.md`)
     - ✅ 부하 테스트 스크립트 실행 권한 설정 및 `package.json`에 `test:load` 스크립트 추가
-    - ⏳ **EC2 서버 배포 필요** (사용자 실행): `backend/deploy-to-ec2.sh` 또는 수동 배포 후 PM2 재시작
-    - ⏳ 배포 후 CORS 검증 (`curl -I -H "Origin: https://noncorverd.vercel.app"`) 및 Playwright E2E 재실행 필요
+    - ✅ **EC2 서버 배포 완료** (2025-11-13):
+    - ✅ CORS 설정 배포 및 PM2 재시작 완료
+    - ✅ CORS 검증 완료 (`curl` 테스트 성공)
+  - ✅ **시군구 코드 변환 로직 추가** (2025-11-13):
+    - ✅ 행정안전부 시군구 코드(예: 111100)를 HIRA API 코드(예: 110016)로 변환하는 매핑 테이블 추가
+    - ✅ 서울특별시 25개 구 및 부산광역시 16개 구 매핑 완료
+    - ✅ 실제 API 호출 테스트 성공 (종로구 종합병원 2개 반환 확인)
+  - ⏳ **E2E 테스트 개선 필요**:
+    - ✅ `HospitalCard`에 `data-testid="hospital-card"` 및 `article` 태그 추가
+    - ⏳ Vercel 배포 후 Playwright E2E 재실행 필요
 
 ## Executor's Feedback or Assistance Requests
-- ✅ **prod-6 Day 1 – CORS 수정 및 배포 준비 완료**:
-  - CORS 설정 개선으로 Vercel 도메인 허용 준비 완료
-  - 배포 스크립트 및 가이드 문서 준비 완료
-  - 다음 단계: EC2 서버 배포 후 검증 필요
+- ✅ **prod-6 Day 1 – CORS 수정 및 시군구 코드 변환 완료**:
+  - CORS 설정 개선 및 EC2 배포 완료
+  - 시군구 코드 변환 로직 추가로 실제 API 데이터 반환 확인
+  - E2E 테스트용 `data-testid` 추가 완료
+  - 다음 단계: Vercel 배포 후 E2E 테스트 재실행 필요
 
