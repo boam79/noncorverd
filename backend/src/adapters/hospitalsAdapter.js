@@ -26,11 +26,17 @@ class HospitalsAdapter extends BaseAdapter {
    * 병원 목록 조회
    */
   async getHospitals({ sido, sigungu, type }) {
-    // Service Key가 없으면 Mock 데이터 반환
-    if (!this.serviceKey) {
+    // Service Key 재확인 (런타임에 환경변수 다시 읽기)
+    const serviceKey = process.env.HIRA_SERVICE_KEY || this.serviceKey;
+    
+    if (!serviceKey) {
       console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
       return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
     }
+
+    // Service Key를 임시로 설정
+    this.serviceKey = serviceKey;
+    console.log('✅ Service Key 확인됨, 실제 API 호출 시도...');
 
     try {
       const params = {};
@@ -57,15 +63,26 @@ class HospitalsAdapter extends BaseAdapter {
         params.clCd = typeMap[type] || type;
       }
 
+      console.log('📡 병원 목록 API 호출 파라미터:', { ...params, serviceKey: '***' });
       const result = await this.fetchAPI(this.apiEndpoint, params);
 
+      console.log('📡 API 응답:', result.ok ? '성공' : '실패', result.error?.message || '');
+
       // API 호출 실패 시 Mock 데이터 사용
-      if (!result.ok || !result.data || result.data.length === 0) {
+      if (!result.ok) {
+        console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', result.error?.message);
+        return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+      }
+
+      // 데이터가 없는 경우 (totalCount=0 등)
+      if (!result.data || result.data.length === 0) {
+        console.warn('⚠️ API 응답에 데이터가 없습니다. Mock 데이터 반환');
         return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
       }
 
       // API 응답을 표준 형식으로 변환
       const hospitals = this.transformHospitalData(result.data);
+      console.log(`✅ 실제 API 데이터 반환: ${hospitals.length}개 병원`);
       return this.formatResponse(hospitals, result.meta);
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
