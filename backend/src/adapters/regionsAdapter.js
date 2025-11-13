@@ -13,12 +13,60 @@ class RegionsAdapter extends BaseAdapter {
     const serviceKey = process.env.api_key || process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || '';
     super('행정안전부', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.ADMINISTRATIVE_CODE;
+    this.regionCache = null;
+    this.regionCacheTimestamp = 0;
+    this.regionCacheTTL = 1000 * 60 * 60 * 12; // 12시간 캐시 유지
     // 디버깅용
     if (serviceKey) {
       console.log('✅ RegionsAdapter: Service Key 설정됨 (길이:', serviceKey.length, ')');
     } else {
       console.warn('⚠️ RegionsAdapter: Service Key 미설정');
     }
+  }
+
+  async loadRegionData(force = false) {
+    if (!this.serviceKey) {
+      throw new Error('Service Key가 설정되지 않았습니다.');
+    }
+
+    const now = Date.now();
+    if (!force && this.regionCache && now - this.regionCacheTimestamp < this.regionCacheTTL) {
+      return this.regionCache;
+    }
+
+    const allRows = [];
+    const pageSize = 1000;
+    let pageNo = 1;
+    let total = Infinity;
+
+    while (allRows.length < total) {
+      const result = await this.fetchAPI(this.apiEndpoint, {
+        type: 'json',
+        pageNo,
+        numOfRows: pageSize,
+      });
+
+      if (!result.ok) {
+        throw new Error(result.error?.message || '행정표준코드 API 호출 실패');
+      }
+
+      const items = Array.isArray(result.data) ? result.data : [];
+      allRows.push(...items);
+
+      total = Number(result.meta?.total || items.length);
+      if (items.length < pageSize) {
+        break;
+      }
+
+      pageNo += 1;
+    }
+
+    this.regionCache = allRows;
+    this.regionCacheTimestamp = now;
+
+    console.log(`✅ RegionsAdapter: 행정표준코드 ${allRows.length}건 로드 완료 (pageNo=${pageNo - 1})`);
+
+    return this.regionCache;
   }
 
   /**
@@ -29,58 +77,60 @@ class RegionsAdapter extends BaseAdapter {
   async getSidoList() {
     // 공공데이터 API는 보통 전체 법정동을 조회하므로,
     // 시도 코드만 추출하여 반환
+    // 최신 행정코드 체계 (2024년 기준)
+    // 실제 API 응답과 일치하도록 최신 코드로 갱신
     const mockSidoList = [
       { code: '11', name: '서울특별시' },
-      { code: '21', name: '부산광역시' },
-      { code: '22', name: '인천광역시' },
-      { code: '23', name: '대구광역시' },
-      { code: '24', name: '광주광역시' },
-      { code: '25', name: '대전광역시' },
-      { code: '26', name: '울산광역시' },
-      { code: '31', name: '경기도' },
-      { code: '32', name: '강원특별자치도' },
-      { code: '33', name: '충청북도' },
-      { code: '34', name: '충청남도' },
-      { code: '35', name: '전북특별자치도' },
-      { code: '36', name: '전라남도' },
-      { code: '37', name: '경상북도' },
-      { code: '38', name: '경상남도' },
-      { code: '39', name: '제주특별자치도' },
-      { code: '41', name: '세종특별자치시' },
+      { code: '26', name: '부산광역시' },
+      { code: '27', name: '대구광역시' },
+      { code: '28', name: '인천광역시' },
+      { code: '29', name: '광주광역시' },
+      { code: '30', name: '대전광역시' },
+      { code: '31', name: '울산광역시' },
+      { code: '36', name: '세종특별자치시' },
+      { code: '41', name: '경기도' },
+      { code: '43', name: '충청북도' },
+      { code: '44', name: '충청남도' },
+      { code: '46', name: '전라남도' },
+      { code: '47', name: '경상북도' },
+      { code: '48', name: '경상남도' },
+      { code: '50', name: '제주특별자치도' },
+      { code: '51', name: '강원특별자치도' },
+      { code: '52', name: '전북특별자치도' },
     ];
 
-    // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
-    const serviceKey = process.env.api_key || process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || this.serviceKey;
-    
-    if (!serviceKey) {
-      console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      return this.formatResponse(mockSidoList);
-    }
-
-    console.log('✅ Service Key 확인됨, 실제 API 호출 시도...');
-    // Service Key를 임시로 설정
-    this.serviceKey = serviceKey;
-
     try {
-      // 실제 API 호출 시도
-      // 주의: 실제 API 엔드포인트와 파라미터는 API 문서에서 확인 필요
-      const result = await this.fetchAPI(this.apiEndpoint, {
-        // API 문서에 따라 파라미터 조정 필요
-        // 예: pageNo: 1, numOfRows: 100
+      const rows = await this.loadRegionData();
+      const sidoMap = new Map();
+
+      rows.forEach((row) => {
+        const sidoCd = row.sido_cd ? String(row.sido_cd).padStart(2, '0') : null;
+        const isSidoLevel = (
+          row.sgg_cd === '000' && row.umd_cd === '000' && row.ri_cd === '00'
+        ) || row.locathigh_cd === '0000000000';
+
+        if (!sidoCd || !isSidoLevel) {
+          return;
+        }
+
+        if (!sidoMap.has(sidoCd)) {
+          const name = row.locatadd_nm || row.locallow_nm || '';
+          sidoMap.set(sidoCd, name);
+        }
       });
 
-      console.log('📡 API 응답:', result.ok ? '성공' : '실패', result.error?.message || '');
+      const sidoList = Array.from(sidoMap.entries())
+        .map(([code, name]) => ({ code, name }))
+        .sort((a, b) => Number(a.code) - Number(b.code));
 
-      // API가 시도 목록을 직접 제공하지 않으면 Mock 데이터 사용
-      if (!result.ok || !result.data || result.data.length === 0) {
-        console.warn('⚠️ API 응답이 비어있어 Mock 데이터를 반환합니다.');
-        return this.formatResponse(mockSidoList);
+      if (sidoList.length > 0) {
+        return this.formatResponse(sidoList);
       }
 
-      console.log('✅ 실제 API 데이터 반환:', result.data.length, '개');
-      return result;
+      console.warn('⚠️ 시도 목록 API 응답이 비어 있어 Mock 데이터를 사용합니다.');
+      return this.formatResponse(mockSidoList);
     } catch (error) {
-      console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
+      console.warn('⚠️ 시도 목록 조회 실패, Mock 데이터 반환:', error.message);
       return this.formatResponse(mockSidoList);
     }
   }
@@ -93,29 +143,51 @@ class RegionsAdapter extends BaseAdapter {
       return this.formatError('MISSING_PARAM', 'sido 파라미터가 필요합니다.');
     }
 
-    // Service Key가 없으면 Mock 데이터 반환
-    if (!this.serviceKey) {
-      console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      const mockData = this.getMockSigunguList(sido);
-      return this.formatResponse(mockData);
-    }
+    const mockData = this.getMockSigunguList(sido);
+    const targetSido = String(sido).padStart(2, '0');
 
     try {
-      const result = await this.fetchAPI(this.apiEndpoint, {
-        sidoCd: String(sido).padEnd(2, '0'),
-        // API 문서에 따라 파라미터 조정 필요
+      const rows = await this.loadRegionData();
+      const sigunguMap = new Map();
+
+      rows.forEach((row) => {
+        const { sido_cd, sgg_cd, umd_cd, ri_cd } = row;
+        if (!sido_cd || !sgg_cd) {
+          return;
+        }
+
+        const isSigunguLevel = sgg_cd !== '000' && umd_cd === '000' && ri_cd === '00';
+        const matchesSido = String(sido_cd).padStart(2, '0') === targetSido;
+
+        if (!matchesSido || !isSigunguLevel) {
+          return;
+        }
+
+        const code = `${String(sido_cd).padStart(2, '0')}${String(sgg_cd).padStart(3, '0')}`.padEnd(6, '0');
+
+        if (!sigunguMap.has(code)) {
+          const name = row.locatadd_nm || row.locallow_nm || '';
+          sigunguMap.set(code, {
+            code,
+            name,
+            regionCode: row.region_cd,
+          });
+        }
       });
 
-      // API 호출 실패 시 Mock 데이터 사용
-      if (!result.ok || !result.data || result.data.length === 0) {
-        const mockData = this.getMockSigunguList(sido);
+      const sigunguList = Array.from(sigunguMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, 'ko')
+      );
+
+      if (sigunguList.length === 0) {
+        console.warn(`⚠️ 시군구 데이터가 없어 Mock 데이터를 반환합니다. (sido=${sido})`);
         return this.formatResponse(mockData);
       }
 
-      return result;
+      console.log(`✅ 시군구 목록 반환: ${sigunguList.length}개 (sido=${sido})`);
+      return this.formatResponse(sigunguList);
     } catch (error) {
-      console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      const mockData = this.getMockSigunguList(sido);
+      console.warn('⚠️ 시군구 조회 실패, Mock 데이터 반환:', error.message);
       return this.formatResponse(mockData);
     }
   }

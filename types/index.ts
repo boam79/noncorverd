@@ -51,6 +51,10 @@ export interface NonCoveredItem {
   name: string;
   price: number;
   unit?: string;
+  code?: string;
+  url?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 // 병원별 비급여 가격 정보
@@ -59,6 +63,7 @@ export interface HospitalPricing {
   hospitalName: string;
   items: NonCoveredItem[];
   averagePrice?: number;
+  totalItems?: number;
 }
 
 // 비교 선택 상태

@@ -23,6 +23,78 @@ class HospitalsAdapter extends BaseAdapter {
   }
 
   /**
+   * 행정안전부 시군구 코드를 HIRA API 코드로 변환
+   * 프론트엔드에서 받은 행정안전부 코드(예: 111100)를 HIRA 코드(예: 110016)로 변환
+   */
+  convertSigunguCodeToHIRA(sigunguCode, sidoCode) {
+    if (!sigunguCode || !sidoCode) {
+      return null;
+    }
+
+    // 행정안전부 코드 → HIRA 코드 매핑 테이블
+    // 형식: { '행정안전부코드': 'HIRA코드' }
+    const codeMap = {
+      // 서울특별시 (sido=11)
+      '111100': '110016', // 종로구
+      '111400': '110017', // 중구
+      '111700': '110014', // 용산구
+      '112000': '110011', // 성동구
+      '112150': '110023', // 광진구
+      '112300': '110007', // 동대문구
+      '112600': '110019', // 중랑구
+      '112900': '110012', // 성북구
+      '113050': '110024', // 강북구
+      '113200': '110006', // 도봉구
+      '113500': '110022', // 노원구
+      '113800': '110015', // 은평구
+      '114100': '110010', // 서대문구
+      '114400': '110009', // 마포구
+      '114700': '110020', // 양천구
+      '115000': '110003', // 강서구
+      '115300': '110005', // 구로구
+      '115450': '110025', // 금천구
+      '115600': '110013', // 영등포구
+      '115900': '110008', // 동작구
+      '116200': '110004', // 관악구
+      '116500': '110021', // 서초구
+      '116800': '110001', // 강남구
+      '117100': '110018', // 송파구
+      '117400': '110002', // 강동구
+      // 부산광역시 (sido=21)
+      '212100': '210008', // 중구
+      '212200': '210002', // 서구
+      '212300': '210002', // 동구
+      '212400': '210007', // 영도구
+      '212500': '210004', // 부산진구
+      '212700': '210003', // 동래구
+      '212800': '210001', // 남구
+      '212900': '210005', // 북구
+      '213000': '210009', // 해운대구
+      '213100': '210010', // 사하구
+      '213200': '210011', // 금정구
+      '213300': '210012', // 강서구
+      '213400': '210013', // 연제구
+      '213500': '210014', // 수영구
+      '213600': '210015', // 사상구
+      '213700': '210016', // 기장군
+    };
+
+    // 행정안전부 코드는 이미 전체 코드 (예: 111100)
+    // 매핑 테이블에서 직접 찾기
+    const fullCode = String(sigunguCode).padEnd(6, '0');
+    const hiraCode = codeMap[fullCode];
+    
+    if (hiraCode) {
+      console.log(`🔄 시군구 코드 변환: ${fullCode} (행정안전부) → ${hiraCode} (HIRA)`);
+      return hiraCode;
+    }
+
+    // 매핑이 없으면 원본 코드 반환 (시도해볼 수 있음)
+    console.warn(`⚠️ 시군구 코드 매핑 없음: ${fullCode}, 원본 코드 사용`);
+    return String(sigunguCode).padEnd(6, '0');
+  }
+
+  /**
    * 병원 목록 조회
    */
   async getHospitals({ sido, sigungu, type }) {
@@ -51,10 +123,17 @@ class HospitalsAdapter extends BaseAdapter {
         console.log('📍 지역 필터 적용:', { sido, sidoCd: params.sidoCd });
       }
       if (sigungu) {
-        // 시군구 코드도 6자리로 변환 (예: "110" → "110000")
-        const sigunguCode = String(sigungu).padEnd(6, '0');
-        params.sgguCd = sigunguCode;
-        console.log('📍 시군구 필터 적용:', { sigungu, sgguCd: params.sgguCd });
+        // 행정안전부 코드를 HIRA 코드로 변환
+        const hiraSgguCd = this.convertSigunguCodeToHIRA(sigungu, sido);
+        if (hiraSgguCd) {
+          params.sgguCd = hiraSgguCd;
+          console.log('📍 시군구 필터 적용:', { sigungu, sgguCd: params.sgguCd });
+        } else {
+          // 변환 실패 시 원본 코드 사용 (하위 호환성)
+          const sigunguCode = String(sigungu).padEnd(6, '0');
+          params.sgguCd = sigunguCode;
+          console.log('📍 시군구 필터 적용 (원본 코드):', { sigungu, sgguCd: params.sgguCd });
+        }
       }
 
       // 의료기관 종별 필터

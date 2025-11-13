@@ -79,7 +79,9 @@ export class BaseAdapter {
       const response = await axios.get(fullUrl, {
         timeout: 30000, // 30초 타임아웃
         headers: {
-          'Accept': 'application/json, application/xml',
+          'Accept': '*/*',
+          'User-Agent': 'curl/7.79.1',
+          'Accept-Encoding': 'gzip, deflate, br',
         },
         // XML 응답을 문자열로 받기 위해 responseType 설정
         responseType: 'text',
@@ -133,6 +135,44 @@ export class BaseAdapter {
               page: body.pageNo || requestParams.pageNo,
               limit: body.numOfRows || requestParams.numOfRows,
             });
+          }
+
+          if (parsed.StanReginCd) {
+            const sections = Array.isArray(parsed.StanReginCd)
+              ? parsed.StanReginCd
+              : [parsed.StanReginCd];
+
+            const headSection = sections.find((section) => Array.isArray(section.head));
+            const rowSection = sections.find((section) => Array.isArray(section.row) || section.row);
+
+            let items = [];
+            if (rowSection) {
+              if (Array.isArray(rowSection.row)) {
+                items = rowSection.row;
+              } else if (rowSection.row) {
+                items = [rowSection.row];
+              }
+            }
+
+            const meta = { total: items.length, page: requestParams.pageNo, limit: requestParams.numOfRows };
+
+            if (headSection && Array.isArray(headSection.head)) {
+              headSection.head.forEach((entry) => {
+                if (entry.totalCount) {
+                  meta.total = Number(entry.totalCount);
+                }
+                if (entry.pageNo) {
+                  meta.page = Number(entry.pageNo);
+                }
+                if (entry.numOfRows) {
+                  meta.limit = Number(entry.numOfRows);
+                }
+              });
+            }
+
+            console.log(`✅ [${this.provider}] StanReginCd 파싱 성공: ${items.length}개 항목`);
+
+            return this.formatResponse(items, meta);
           }
           
           // 표준 구조가 아닌 경우 전체 반환

@@ -14,6 +14,10 @@ class PricingAdapter extends BaseAdapter {
     super('건강보험심사평가원', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.NON_PAYMENT_PRICING;
     
+    // 캐시 설정 (in-memory)
+    this.pricingCache = new Map();
+    this.cacheTTL = 1000 * 60 * 60 * 12; // 12시간
+    
     // 디버깅용 로그
     if (serviceKey) {
       console.log('✅ PricingAdapter: Service Key 설정됨 (길이:', serviceKey.length, ')');
@@ -73,26 +77,85 @@ class PricingAdapter extends BaseAdapter {
    * 필수 파라미터: ykiho (암호화된 요양기호)
    * 옵션 파라미터: clCd (종별코드), sidoCd (시도코드), sgguCd (시군구코드), yadmNm (병원명)
    */
-  async getHospitalPricing(hospitalId) {
+  async getHospitalPricing(hospitalId, forceRefresh = false) {
     try {
       console.log(`💰 비급여 가격 조회: 병원 ID=${hospitalId}`);
       
-      const result = await this.fetchAPI(this.apiEndpoint, {
-        ykiho: hospitalId, // 암호화된 요양기호 (병원 목록 API에서 받은 ykiho)
-        pageNo: 1,
-        numOfRows: 100, // 최대 100개 항목 조회
-      });
+      // 캐시 확인
+      if (!forceRefresh) {
+        const cached = this.pricingCache.get(hospitalId);
+        if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+          console.log(`✅ 캐시에서 비급여 가격 반환: ${hospitalId}`);
+          return this.formatResponse(cached.data);
+        }
+      }
       
-      console.log(`💰 비급여 가격 API 응답:`, result.ok ? '성공' : '실패', result.error?.message || '');
-
-      if (!result.ok) {
-        return result;
+      // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
+      const serviceKey = process.env.api_key || process.env.HIRA_PRICING_SERVICE_KEY || this.serviceKey;
+      
+      if (!serviceKey) {
+        console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
+        return this.formatResponse(this.getMockPricing([hospitalId])[0]);
       }
 
+      // Service Key를 임시로 설정
+      this.serviceKey = serviceKey;
+      
+      // 페이지네이션을 고려하여 모든 항목 가져오기
+      let allItems = [];
+      let pageNo = 1;
+      const pageSize = 100;
+      let totalCount = Infinity;
+
+      while (allItems.length < totalCount && pageNo <= 10) { // 최대 10페이지 (1000개 항목)
+        const result = await this.fetchAPI(this.apiEndpoint, {
+          ykiho: hospitalId,
+          pageNo: pageNo,
+          numOfRows: pageSize,
+        });
+        
+        if (!result.ok) {
+          if (pageNo === 1) {
+            // 첫 페이지 실패 시 Mock 데이터 반환
+            console.warn('⚠️ API 호출 실패, Mock 데이터 반환');
+            return this.formatResponse(this.getMockPricing([hospitalId])[0]);
+          }
+          // 이후 페이지 실패 시 기존 데이터 반환
+          break;
+        }
+
+        const items = Array.isArray(result.data) ? result.data : [];
+        allItems = allItems.concat(items);
+
+        // totalCount 업데이트
+        if (result.meta?.total) {
+          totalCount = Number(result.meta.total);
+        } else if (items.length < pageSize) {
+          // 마지막 페이지
+          totalCount = allItems.length;
+        }
+
+        if (items.length < pageSize) {
+          break;
+        }
+
+        pageNo += 1;
+      }
+      
+      console.log(`💰 비급여 가격 API 응답: 성공 (${allItems.length}개 항목, ${pageNo}페이지)`);
+
       // API 응답을 표준 형식으로 변환
-      const pricing = this.transformPricingData(hospitalId, result.data);
+      const pricing = this.transformPricingData(hospitalId, allItems);
+      
+      // 캐시에 저장
+      this.pricingCache.set(hospitalId, {
+        data: pricing,
+        timestamp: Date.now(),
+      });
+      
       return this.formatResponse(pricing);
     } catch (error) {
+      console.error('❌ 비급여 가격 조회 오류:', error.message);
       return this.formatError('API_ERROR', error.message);
     }
   }
@@ -105,8 +168,11 @@ class PricingAdapter extends BaseAdapter {
    * - yadmNm: 병원명
    * - npayKorNm: 비급여한글명 (항목명)
    * - yadmNpayCdNm: 요양기관비급여코드명 (병원별 항목명)
-   * - curAmt: 현재금액 (가격)
+   * - curAmt: 현재금액 (가격, 문자열)
    * - npayCd: 비급여코드
+   * - adtFrDd: 적용시작일 (YYYYMMDD)
+   * - adtEndDd: 적용종료일 (YYYYMMDD, 99991231은 무기한)
+   * - urlAddr: 비급여 정보 URL
    */
   transformPricingData(hospitalId, apiData) {
     if (!Array.isArray(apiData) || apiData.length === 0) {
@@ -121,21 +187,71 @@ class PricingAdapter extends BaseAdapter {
     // 병원명 추출 (첫 번째 항목에서)
     const hospitalName = apiData[0]?.yadmNm || '병원명 없음';
 
-    const items = apiData.map((item) => ({
-      id: item.npayCd || item.sno || `item_${Date.now()}_${Math.random()}`,
-      name: item.npayKorNm || item.yadmNpayCdNm || '항목명 없음',
-      price: parseInt(item.curAmt || item.amt || 0, 10),
-      unit: '회', // API 응답에 unit 정보가 없으므로 기본값
-    }));
+    // 현재 날짜 기준으로 유효한 항목만 필터링 (선택적)
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+
+    const normalizeDate = (value) => {
+      if (!value) {
+        return undefined;
+      }
+      const str = String(value);
+      if (str.length !== 8) {
+        return str;
+      }
+      return `${str.slice(0, 4)}-${str.slice(4, 6)}-${str.slice(6, 8)}`;
+    };
+
+    const items = apiData
+      .filter((item) => {
+        // 적용 종료일이 99991231이거나 오늘 이후인 항목만 포함
+        const endDate = item.adtEndDd || '99991231';
+        return endDate === '99991231' || endDate >= todayStr;
+      })
+      .map((item) => {
+        // 항목명 우선순위: npayKorNm > yadmNpayCdNm
+        const itemName = item.npayKorNm || item.yadmNpayCdNm || '항목명 없음';
+        
+        // 가격 파싱 (문자열 → 숫자)
+        const price = parseInt(item.curAmt || item.amt || '0', 10);
+        
+        // 단위 추정 (항목명에서 추출하거나 기본값 사용)
+        const resolvedUnit = (() => {
+          if (itemName.includes('일') || itemName.includes('일당')) {
+            return '일';
+          }
+          if (itemName.includes('건')) {
+            return '건';
+          }
+          if (itemName.includes('회')) {
+            return '회';
+          }
+          return item.unit || '회';
+        })();
+
+        return {
+          id: item.npayCd || item.sno || `item_${Date.now()}_${Math.random()}`,
+          name: itemName,
+          price: price,
+          unit: resolvedUnit,
+          // 추가 메타데이터 (선택적)
+          code: item.npayCd,
+          url: item.urlAddr,
+          startDate: normalizeDate(item.adtFrDd),
+          endDate: normalizeDate(item.adtEndDd),
+        };
+      })
+      .filter((item) => item.price > 0); // 가격이 0인 항목 제외
 
     const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
     const averagePrice = items.length > 0 ? Math.round(totalPrice / items.length) : 0;
 
     return {
       hospitalId,
-      hospitalName: apiData[0]?.yadmNm || apiData[0]?.hospNm || '병원명 없음',
+      hospitalName: hospitalName,
       items,
       averagePrice,
+      totalItems: items.length,
     };
   }
 
@@ -199,6 +315,7 @@ class PricingAdapter extends BaseAdapter {
           name: itemName,
           price: price,
           unit: '회',
+          code: itemName.toUpperCase().replace(/\s+/g, '_'),
         };
       });
 
@@ -210,6 +327,7 @@ class PricingAdapter extends BaseAdapter {
         hospitalName,
         items,
         averagePrice,
+        totalItems: items.length,
       };
     });
   }

@@ -137,6 +137,15 @@ npm run lint
 
 # 빌드 테스트
 npm run build
+
+# E2E 테스트
+npm run test:e2e
+
+# E2E 테스트 (UI 모드)
+npm run test:e2e:ui
+
+# E2E 테스트 (헤드 모드)
+npm run test:e2e:headed
 ```
 
 ## 📦 배포
@@ -180,6 +189,13 @@ pm2 startup
 ## 🤝 기여
 
 이 프로젝트는 MVP 단계입니다. 버그 리포트 및 기능 제안은 이슈로 등록해주세요.
+
+## 📚 추가 문서
+
+- [사용자 가이드](./USER_GUIDE.md) - 서비스 사용법
+- [QA 체크리스트](./QA_CHECKLIST.md) - 테스트 체크리스트
+- [배포 가이드](./DEPLOYMENT.md) - 배포 절차
+- [Vercel 배포 가이드](./VERCEL_DEPLOYMENT.md) - Vercel 배포 상세 가이드
 
 ## 📄 라이선스
 

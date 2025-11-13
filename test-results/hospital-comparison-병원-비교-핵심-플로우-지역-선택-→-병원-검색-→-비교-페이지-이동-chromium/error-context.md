@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - heading "🏥 의료기관 비급여 비교 서비스" [level=1] [ref=e5]
+        - paragraph [ref=e6]: 전국 병원 비급여 수가 검색·비교
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - heading "검색 조건" [level=2] [ref=e10]
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - generic [ref=e14]: 시도
+            - combobox "시도 선택" [disabled] [ref=e15]:
+              - option "전체" [selected]
+            - paragraph [ref=e16]: 시도 목록 로딩 중...
+          - generic [ref=e17]:
+            - generic [ref=e18]: 시군구
+            - combobox "시군구 선택" [disabled] [ref=e19]:
+              - option "시도를 먼저 선택하세요" [selected]
+        - generic [ref=e20]:
+          - generic [ref=e21]: 의료기관 종별
+          - generic [ref=e22]:
+            - generic [ref=e23] [cursor=pointer]:
+              - checkbox "종합병원 선택" [ref=e24]
+              - generic [ref=e25]: 종합병원
+            - generic [ref=e26] [cursor=pointer]:
+              - checkbox "병원 선택" [ref=e27]
+              - generic [ref=e28]: 병원
+            - generic [ref=e29] [cursor=pointer]:
+              - checkbox "의원 선택" [ref=e30]
+              - generic [ref=e31]: 의원
+            - generic [ref=e32] [cursor=pointer]:
+              - checkbox "요양병원 선택" [ref=e33]
+              - generic [ref=e34]: 요양병원
+            - generic [ref=e35] [cursor=pointer]:
+              - checkbox "치과 선택" [ref=e36]
+              - generic [ref=e37]: 치과
+            - generic [ref=e38] [cursor=pointer]:
+              - checkbox "한의원 선택" [ref=e39]
+              - generic [ref=e40]: 한의원
+      - generic [ref=e41]:
+        - heading "검색 결과 (0개)" [level=2] [ref=e42]
+        - paragraph [ref=e44]: 검색 결과가 없습니다.
+    - contentinfo [ref=e45]:
+      - generic [ref=e47]:
+        - paragraph [ref=e48]: © 2025 의료기관 비급여 비교 서비스
+        - paragraph [ref=e49]: 공공데이터포털 API를 활용한 정보 제공 서비스
+  - alert [ref=e50]
+```

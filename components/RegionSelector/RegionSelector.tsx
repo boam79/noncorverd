@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRegions } from '@/lib/hooks/useRegions';
+import { apiClient } from '@/lib/api';
+import type { Region } from '@/types';
 
 interface RegionSelectorProps {
   onRegionChange: (sido?: string, sigungu?: string) => void;
@@ -10,22 +13,67 @@ interface RegionSelectorProps {
 export function RegionSelector({ onRegionChange }: RegionSelectorProps) {
   const [selectedSido, setSelectedSido] = useState<string>('');
   const [selectedSigungu, setSelectedSigungu] = useState<string>('');
+  const queryClient = useQueryClient();
 
   const { data: sidoList, isLoading: isLoadingSido, error: sidoError } = useRegions();
   const { data: sigunguList, isLoading: isLoadingSigungu, error: sigunguError } = useRegions(selectedSido);
   
-  // 배열이 아닌 경우 빈 배열로 처리
-  const safeSidoList = Array.isArray(sidoList) ? sidoList : [];
-  const safeSigunguList = Array.isArray(sigunguList) ? sigunguList : [];
+  // 배열이 아닌 경우 빈 배열로 처리 (useMemo로 최적화)
+  const safeSidoList = useMemo(() => (Array.isArray(sidoList) ? sidoList : []), [sidoList]);
+  const safeSigunguList = useMemo(() => (Array.isArray(sigunguList) ? sigunguList : []), [sigunguList]);
+
+  // 시군구 프리패치 함수
+  const prefetchSigungu = useCallback(async (sidoCode: string) => {
+    const queryKey = ['regions', sidoCode];
+    
+    // 이미 캐시에 있고 fresh한 데이터가 있으면 스킵
+    const cached = queryClient.getQueryState(queryKey);
+    if (cached?.data && cached?.dataUpdatedAt && Date.now() - cached.dataUpdatedAt < 24 * 60 * 60 * 1000) {
+      return;
+    }
+
+    // 백그라운드에서 프리패치
+    queryClient.prefetchQuery({
+      queryKey,
+      queryFn: async () => {
+        const response = await apiClient.getRegions(sidoCode);
+        if (response.ok && response.data) {
+          const data = response.data;
+          if (Array.isArray(data)) {
+            return data as Region[];
+          }
+          if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
+            return (data as { data: Region[] }).data;
+          }
+          throw new Error('지역 정보 형식이 올바르지 않습니다.');
+        }
+        throw new Error(response.error?.message || '지역 정보를 불러오는데 실패했습니다.');
+      },
+      staleTime: 24 * 60 * 60 * 1000, // 24시간
+    });
+  }, [queryClient]);
+
+  // 시도 목록이 로드되면 주요 시도들의 시군구를 프리패치
+  useEffect(() => {
+    if (safeSidoList.length > 0) {
+      // 주요 시도들(서울, 경기, 부산 등)의 시군구를 미리 로드
+      const majorSidos = ['11', '41', '26', '27', '28']; // 서울, 경기, 부산, 대구, 인천
+      majorSidos.forEach((code) => {
+        prefetchSigungu(code);
+      });
+    }
+  }, [safeSidoList, prefetchSigungu]);
 
   useEffect(() => {
     if (selectedSido) {
       setSelectedSigungu('');
       onRegionChange(selectedSido, undefined);
+      // 선택된 시도의 시군구를 프리패치 (이미 로드 중이면 스킵)
+      prefetchSigungu(selectedSido);
     } else {
       onRegionChange(undefined, undefined);
     }
-  }, [selectedSido, onRegionChange]);
+  }, [selectedSido, onRegionChange, prefetchSigungu]);
 
   useEffect(() => {
     if (selectedSido && selectedSigungu) {

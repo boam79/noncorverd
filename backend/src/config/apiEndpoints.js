@@ -8,7 +8,7 @@
 export const API_ENDPOINTS = {
   // 행정안전부 행정표준코드_법정동코드
   // 참고: 실제 엔드포인트는 API 상세 페이지에서 확인 필요
-  ADMINISTRATIVE_CODE: '/B552584/AdministrativeCodeService/getAdministrativeCode',
+  ADMINISTRATIVE_CODE: '/1741000/StanReginCd/getStanReginCdList',
 
   // 건강보험심사평가원 병원정보서비스
   // Base URL: apis.data.go.kr/B551182/hospInfoServicev2

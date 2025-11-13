@@ -72,8 +72,12 @@ export default function ComparisonPage() {
               error={error}
               onRetry={() => window.location.reload()}
             />
-          ) : pricingData ? (
+          ) : pricingData && Array.isArray(pricingData) && pricingData.length > 0 ? (
             <ComparisonTable pricingData={pricingData} />
+          ) : pricingData && Array.isArray(pricingData) && pricingData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              선택한 병원의 가격 정보가 없습니다.
+            </div>
           ) : null}
         </div>
       </Container>

@@ -16,7 +16,8 @@ export function HospitalCard({
   maxSelectionReached,
 }: HospitalCardProps) {
   return (
-    <div
+    <article
+      data-testid="hospital-card"
       className={`border rounded-lg p-4 transition-all duration-300 animate-fade-in ${
         isSelected
           ? 'border-primary-500 bg-primary-50 shadow-md scale-[1.02]'
@@ -56,17 +57,26 @@ export function HospitalCard({
           )}
         </div>
         <label className="flex items-center touch-target">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onToggle(hospital)}
+          <button
+            type="button"
+            data-testid="hospital-select-button"
+            onClick={() => onToggle(hospital)}
             disabled={maxSelectionReached && !isSelected}
-            className="w-6 h-6 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-6 h-6 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
             aria-label={`${hospital.name} ${isSelected ? '선택 해제' : '선택'}`}
-          />
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              readOnly
+              disabled={maxSelectionReached && !isSelected}
+              className="w-6 h-6 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all pointer-events-none"
+              aria-label={`${hospital.name} ${isSelected ? '선택 해제' : '선택'}`}
+            />
+          </button>
         </label>
       </div>
-    </div>
+    </article>
   );
 }
 
