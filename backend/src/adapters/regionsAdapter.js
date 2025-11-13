@@ -9,8 +9,8 @@ import { API_ENDPOINTS } from '../config/apiEndpoints.js';
  */
 class RegionsAdapter extends BaseAdapter {
   constructor() {
-    // 환경변수를 런타임에 읽도록 수정
-    const serviceKey = process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || '';
+    // 단일 API 키 사용 (모든 API가 동일한 키 사용)
+    const serviceKey = process.env.api_key || process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || '';
     super('행정안전부', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.ADMINISTRATIVE_CODE;
     // 디버깅용
@@ -49,8 +49,8 @@ class RegionsAdapter extends BaseAdapter {
       { code: '50', name: '제주특별자치도' },
     ];
 
-    // Service Key 재확인 (런타임에 환경변수 다시 읽기)
-    const serviceKey = process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || this.serviceKey;
+    // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
+    const serviceKey = process.env.api_key || process.env.ADMINISTRATIVE_CODE_SERVICE_KEY || this.serviceKey;
     
     if (!serviceKey) {
       console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');

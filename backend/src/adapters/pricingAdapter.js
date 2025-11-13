@@ -9,11 +9,17 @@ import { API_ENDPOINTS } from '../config/apiEndpoints.js';
  */
 class PricingAdapter extends BaseAdapter {
   constructor() {
-    super(
-      '건강보험심사평가원',
-      process.env.HIRA_PRICING_SERVICE_KEY || process.env.HIRA_SERVICE_KEY || ''
-    );
+    // 단일 API 키 사용 (모든 API가 동일한 키 사용)
+    const serviceKey = process.env.api_key || process.env.HIRA_PRICING_SERVICE_KEY || process.env.HIRA_SERVICE_KEY || '';
+    super('건강보험심사평가원', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.NON_PAYMENT_PRICING;
+    
+    // 디버깅용 로그
+    if (serviceKey) {
+      console.log('✅ PricingAdapter: Service Key 설정됨 (길이:', serviceKey.length, ')');
+    } else {
+      console.warn('⚠️ PricingAdapter: Service Key 미설정');
+    }
   }
 
   /**
@@ -24,11 +30,16 @@ class PricingAdapter extends BaseAdapter {
       return this.formatError('INVALID_REQUEST', 'hospitalIds는 배열이어야 합니다.');
     }
 
-    // Service Key가 없으면 Mock 데이터 반환
-    if (!this.serviceKey) {
+    // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
+    const serviceKey = process.env.api_key || process.env.HIRA_PRICING_SERVICE_KEY || this.serviceKey;
+    
+    if (!serviceKey) {
       console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
       return this.formatResponse(this.getMockPricing(hospitalIds));
     }
+
+    // Service Key를 임시로 설정
+    this.serviceKey = serviceKey;
 
     try {
       // 여러 병원의 가격 정보를 병렬로 조회
