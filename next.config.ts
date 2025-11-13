@@ -20,15 +20,9 @@ const nextConfig: NextConfig = {
   // Vercel 최적화 (standalone은 Vercel에서 자동 처리)
   // output: 'standalone', // Vercel에서는 필요 없음
   
-  // API 프록시 설정 (Mixed Content 에러 해결)
-  async rewrites() {
-    return [
-      {
-        source: '/api/opendata/:path*',
-        destination: 'http://54.180.251.93:3000/opendata/:path*',
-      },
-    ];
-  },
+  // 참고: API 프록시는 app/api/opendata/[...path]/route.ts에서 처리
+  // rewrites는 Vercel에서 외부 HTTP 엔드포인트 프록시 시 제한이 있어서
+  // Next.js API Route를 사용하는 것이 더 안정적입니다.
 };
 
 export default nextConfig;

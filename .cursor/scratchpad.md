@@ -311,6 +311,8 @@
     - next.config.ts에 API 프록시 설정 추가 (rewrites)
     - lib/api.ts에서 Vercel 배포 시 자동 프록시 사용
     - HTTPS(Vercel) → HTTP(백엔드) Mixed Content 에러 해결
+    - ✅ Vercel 배포 시 환경변수 무시하고 프록시 강제 사용 로직 추가
+    - 빌드 시점과 런타임 모두에서 Vercel 감지 개선
   - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
   - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
   - 환경변수 설정:
