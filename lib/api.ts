@@ -1,6 +1,11 @@
 import type { ApiResponse } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/opendata";
+// Vercel 배포 시 API 프록시 사용, 로컬 개발 시 직접 연결
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+    ? '/api/opendata'  // Vercel 배포 시 프록시 사용
+    : 'http://localhost:3001/opendata');  // 로컬 개발 시 직접 연결
+
 const CLIENT_TOKEN = process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || process.env.CLIENT_OPENDATA_TOKEN || "";
 
 /**

@@ -303,9 +303,19 @@
   - GitHub 저장소 (boam79/noncorverd)에 푸시 완료
   - Vercel 배포 준비 완료
 
+- **Vercel 배포 진행 중**:
+  - GitHub 저장소 연결 완료
+  - 프로젝트 설정 중 (Framework: Next.js)
+  - ✅ vercel.json 수정 완료 (Secret 참조 제거)
+  - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
+  - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
+  - 환경변수 설정 필요:
+    - NEXT_PUBLIC_API_BASE_URL=http://54.180.251.93:3000/opendata
+    - NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
+  - ⚠️ 참고: 공공데이터 API 키는 백엔드(EC2)에만 필요, 프론트엔드에는 불필요
+
 - **다음 단계 제안**: 
-  - Vercel Dashboard에서 프로젝트 연결 및 배포
-  - 환경변수 설정 (NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN)
+  - 환경변수 설정 후 배포 실행
   - 배포 후 기능 테스트
   - 성능 최적화 (이미지 최적화, 캐싱 전략)
   - 모니터링 설정 (Sentry, Vercel Analytics)

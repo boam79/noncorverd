@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
   },
   // Vercel 최적화 (standalone은 Vercel에서 자동 처리)
   // output: 'standalone', // Vercel에서는 필요 없음
+  
+  // API 프록시 설정 (Mixed Content 에러 해결)
+  async rewrites() {
+    return [
+      {
+        source: '/api/opendata/:path*',
+        destination: 'http://54.180.251.93:3000/opendata/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
