@@ -168,6 +168,32 @@
 - [x] Phase 8: 배포 준비 ✅
 
 ## Current Status / Progress Tracking
+
+### ✅ 완료된 작업 (2025-11-13)
+
+1. **단일 API 키 적용 완료**
+   - 모든 어댑터가 `api_key` 환경변수 우선 사용
+   - `backend/.env`에 `api_key` 추가
+   - `ecosystem.config.cjs`에 `api_key` 환경변수 추가
+   - 하위 호환성 유지 (기존 키도 지원)
+
+2. **Service Key 인코딩 문제 해결**
+   - URLSearchParams 사용으로 인코딩 문제 해결
+   - axios의 params 자동 인코딩과 충돌 방지
+   - curl `--data-urlencode`와 동일한 방식으로 처리
+
+3. **JSON 문자열 응답 파싱 로직 추가**
+   - 공공데이터 API가 JSON 문자열로 반환하는 경우 처리
+   - `responseType: 'text'` 설정으로 문자열로 받기
+   - JSON 파싱 후 items 추출 로직 구현
+
+4. **실제 API 연동 성공** ✅
+   - API 호출 성공 (401 → 성공)
+   - JSON 파싱 성공: 100개 항목
+   - 실제 API 데이터 반환: 100개 병원
+   - 실제 병원 데이터 확인 (가톨릭대학교 성빈센트병원, 가톨릭대학교인천성모병원 등)
+
+## Current Status / Progress Tracking
 - **Executor 모드 진행 중**: Phase 1 완료 ✅
 - **완료된 작업**:
   - Next.js 15.5 프로젝트 생성 (TypeScript, App Router)
