@@ -328,6 +328,10 @@
     - 빌드 시간: 25초
     - API Route 생성: /api/opendata/[...path] (Dynamic)
     - 배포 완료 및 빌드 캐시 업로드 완료
+  - ✅ 502 Bad Gateway 에러 해결:
+    - 원인: 포트 불일치 (서버 3001, Vercel 3000)
+    - 해결: EC2 서버 포트를 3000으로 변경
+    - PM2 재시작 완료, 포트 3000 LISTEN 상태 확인
   - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
   - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
   - 환경변수 설정:
