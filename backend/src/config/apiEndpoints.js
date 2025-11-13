@@ -11,8 +11,14 @@ export const API_ENDPOINTS = {
   ADMINISTRATIVE_CODE: '/B552584/AdministrativeCodeService/getAdministrativeCode',
 
   // 건강보험심사평가원 병원정보서비스
-  // 참고: 실제 엔드포인트는 API 상세 페이지에서 확인 필요
+  // Base URL: apis.data.go.kr/B551182/hospInfoServicev2
+  // 실제 엔드포인트: getHospBasisList (병원 기본 목록)
   HOSPITAL_INFO: '/B551182/hospInfoServicev2/getHospBasisList',
+  
+  // 건강보험심사평가원 의료기관별상세정보서비스
+  // Base URL: apis.data.go.kr/B551182/MadmDtlInfoService2.7
+  // 실제 엔드포인트: getDetailInfoList (상세 정보)
+  HOSPITAL_DETAIL: '/B551182/MadmDtlInfoService2.7/getDetailInfoList',
 
   // 건강보험심사평가원 비급여진료비정보조회서비스
   // 참고: 실제 엔드포인트는 API 상세 페이지에서 확인 필요
