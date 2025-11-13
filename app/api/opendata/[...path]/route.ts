@@ -21,14 +21,13 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams.toString();
     const url = `${BACKEND_URL}/opendata${path}${searchParams ? `?${searchParams}` : ''}`;
 
-    // 디버깅 정보 (개발 환경에서만)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[API Proxy] GET Request:', {
-        url,
-        backendUrl: BACKEND_URL,
-        hasToken: !!CLIENT_TOKEN,
-      });
-    }
+    // 디버깅 정보 (프로덕션에서도 로깅)
+    console.log('[API Proxy] GET Request:', {
+      url,
+      backendUrl: BACKEND_URL,
+      hasToken: !!CLIENT_TOKEN,
+      timestamp: new Date().toISOString(),
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
@@ -137,14 +136,13 @@ export async function POST(
     const url = `${BACKEND_URL}/opendata${path}`;
     const body = await request.json();
 
-    // 디버깅 정보 (개발 환경에서만)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[API Proxy] POST Request:', {
-        url,
-        backendUrl: BACKEND_URL,
-        hasToken: !!CLIENT_TOKEN,
-      });
-    }
+    // 디버깅 정보 (프로덕션에서도 로깅)
+    console.log('[API Proxy] POST Request:', {
+      url,
+      backendUrl: BACKEND_URL,
+      hasToken: !!CLIENT_TOKEN,
+      timestamp: new Date().toISOString(),
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃

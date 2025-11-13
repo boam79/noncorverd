@@ -324,11 +324,16 @@
         - 디버깅 로그 추가 (개발 환경)
         - AbortController로 타임아웃 처리 개선
         - 더 명확한 에러 메시지 제공
+  - ✅ Vercel 배포 성공 (2025-01-XX):
+    - 빌드 시간: 25초
+    - API Route 생성: /api/opendata/[...path] (Dynamic)
+    - 배포 완료 및 빌드 캐시 업로드 완료
   - ⚠️ 환경변수 이름 오타 발견: NEXT_PUBLIC_CLIENT_OPENDATA_TC → NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN 수정 필요
   - ⚠️ 프로젝트 이름 중복 오류: "noncorverd" 이미 존재 → 프로젝트 이름 변경 필요
   - 환경변수 설정:
+    - BACKEND_URL=http://54.180.251.93:3000 (선택사항, 기본값 사용 가능)
+    - CLIENT_OPENDATA_TOKEN=dev-client-token-12345 또는 NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
     - NEXT_PUBLIC_API_BASE_URL: 제거 또는 빈 값 (프록시 사용 시 불필요)
-    - NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
   - ⚠️ 참고: 공공데이터 API 키는 백엔드(EC2)에만 필요, 프론트엔드에는 불필요
 
 - **다음 단계 제안**: 
