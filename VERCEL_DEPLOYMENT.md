@@ -47,10 +47,15 @@ Vercel Dashboard → Project Settings → Environment Variables에서 다음 변
 
 **옵션 1: API 프록시 사용 (권장, Mixed Content 에러 방지)**
 ```
+BACKEND_URL=http://54.180.251.93:3000
+CLIENT_OPENDATA_TOKEN=dev-client-token-12345
+또는
 NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
 ```
+- `BACKEND_URL`: 백엔드 서버 URL (선택사항, 기본값: `http://54.180.251.93:3000`)
+- `CLIENT_OPENDATA_TOKEN` 또는 `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`: 인증 토큰
 - `NEXT_PUBLIC_API_BASE_URL`은 설정하지 않음 (자동으로 `/api/opendata` 프록시 사용)
-- `next.config.ts`의 rewrites가 자동으로 백엔드로 프록시
+- `app/api/opendata/[...path]/route.ts`가 서버사이드에서 백엔드로 프록시
 
 **옵션 2: 직접 연결 (백엔드가 HTTPS인 경우)**
 ```
