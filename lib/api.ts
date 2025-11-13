@@ -1,23 +1,43 @@
 import type { ApiResponse } from "@/types";
 
 // Vercel 배포 시 API 프록시 사용, 로컬 개발 시 직접 연결
-// 환경변수가 설정되어 있으면 사용, 없으면 자동 감지
-const getApiBaseUrl = () => {
-  // 환경변수가 명시적으로 설정되어 있으면 사용
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-    return process.env.NEXT_PUBLIC_API_BASE_URL;
+// Vercel 배포인지 확인하는 함수 (빌드 시점과 런타임 모두 지원)
+const isVercelDeployment = () => {
+  // 빌드 시점 확인 (환경변수)
+  if (process.env.VERCEL || process.env.VERCEL_URL) {
+    return true;
   }
   
-  // 클라이언트 사이드에서 Vercel 배포인지 확인
+  // 런타임 확인 (클라이언트 사이드)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    return hostname.includes('vercel.app') || hostname.includes('vercel.com');
+  }
+  
+  return false;
+};
+
+// API Base URL 결정 함수
+const getApiBaseUrl = () => {
+  // Vercel 배포인 경우 무조건 프록시 사용 (환경변수 무시)
+  if (isVercelDeployment()) {
+    return '/api/opendata';
+  }
+  
+  // 로컬 개발 또는 다른 환경
+  // 환경변수가 설정되어 있으면 사용, 없으면 기본값
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/opendata';
+};
+
+// 런타임에 동적으로 결정 (클라이언트 사이드에서만)
+const getRuntimeApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname.includes('vercel.app') || hostname.includes('vercel.com')) {
-      return '/api/opendata';  // Vercel 배포 시 프록시 사용
+      return '/api/opendata';
     }
   }
-  
-  // 서버 사이드 또는 로컬 개발
-  return 'http://localhost:3001/opendata';
+  return null; // 서버 사이드에서는 null 반환
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -32,7 +52,9 @@ export class ApiClient {
   private token: string;
 
   constructor() {
-    this.baseUrl = API_BASE_URL;
+    // 런타임에 Vercel 배포인지 다시 확인 (클라이언트 사이드)
+    const runtimeUrl = getRuntimeApiBaseUrl();
+    this.baseUrl = runtimeUrl || API_BASE_URL;
     this.token = CLIENT_TOKEN;
   }
 
