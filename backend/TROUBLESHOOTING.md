@@ -35,11 +35,19 @@ pm2 logs nonvovered-backend --lines 50
 
 ### 4️⃣ 포트 3000 확인
 ```bash
+# 방법 1: ss 명령어 (Ubuntu 22.04 기본 제공)
+sudo ss -tlnp | grep 3000
+
+# 방법 2: netstat (설치 필요)
+sudo apt install -y net-tools
 sudo netstat -tlnp | grep 3000
+
+# 방법 3: lsof
+sudo lsof -i :3000
 ```
 **예상 결과:**
 ```
-tcp6       0      0 :::3000                 :::*                    LISTEN      12345/node
+tcp   LISTEN  0  128  :::3000  :::*  users:(("node",pid=12345,fd=20))
 ```
 - `LISTEN` 상태여야 정상
 - 없으면 서버가 실행되지 않은 것
