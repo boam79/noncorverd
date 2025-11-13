@@ -50,7 +50,6 @@ export class BaseAdapter {
       const url = `${this.baseUrl}${endpoint}`;
       const requestParams = {
         ...params,
-        serviceKey: this.serviceKey,
         numOfRows: params.numOfRows || 100,
         pageNo: params.pageNo || 1,
       };
@@ -60,18 +59,27 @@ export class BaseAdapter {
         serviceKey: '***',
       });
 
-      // Service Key URL 인코딩 (공공데이터 API는 인코딩된 키를 요구할 수 있음)
-      const encodedServiceKey = encodeURIComponent(this.serviceKey);
-      const finalParams = {
-        ...requestParams,
-        serviceKey: encodedServiceKey,
-      };
+      // 공공데이터 API는 serviceKey를 URL 쿼리 스트링에 직접 포함해야 함
+      // axios의 params는 자동 인코딩하므로, serviceKey만 별도로 처리
+      // curl --data-urlencode와 동일한 방식으로 처리
+      const queryParams = new URLSearchParams();
+      
+      // serviceKey를 먼저 추가 (인코딩된 상태로)
+      queryParams.append('serviceKey', this.serviceKey);
+      
+      // 나머지 파라미터 추가
+      Object.keys(requestParams).forEach((key) => {
+        if (requestParams[key] !== undefined && requestParams[key] !== null) {
+          queryParams.append(key, requestParams[key]);
+        }
+      });
 
-      const response = await axios.get(url, {
-        params: finalParams,
+      const fullUrl = `${url}?${queryParams.toString()}`;
+
+      const response = await axios.get(fullUrl, {
         timeout: 30000, // 30초 타임아웃
         headers: {
-          'Accept': 'application/json',
+          'Accept': 'application/json, application/xml',
         },
       });
 
