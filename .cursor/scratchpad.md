@@ -298,8 +298,15 @@
   - 로컬 빌드 성공 확인
   - 빌드 결과: 홈 페이지 4.62 kB, 비교 페이지 4.26 kB
 
+- **GitHub 커밋 및 푸시 완료 ✅**:
+  - 모든 파일 커밋 완료
+  - GitHub 저장소 (boam79/noncorverd)에 푸시 완료
+  - Vercel 배포 준비 완료
+
 - **다음 단계 제안**: 
-  - Vercel CLI로 배포 또는 Dashboard에서 수동 배포
+  - Vercel Dashboard에서 프로젝트 연결 및 배포
+  - 환경변수 설정 (NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN)
+  - 배포 후 기능 테스트
   - 성능 최적화 (이미지 최적화, 캐싱 전략)
   - 모니터링 설정 (Sentry, Vercel Analytics)
   - 실제 공공데이터 API 연동 테스트 (서비스 키 재확인)
