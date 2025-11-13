@@ -39,6 +39,10 @@ export interface Hospital {
   departments: string[];
   phone?: string;
   rating?: number;
+  sidoCd?: string;
+  sgguCd?: string;
+  clCdNm?: string;
+  ykiho?: string;
 }
 
 // 비급여 항목 타입
