@@ -90,6 +90,59 @@ export class BaseAdapter {
       console.log(`📊 [${this.provider}] 응답 길이:`, response.data?.length || 0);
       console.log(`📊 [${this.provider}] 응답 시작 부분:`, response.data?.substring(0, 200) || '');
 
+      // JSON 문자열 응답인 경우 (공공데이터 API가 JSON 문자열로 반환하는 경우)
+      if (typeof response.data === 'string' && response.data.trim().startsWith('{')) {
+        console.log(`📄 [${this.provider}] JSON 문자열 응답을 받았습니다. 파싱 중...`);
+        try {
+          const parsed = JSON.parse(response.data);
+          
+          // 공공데이터 API 표준 응답 구조: response.header, response.body
+          if (parsed.response) {
+            const header = parsed.response.header || {};
+            const body = parsed.response.body || {};
+            
+            // 에러 체크
+            if (header.resultCode && header.resultCode !== '00') {
+              return this.formatError(
+                'API_ERROR',
+                header.resultMsg || 'API 호출 실패'
+              );
+            }
+            
+            // items 추출 (단일 객체 또는 배열)
+            let items = [];
+            if (body.items) {
+              if (Array.isArray(body.items.item)) {
+                items = body.items.item;
+              } else if (body.items.item) {
+                items = [body.items.item];
+              }
+            }
+            
+            console.log(`✅ [${this.provider}] JSON 파싱 성공: ${items.length}개 항목`);
+            console.log(`📊 [${this.provider}] JSON 파싱 상세:`, {
+              hasItems: !!body.items,
+              itemsType: body.items ? typeof body.items : 'null',
+              itemType: body.items?.item ? typeof body.items.item : 'null',
+              isArray: Array.isArray(body.items?.item),
+              totalCount: body.totalCount,
+            });
+            
+            return this.formatResponse(items, {
+              total: body.totalCount || items.length,
+              page: body.pageNo || requestParams.pageNo,
+              limit: body.numOfRows || requestParams.numOfRows,
+            });
+          }
+          
+          // 표준 구조가 아닌 경우 전체 반환
+          return this.formatResponse(parsed);
+        } catch (jsonError) {
+          console.error(`❌ [${this.provider}] JSON 파싱 오류:`, jsonError.message);
+          // JSON 파싱 실패 시 XML로 시도
+        }
+      }
+
       // XML 응답인 경우 (일부 API는 XML만 지원)
       if (typeof response.data === 'string' && response.data.includes('<?xml')) {
         console.log(`📄 [${this.provider}] XML 응답을 받았습니다. 파싱 중...`);
