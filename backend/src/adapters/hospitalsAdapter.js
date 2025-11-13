@@ -9,11 +9,17 @@ import { API_ENDPOINTS } from '../config/apiEndpoints.js';
  */
 class HospitalsAdapter extends BaseAdapter {
   constructor() {
-    super(
-      '건강보험심사평가원',
-      process.env.HIRA_SERVICE_KEY || ''
-    );
+    // 환경변수를 런타임에 읽도록 수정
+    const serviceKey = process.env.HIRA_SERVICE_KEY || '';
+    super('건강보험심사평가원', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.HOSPITAL_INFO;
+    
+    // 디버깅용 로그
+    if (serviceKey) {
+      console.log('✅ HospitalsAdapter: Service Key 설정됨 (길이:', serviceKey.length, ')');
+    } else {
+      console.warn('⚠️ HospitalsAdapter: Service Key 미설정');
+    }
   }
 
   /**
