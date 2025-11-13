@@ -41,12 +41,20 @@ class HospitalsAdapter extends BaseAdapter {
     try {
       const params = {};
       
-      // 지역 필터
+      // 지역 필터 (공공데이터 API 파라미터명)
+      // sido: 시도 코드 (2자리: 11=서울, 26=부산, 28=인천, 41=경기)
+      // API는 6자리 코드를 요구하므로 변환 필요 (예: 11 → 110000)
       if (sido) {
-        params.sidoCd = sido;
+        // 2자리 코드를 6자리로 변환 (예: "11" → "110000")
+        const sidoCode = String(sido).padEnd(6, '0');
+        params.sidoCd = sidoCode;
+        console.log('📍 지역 필터 적용:', { sido, sidoCd: params.sidoCd });
       }
       if (sigungu) {
-        params.sgguCd = sigungu;
+        // 시군구 코드도 6자리로 변환 (예: "110" → "110000")
+        const sigunguCode = String(sigungu).padEnd(6, '0');
+        params.sgguCd = sigunguCode;
+        console.log('📍 시군구 필터 적용:', { sigungu, sgguCd: params.sgguCd });
       }
 
       // 의료기관 종별 필터

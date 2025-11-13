@@ -68,13 +68,22 @@ class PricingAdapter extends BaseAdapter {
 
   /**
    * 단일 병원의 비급여 가격 정보 조회
+   * 
+   * API 문서: https://www.data.go.kr/data/15001700/openapi.do
+   * 필수 파라미터: ykiho (암호화된 요양기호)
+   * 옵션 파라미터: clCd (종별코드), sidoCd (시도코드), sgguCd (시군구코드), yadmNm (병원명)
    */
   async getHospitalPricing(hospitalId) {
     try {
+      console.log(`💰 비급여 가격 조회: 병원 ID=${hospitalId}`);
+      
       const result = await this.fetchAPI(this.apiEndpoint, {
-        ykiho: hospitalId, // 병원 고유번호
-        // 기타 필터 파라미터 (API 문서 확인 필요)
+        ykiho: hospitalId, // 암호화된 요양기호 (병원 목록 API에서 받은 ykiho)
+        pageNo: 1,
+        numOfRows: 100, // 최대 100개 항목 조회
       });
+      
+      console.log(`💰 비급여 가격 API 응답:`, result.ok ? '성공' : '실패', result.error?.message || '');
 
       if (!result.ok) {
         return result;
