@@ -9,10 +9,13 @@
 ### 주요 기능
 
 - ✅ 지역별 병원 검색 (시도 → 시군구)
+- ✅ 의료기관명 검색 (병원명으로 직접 검색 가능)
 - ✅ 의료기관 종별 필터링 (종합병원, 병원, 의원, 요양병원, 치과, 한의원)
 - ✅ 병원 선택 및 비교 (최대 5개)
 - ✅ 비급여 가격 비교 테이블
 - ✅ 모바일 최적화 UI (2열 그리드, 스와이프 비교 뷰)
+- ✅ 메인 타이틀 클릭 시 초기화 및 홈 이동
+- ✅ API 호출 최적화 (캐싱, 페이지네이션 최적화)
 
 ## 🛠 기술 스택
 
@@ -121,11 +124,16 @@ HIRA_PRICING_SERVICE_KEY=your-hira-pricing-service-key
 모든 요청은 `X-Client-Token` 헤더를 포함해야 합니다.
 
 - `GET /opendata/regions?sido={sido}` - 지역 정보 조회
-- `GET /opendata/hospitals?sido={sido}&sigungu={sigungu}&type={type}` - 병원 목록 조회
+- `GET /opendata/hospitals?sido={sido}&sigungu={sigungu}&type={type}&hospitalName={name}` - 병원 목록 조회
+  - `sido`: 시도 코드 (2자리, 예: 11=서울, 26=부산)
+  - `sigungu`: 시군구 코드 (6자리, 예: 111100=서울 종로구)
+  - `type`: 의료기관 종별 (종합병원, 병원, 의원, 요양병원, 치과, 한의원)
+  - `hospitalName`: 병원명 (부분 검색 지원)
 - `POST /opendata/pricing` - 비급여 가격 정보 조회
   ```json
   {
-    "hospitalIds": ["id1", "id2", ...]
+    "hospitalIds": ["id1", "id2", ...],
+    "hospitals": [{"id": "id1", "name": "병원명"}, ...]
   }
   ```
 
@@ -184,7 +192,7 @@ pm2 startup
 - 건강보험심사평가원_비급여진료비정보조회서비스
 - 건강보험심사평가원_의료기관별상세정보서비스
 
-자세한 내용은 `의료기관_비급여비교_PDR_v1.2.md`를 참고하세요.
+자세한 내용은 [`doc/의료기관_비급여비교_PDR_v1.2.md`](./doc/의료기관_비급여비교_PDR_v1.2.md)를 참고하세요.
 
 ## 🤝 기여
 
@@ -192,10 +200,56 @@ pm2 startup
 
 ## 📚 추가 문서
 
-- [사용자 가이드](./USER_GUIDE.md) - 서비스 사용법
-- [QA 체크리스트](./QA_CHECKLIST.md) - 테스트 체크리스트
-- [배포 가이드](./DEPLOYMENT.md) - 배포 절차
-- [Vercel 배포 가이드](./VERCEL_DEPLOYMENT.md) - Vercel 배포 상세 가이드
+모든 문서는 [`doc/`](./doc/) 폴더에 있습니다.
+
+### 주요 문서
+- [사용자 가이드](./doc/USER_GUIDE.md) - 서비스 사용법
+- [개발자 가이드](./doc/DEVELOPER_GUIDE.md) - 개발 환경 설정 및 가이드
+- [QA 체크리스트](./doc/QA_CHECKLIST.md) - 테스트 체크리스트
+- [배포 가이드](./doc/DEPLOYMENT.md) - 배포 절차
+- [Vercel 배포 가이드](./doc/VERCEL_DEPLOYMENT.md) - Vercel 배포 상세 가이드
+- [프로젝트 요구사항 문서](./doc/의료기관_비급여비교_PDR_v1.2.md) - PDR 문서
+
+### API 관련 문서
+- [API 호출 최적화](./doc/API_CALL_OPTIMIZATION.md) - API 호출 절약 전략
+- [API 할당량 리포트](./doc/API_QUOTA_REPORT.md) - API 할당량 현황
+- [API 상태](./doc/API_STATUS.md) - API 통합 상태
+- [운영 계정 설정](./doc/OPERATIONAL_ACCOUNT_SETUP.md) - 운영 계정 서비스 키 설정
+
+### 백엔드 문서
+- [AWS 배포 가이드](./doc/AWS_DEPLOYMENT.md) - AWS EC2 배포 가이드
+- [API 통합 상태](./doc/API_INTEGRATION_STATUS.md) - 백엔드 API 통합 현황
+- [API 테스트 가이드](./doc/API_TEST_GUIDE.md) - API 테스트 방법
+- [API 테스트 결과](./doc/API_TEST_RESULTS.md) - API 테스트 결과
+- [데이터 소스 상태](./doc/DATA_SOURCE_STATUS.md) - 데이터 소스 현황
+- [배포 체크리스트](./doc/DEPLOY_CHECKLIST.md) - 배포 전 체크리스트
+- [배포 상태](./doc/DEPLOYMENT_STATUS.md) - 배포 현황
+- [EC2 정보](./doc/EC2_INFO.md) - EC2 인스턴스 정보
+- [README AWS](./doc/README_AWS.md) - AWS 관련 README
+- [트러블슈팅](./doc/TROUBLESHOOTING.md) - 문제 해결 가이드
+
+### 테스트 문서
+- [프론트엔드/백엔드 테스트](./doc/FRONTEND_BACKEND_TEST.md) - 통합 테스트 가이드
+
+## 🎯 최근 업데이트
+
+### 2025-11-14
+- ✅ 병원명 검색 기능 추가 (병원명만으로도 검색 가능)
+- ✅ 메인 타이틀 클릭 시 초기화 및 홈 이동 기능
+- ✅ 푸터에 제작자 표시 추가 (Boam79)
+- ✅ API 호출 최적화 (캐싱, 페이지네이션 최적화)
+- ✅ 검색 결과 속도 개선 (React Query 캐시 설정 최적화)
+- ✅ Enter 키 및 검색 버튼으로 검색 실행 가능
+- ✅ 선택된 병원 독립 표시 및 관리 기능
+
+### 성능 최적화
+- **API 호출 절약**: 백엔드 캐싱 (1시간 TTL) 및 페이지네이션 최적화 (초기 2페이지만 수집)
+- **검색 속도 개선**: React Query `staleTime` 1분, `gcTime` 10분으로 조정
+- **프론트엔드 필터링**: 백엔드 필터링과 함께 프론트엔드에서 추가 필터링으로 정확도 향상
+
+## 👨‍💻 제작자
+
+**Boam79**
 
 ## 📄 라이선스
 
