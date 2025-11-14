@@ -164,7 +164,11 @@ export default function Home() {
               )}
             </div>
             
-            <RegionSelector onRegionChange={handleRegionChange} />
+            <RegionSelector 
+              onRegionChange={handleRegionChange}
+              sido={sido}
+              sigungu={sigungu}
+            />
             <InstitutionFilter
               selectedTypes={selectedTypes}
               onChange={setSelectedTypes}

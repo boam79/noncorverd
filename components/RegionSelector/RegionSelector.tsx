@@ -8,12 +8,27 @@ import type { Region } from '@/types';
 
 interface RegionSelectorProps {
   onRegionChange: (sido?: string, sigungu?: string) => void;
+  sido?: string; // 부모 컴포넌트의 sido 상태
+  sigungu?: string; // 부모 컴포넌트의 sigungu 상태
 }
 
-export function RegionSelector({ onRegionChange }: RegionSelectorProps) {
+export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: parentSigungu }: RegionSelectorProps) {
   const [selectedSido, setSelectedSido] = useState<string>('');
   const [selectedSigungu, setSelectedSigungu] = useState<string>('');
   const queryClient = useQueryClient();
+  
+  // 부모 컴포넌트의 상태와 동기화
+  useEffect(() => {
+    if (parentSido !== undefined) {
+      setSelectedSido(parentSido || '');
+    }
+  }, [parentSido]);
+  
+  useEffect(() => {
+    if (parentSigungu !== undefined) {
+      setSelectedSigungu(parentSigungu || '');
+    }
+  }, [parentSigungu]);
 
   const { data: sidoList, isLoading: isLoadingSido, error: sidoError } = useRegions();
   const { data: sigunguList, isLoading: isLoadingSigungu, error: sigunguError } = useRegions(selectedSido);
