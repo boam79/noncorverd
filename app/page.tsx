@@ -101,9 +101,8 @@ export default function Home() {
     setSido(newSido);
     setSigungu(newSigungu);
     
-    // 지역 변경 시 선택된 병원 목록 초기화
-    clearHospitals();
-  }, [sido, clearHospitals]);
+    // 지역 변경 시 선택된 병원 목록은 유지 (초기화하지 않음)
+  }, [sido]);
 
   // 비교하기
   const handleCompare = () => {
