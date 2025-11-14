@@ -29,12 +29,13 @@ export default function Home() {
   
   const { data: allHospitals = [], isLoading, error } = useHospitals({
     sido,
-    sigungu: undefined, // 백엔드 매핑이 없는 경우를 위해 시군구 필터 비활성화, 프론트엔드에서 필터링
+    sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
     types: selectedTypes,
     enabled: !!sido,
   });
 
-  // 시군구 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 필터링)
+  // 시군구 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)
+  // 백엔드에서 이미 필터링된 경우에도 프론트엔드에서 한 번 더 확인하여 정확도 향상
   const hospitals = useMemo(() => {
     if (!sigungu || allHospitals.length === 0) {
       return allHospitals;
@@ -54,9 +55,14 @@ export default function Home() {
     }
 
     // 주소에 시군구명이 포함된 병원만 필터링
-    return allHospitals.filter((hospital) => {
+    // 백엔드 매핑이 있는 경우에도 프론트엔드에서 한 번 더 확인
+    const filtered = allHospitals.filter((hospital) => {
       return hospital.address?.includes(cleanSigunguName) || false;
     });
+
+    // 필터링 결과가 너무 적으면 (백엔드 매핑이 작동한 경우) 원본 반환
+    // 필터링 결과가 많으면 (백엔드 매핑이 없는 경우) 필터링된 결과 반환
+    return filtered.length > 0 ? filtered : allHospitals;
   }, [allHospitals, sigungu, sigunguList]);
 
   // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
