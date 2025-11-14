@@ -474,6 +474,12 @@
     - ✅ 부분 매칭 로직 추가 (예: '요양' 포함 시 '요양병원'으로 매핑)
     - ✅ `transformHospitalData`에서 `clCdNm` 우선순위 조정
     - ✅ 요양병원/의원/한의원 선택 시 올바른 결과 반환 확인
+  - ✅ **지역별 병원 출력 및 공통 항목 표시 개선** (2025-11-14):
+    - ✅ 구리시 시군구 코드 매핑 추가 (413100 -> 311000)
+    - ✅ 프론트엔드 시군구 필터링 추가 (백엔드 매핑 없는 경우 주소 기반 필터링)
+    - ✅ 공통 항목 표시 로직 개선 (모든 병원의 가격이 표시되도록 수정)
+    - ✅ `commonItemCount` 계산 로직 개선 (모든 병원 확인)
+    - ✅ 로딩 속도 개선 (useHospitals staleTime 2분, refetchOnMount false)
   - ⏳ **E2E 테스트 개선 필요**:
     - ✅ `HospitalCard`에 `data-testid="hospital-card"` 및 `article` 태그 추가
     - ⏳ Vercel 배포 후 Playwright E2E 재실행 필요
