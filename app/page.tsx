@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -30,8 +30,8 @@ export default function Home() {
     enabled: !!sido,
   });
 
-  // 지역 변경 핸들러
-  const handleRegionChange = (newSido?: string, newSigungu?: string) => {
+  // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
+  const handleRegionChange = useCallback((newSido?: string, newSigungu?: string) => {
     // 시도가 변경되면 시군구도 초기화
     if (sido !== newSido) {
       setSigungu(undefined);
@@ -41,7 +41,7 @@ export default function Home() {
     
     // 지역 변경 시 선택된 병원 목록 초기화
     clearHospitals();
-  };
+  }, [sido, clearHospitals]);
 
   // 비교하기
   const handleCompare = () => {
