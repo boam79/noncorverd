@@ -32,8 +32,15 @@ export default function Home() {
 
   // 지역 변경 핸들러
   const handleRegionChange = (newSido?: string, newSigungu?: string) => {
+    // 시도가 변경되면 시군구도 초기화
+    if (sido !== newSido) {
+      setSigungu(undefined);
+    }
     setSido(newSido);
     setSigungu(newSigungu);
+    
+    // 지역 변경 시 선택된 병원 목록 초기화
+    clearHospitals();
   };
 
   // 비교하기

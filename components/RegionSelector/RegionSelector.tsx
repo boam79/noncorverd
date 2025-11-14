@@ -64,22 +64,30 @@ export function RegionSelector({ onRegionChange }: RegionSelectorProps) {
     }
   }, [safeSidoList, prefetchSigungu]);
 
+  // 시도 변경 시 시군구 초기화 및 지역 변경 알림
   useEffect(() => {
     if (selectedSido) {
+      // 시도 변경 시 시군구 초기화
       setSelectedSigungu('');
+      // 시도만 선택된 상태로 알림
       onRegionChange(selectedSido, undefined);
       // 선택된 시도의 시군구를 프리패치 (이미 로드 중이면 스킵)
       prefetchSigungu(selectedSido);
     } else {
+      // 시도가 없으면 모두 초기화
+      setSelectedSigungu('');
       onRegionChange(undefined, undefined);
     }
   }, [selectedSido, onRegionChange, prefetchSigungu]);
 
+  // 시군구 변경 시 지역 변경 알림
   useEffect(() => {
-    if (selectedSido && selectedSigungu) {
-      onRegionChange(selectedSido, selectedSigungu);
+    if (selectedSido) {
+      // 시도가 있을 때만 시군구 변경을 알림
+      // sigungu가 빈 문자열이면 undefined로 전달 (전체 선택)
+      onRegionChange(selectedSido, selectedSigungu || undefined);
     }
-  }, [selectedSido, selectedSigungu, onRegionChange]);
+  }, [selectedSigungu, selectedSido, onRegionChange]);
 
   const loading = isLoadingSido || isLoadingSigungu;
 
