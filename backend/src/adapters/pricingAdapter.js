@@ -29,9 +29,19 @@ class PricingAdapter extends BaseAdapter {
   /**
    * 병원별 비급여 가격 정보 조회
    */
-  async getPricing(hospitalIds) {
+  async getPricing(hospitalIds, hospitals = []) {
     if (!Array.isArray(hospitalIds) || hospitalIds.length === 0) {
       return this.formatError('INVALID_REQUEST', 'hospitalIds는 배열이어야 합니다.');
+    }
+
+    // 병원 정보 맵 생성 (hospitalId -> hospitalName)
+    const hospitalMap = new Map();
+    if (Array.isArray(hospitals)) {
+      hospitals.forEach((h) => {
+        if (h.id && h.name) {
+          hospitalMap.set(h.id, h.name);
+        }
+      });
     }
 
     // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
@@ -39,7 +49,7 @@ class PricingAdapter extends BaseAdapter {
     
     if (!serviceKey) {
       console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      return this.formatResponse(this.getMockPricing(hospitalIds));
+      return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
     }
 
     // Service Key를 임시로 설정
@@ -48,7 +58,7 @@ class PricingAdapter extends BaseAdapter {
     try {
       // 여러 병원의 가격 정보를 병렬로 조회
       const promises = hospitalIds.map((hospitalId) =>
-        this.getHospitalPricing(hospitalId)
+        this.getHospitalPricing(hospitalId, false, hospitalMap.get(hospitalId))
       );
 
       const results = await Promise.all(promises);
@@ -60,13 +70,13 @@ class PricingAdapter extends BaseAdapter {
 
       if (validResults.length === 0) {
         // 모든 API 호출 실패 시 Mock 데이터 사용
-        return this.formatResponse(this.getMockPricing(hospitalIds));
+        return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
       }
 
       return this.formatResponse(validResults);
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      return this.formatResponse(this.getMockPricing(hospitalIds));
+      return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
     }
   }
 
@@ -77,7 +87,7 @@ class PricingAdapter extends BaseAdapter {
    * 필수 파라미터: ykiho (암호화된 요양기호)
    * 옵션 파라미터: clCd (종별코드), sidoCd (시도코드), sgguCd (시군구코드), yadmNm (병원명)
    */
-  async getHospitalPricing(hospitalId, forceRefresh = false) {
+  async getHospitalPricing(hospitalId, forceRefresh = false, hospitalName = null) {
     try {
       console.log(`💰 비급여 가격 조회: 병원 ID=${hospitalId}`);
       
@@ -145,7 +155,7 @@ class PricingAdapter extends BaseAdapter {
       console.log(`💰 비급여 가격 API 응답: 성공 (${allItems.length}개 항목, ${pageNo}페이지)`);
 
       // API 응답을 표준 형식으로 변환
-      const pricing = this.transformPricingData(hospitalId, allItems);
+      const pricing = this.transformPricingData(hospitalId, allItems, hospitalName);
       
       // 캐시에 저장
       this.pricingCache.set(hospitalId, {
@@ -174,18 +184,19 @@ class PricingAdapter extends BaseAdapter {
    * - adtEndDd: 적용종료일 (YYYYMMDD, 99991231은 무기한)
    * - urlAddr: 비급여 정보 URL
    */
-  transformPricingData(hospitalId, apiData) {
+  transformPricingData(hospitalId, apiData, hospitalName = null) {
     if (!Array.isArray(apiData) || apiData.length === 0) {
       return {
         hospitalId,
-        hospitalName: '병원명 없음',
+        hospitalName: hospitalName || '병원명 없음',
         items: [],
         averagePrice: 0,
+        totalItems: 0,
       };
     }
 
-    // 병원명 추출 (첫 번째 항목에서)
-    const hospitalName = apiData[0]?.yadmNm || '병원명 없음';
+    // 병원명 우선순위: 전달받은 병원명 > API 응답의 병원명 > 기본값
+    const resolvedHospitalName = hospitalName || apiData[0]?.yadmNm || '병원명 없음';
 
     // 현재 날짜 기준으로 유효한 항목만 필터링 (선택적)
     const today = new Date();
@@ -248,7 +259,7 @@ class PricingAdapter extends BaseAdapter {
 
     return {
       hospitalId,
-      hospitalName: hospitalName,
+      hospitalName: resolvedHospitalName,
       items,
       averagePrice,
       totalItems: items.length,
@@ -258,7 +269,7 @@ class PricingAdapter extends BaseAdapter {
   /**
    * Mock 비급여 가격 데이터 (API 실패 시 사용)
    */
-  getMockPricing(hospitalIds) {
+  getMockPricing(hospitalIds, hospitalMap = new Map()) {
     // 병원 ID와 이름 매핑 (실제 병원 정보와 연동)
     const hospitalNameMap = {
       'hosp_001': '서울대학교병원',
@@ -300,7 +311,8 @@ class PricingAdapter extends BaseAdapter {
     };
 
     return hospitalIds.map((hospitalId, index) => {
-      const hospitalName = hospitalNameMap[hospitalId] || `병원 ${index + 1}`;
+      // 병원명 우선순위: 전달받은 맵 > 기본 맵 > 기본값
+      const hospitalName = hospitalMap.get(hospitalId) || hospitalNameMap[hospitalId] || `병원 ${index + 1}`;
       const priceVariation = getPriceVariation(hospitalId);
       
       // 병원별로 다른 항목 조합 생성

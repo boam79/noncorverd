@@ -163,10 +163,10 @@ export class ApiClient {
   /**
    * 비급여 가격 정보 조회
    */
-  async getNonCoveredPricing(hospitalIds: string[]): Promise<ApiResponse> {
+  async getNonCoveredPricing(hospitalIds: string[], hospitals?: Array<{ id: string; name: string }>): Promise<ApiResponse> {
     return this.request("/pricing", {
       method: "POST",
-      body: JSON.stringify({ hospitalIds }),
+      body: JSON.stringify({ hospitalIds, hospitals }),
     });
   }
 }

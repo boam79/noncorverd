@@ -13,7 +13,7 @@ import Link from 'next/link';
 export default function ComparisonPage() {
   const { selectedHospitals, clearHospitals } = useComparisonStore();
   const hospitalIds = selectedHospitals.map((h) => h.id);
-  const { data: pricingData, isLoading, error } = usePricing(hospitalIds);
+  const { data: pricingData, isLoading, error } = usePricing(hospitalIds, selectedHospitals);
 
   if (selectedHospitals.length === 0) {
     return (

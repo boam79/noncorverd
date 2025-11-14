@@ -39,7 +39,7 @@ router.get('/hospitals', async (req, res, next) => {
  */
 router.post('/pricing', async (req, res, next) => {
   try {
-    const { hospitalIds } = req.body;
+    const { hospitalIds, hospitals } = req.body; // hospitals: 병원 정보 배열 (id, name 포함)
     if (!Array.isArray(hospitalIds) || hospitalIds.length === 0) {
       return res.status(400).json({
         ok: false,
@@ -49,7 +49,7 @@ router.post('/pricing', async (req, res, next) => {
         },
       });
     }
-    const result = await pricingAdapter.getPricing(hospitalIds);
+    const result = await pricingAdapter.getPricing(hospitalIds, hospitals);
     res.json(result);
   } catch (error) {
     next(error);

@@ -163,6 +163,9 @@ class HospitalsAdapter extends BaseAdapter {
       '302300': '300005', // 대덕구
       // 세종특별자치시 (sido=36, 행정안전부 코드)
       '361100': '360001', // 세종시
+      // 제주특별자치도 (sido=50, 행정안전부 코드)
+      '501100': '500001', // 제주시 (추정)
+      '501300': '500002', // 서귀포시 (추정)
     };
 
     // 행정안전부 코드는 이미 전체 코드 (예: 111100)
@@ -240,7 +243,18 @@ class HospitalsAdapter extends BaseAdapter {
           '치과': '41',
           '한의원': '51',
         };
-        params.clCd = typeMap[type] || type;
+        
+        // 여러 종별이 쉼표로 구분된 경우 처리
+        if (type.includes(',')) {
+          const types = type.split(',').map(t => t.trim());
+          // HIRA API는 단일 clCd만 지원하므로, 첫 번째 종별만 사용
+          // 또는 여러 번 호출하여 결과를 합치는 방법도 있지만, 현재는 첫 번째만 사용
+          const firstType = types[0];
+          params.clCd = typeMap[firstType] || firstType;
+          console.log(`📍 여러 종별 선택됨: ${types.join(', ')}, 첫 번째 종별만 적용: ${firstType}`);
+        } else {
+          params.clCd = typeMap[type] || type;
+        }
       }
 
       console.log('📡 병원 목록 API 호출 파라미터:', { ...params, serviceKey: '***' });

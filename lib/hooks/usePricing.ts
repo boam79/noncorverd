@@ -1,15 +1,17 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import type { HospitalPricing } from '@/types';
+import type { HospitalPricing, Hospital } from '@/types';
 
-export function usePricing(hospitalIds: string[], enabled = true) {
+export function usePricing(hospitalIds: string[], hospitals?: Hospital[], enabled = true) {
   return useQuery({
-    queryKey: ['pricing', hospitalIds.slice().sort().join(',')],
+    queryKey: ['pricing', hospitalIds.slice().sort().join(','), hospitals?.map(h => h.id).sort().join(',')],
     queryFn: async (): Promise<HospitalPricing[]> => {
       if (hospitalIds.length === 0) {
         return [];
       }
-      const response = await apiClient.getNonCoveredPricing(hospitalIds);
+      // 병원 정보 배열 생성 (id, name만 포함)
+      const hospitalInfo = hospitals?.map(h => ({ id: h.id, name: h.name })) || undefined;
+      const response = await apiClient.getNonCoveredPricing(hospitalIds, hospitalInfo);
       if (response.ok && Array.isArray(response.data)) {
         return response.data as HospitalPricing[];
       }
