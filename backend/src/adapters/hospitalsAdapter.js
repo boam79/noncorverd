@@ -29,8 +29,8 @@ class HospitalsAdapter extends BaseAdapter {
   /**
    * 캐시 키 생성
    */
-  getCacheKey(sido, sigungu, type) {
-    return `hospitals:${sido || 'all'}:${sigungu || 'all'}:${type || 'all'}`;
+  getCacheKey(sido, sigungu, type, hospitalName) {
+    return `hospitals:${sido || 'all'}:${sigungu || 'all'}:${type || 'all'}:${hospitalName || 'all'}`;
   }
 
   /**
@@ -232,7 +232,7 @@ class HospitalsAdapter extends BaseAdapter {
   /**
    * 병원 목록 조회
    */
-  async getHospitals({ sido, sigungu, type }) {
+  async getHospitals({ sido, sigungu, type, hospitalName }) {
     // Service Key 재확인 (런타임에 환경변수 다시 읽기) - 단일 API 키 사용
     const serviceKey = process.env.api_key || process.env.HIRA_SERVICE_KEY || this.serviceKey;
     

@@ -147,6 +147,7 @@ export class ApiClient {
     sido?: string;
     sigungu?: string;
     type?: string;
+    hospitalName?: string;
   }): Promise<ApiResponse> {
     const queryString = new URLSearchParams(
       Object.entries(params).reduce(

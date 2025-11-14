@@ -21,6 +21,7 @@ export default function Home() {
   const [sido, setSido] = useState<string>();
   const [sigungu, setSigungu] = useState<string>();
   const [selectedTypes, setSelectedTypes] = useState<MedicalInstitutionType[]>([]);
+  const [hospitalName, setHospitalName] = useState<string>('');
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
   
@@ -31,6 +32,7 @@ export default function Home() {
     sido,
     sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
     types: selectedTypes,
+    hospitalName: hospitalName.trim() || undefined,
     enabled: !!sido,
   });
 
@@ -93,6 +95,22 @@ export default function Home() {
           {/* 검색 필터 섹션 */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">검색 조건</h2>
+            
+            {/* 의료기관명 검색란 */}
+            <div>
+              <label htmlFor="hospital-name-search" className="block text-sm font-medium text-gray-700 mb-2">
+                의료기관명 검색
+              </label>
+              <input
+                id="hospital-name-search"
+                type="text"
+                value={hospitalName}
+                onChange={(e) => setHospitalName(e.target.value)}
+                placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+              />
+            </div>
+            
             <RegionSelector onRegionChange={handleRegionChange} />
             <InstitutionFilter
               selectedTypes={selectedTypes}

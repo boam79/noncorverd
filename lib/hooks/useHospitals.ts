@@ -6,6 +6,7 @@ interface UseHospitalsParams {
   sido?: string;
   sigungu?: string;
   types?: MedicalInstitutionType[];
+  hospitalName?: string;
   enabled?: boolean;
 }
 
@@ -13,15 +14,17 @@ export function useHospitals({
   sido,
   sigungu,
   types,
+  hospitalName,
   enabled = true,
 }: UseHospitalsParams) {
   return useQuery({
-    queryKey: ['hospitals', sido, sigungu, types?.sort().join(',')],
+    queryKey: ['hospitals', sido, sigungu, types?.sort().join(','), hospitalName],
     queryFn: async () => {
       const response = await apiClient.getHospitals({
         sido,
         sigungu,
         type: types && types.length > 0 ? types.join(',') : undefined,
+        hospitalName,
       });
       if (response.ok && response.data) {
         return response.data as Hospital[];

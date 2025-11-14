@@ -25,8 +25,8 @@ router.get('/regions', async (req, res, next) => {
  */
 router.get('/hospitals', async (req, res, next) => {
   try {
-    const { sido, sigungu, type } = req.query;
-    const result = await hospitalsAdapter.getHospitals({ sido, sigungu, type });
+    const { sido, sigungu, type, hospitalName } = req.query;
+    const result = await hospitalsAdapter.getHospitals({ sido, sigungu, type, hospitalName });
     res.json(result);
   } catch (error) {
     next(error);
