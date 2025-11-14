@@ -7,6 +7,9 @@ export function Footer() {
           <p className="mt-2 text-xs">
             공공데이터포털 API를 활용한 정보 제공 서비스
           </p>
+          <p className="mt-2 text-xs text-gray-500">
+            제작자: Boam79
+          </p>
         </div>
       </div>
     </footer>

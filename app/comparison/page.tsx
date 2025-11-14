@@ -15,10 +15,15 @@ export default function ComparisonPage() {
   const hospitalIds = selectedHospitals.map((h) => h.id);
   const { data: pricingData, isLoading, error } = usePricing(hospitalIds, selectedHospitals);
 
+  // 메인 타이틀 클릭 시 선택된 병원 초기화
+  const handleHomeClick = () => {
+    clearHospitals();
+  };
+
   if (selectedHospitals.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header onHomeClick={handleHomeClick} />
         <Container className="py-12">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -41,7 +46,7 @@ export default function ComparisonPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <Header />
+      <Header onHomeClick={handleHomeClick} />
       <Container className="py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">

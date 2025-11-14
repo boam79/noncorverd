@@ -25,6 +25,16 @@ export default function Home() {
   const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
+
+  // 메인 타이틀 클릭 시 모든 상태 초기화
+  const handleHomeClick = useCallback(() => {
+    setSido(undefined);
+    setSigungu(undefined);
+    setSelectedTypes([]);
+    setHospitalNameInput('');
+    setHospitalName('');
+    clearHospitals();
+  }, [clearHospitals]);
   
   // 시군구 목록 가져오기 (필터링용)
   const { data: sigunguList = [] } = useRegions(sido);
@@ -104,7 +114,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32 md:pb-24">
-      <Header />
+      <Header onHomeClick={handleHomeClick} />
       <Container className="py-8">
         <div className="space-y-6">
           {/* 검색 필터 섹션 */}
