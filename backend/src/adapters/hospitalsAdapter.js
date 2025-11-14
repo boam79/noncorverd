@@ -353,13 +353,22 @@ class HospitalsAdapter extends BaseAdapter {
       }
       
       // 종합병원 필터링: clCd=01로 검색했을 때 결과가 없는 경우를 대비
+      // clCdNm이 있는 경우에만 추가 필터링 (정확도 향상)
       if (type === '종합병원' || (type && type.includes('종합병원'))) {
-        // clCdNm으로 한 번 더 필터링하여 정확도 향상
-        allHospitals = allHospitals.filter((h) => {
-          // clCdNm이 "종합병원" 또는 "상급종합"인 경우만 필터링
-          return h.clCdNm === '종합병원' || h.clCdNm === '상급종합';
-        });
-        console.log(`📍 종합병원 필터링 적용: ${allHospitals.length}개 종합병원 (clCdNm="종합병원" 또는 "상급종합")`);
+        // clCdNm이 있는 경우에만 추가 필터링
+        // clCdNm이 없으면 clCd=01로 이미 필터링된 것으로 간주
+        if (allHospitals.length > 0 && allHospitals[0].clCdNm) {
+          const beforeCount = allHospitals.length;
+          allHospitals = allHospitals.filter((h) => {
+            // clCdNm이 없으면 통과 (clCd=01로 이미 필터링됨)
+            if (!h.clCdNm) return true;
+            // clCdNm이 "종합병원" 또는 "상급종합"인 경우만 필터링
+            return h.clCdNm === '종합병원' || h.clCdNm === '상급종합';
+          });
+          if (beforeCount !== allHospitals.length) {
+            console.log(`📍 종합병원 필터링 적용: ${allHospitals.length}개 종합병원 (${beforeCount}개 → ${allHospitals.length}개)`);
+          }
+        }
       }
 
       console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${totalCount}개 중)`);
