@@ -294,9 +294,16 @@ class HospitalsAdapter extends BaseAdapter {
 
         // API 호출 실패 시
         if (!result.ok) {
+          console.warn(`⚠️ API 호출 실패 (페이지 ${pageNo}):`, result.error?.message);
           if (pageNo === 1) {
-            // 첫 페이지 실패 시 Mock 데이터 반환
-            console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', result.error?.message);
+            // 첫 페이지 실패 시: API 토큰 할당량 초과 등으로 인한 실패인 경우 기존 수집된 데이터 반환
+            // (이미 allHospitals에 데이터가 있을 수 있음)
+            if (allHospitals.length > 0) {
+              console.log(`⚠️ 첫 페이지 실패했지만 기존 데이터 ${allHospitals.length}개 반환`);
+              break;
+            }
+            // 데이터가 없으면 Mock 데이터 반환
+            console.warn('⚠️ API 호출 실패 및 데이터 없음, Mock 데이터 반환');
             return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
           }
           // 이후 페이지 실패 시 기존 데이터 반환
