@@ -339,12 +339,17 @@ class HospitalsAdapter extends BaseAdapter {
       }
       
       // 한의원 필터링: clCd=51은 실제로 "치과의원"이므로 clCdNm으로 필터링
+      // clCd로 검색하지 않고 전체 검색 후 clCdNm으로 필터링
       if (type === '한의원' || (type && type.includes('한의원'))) {
+        // clCd=51로 검색하지 않았으므로 (typeMap에서 null), 전체 검색 결과에서 필터링
+        const beforeCount = allHospitals.length;
         allHospitals = allHospitals.filter((h) => {
           // clCdNm이 "한의원" 또는 "한방병원"인 경우 필터링
           return h.clCdNm === '한의원' || h.clCdNm === '한방병원';
         });
-        console.log(`📍 한의원 필터링 적용: ${allHospitals.length}개 한의원 (clCdNm="한의원" 또는 "한방병원")`);
+        if (beforeCount > 0) {
+          console.log(`📍 한의원 필터링 적용: ${allHospitals.length}개 한의원 (${beforeCount}개 → ${allHospitals.length}개, clCdNm="한의원" 또는 "한방병원")`);
+        }
       }
       
       // 종합병원 필터링: clCd=01로 검색했을 때 결과가 없는 경우를 대비
