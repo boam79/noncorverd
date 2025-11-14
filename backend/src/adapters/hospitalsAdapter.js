@@ -147,8 +147,9 @@ class HospitalsAdapter extends BaseAdapter {
       '282370': '280006', // 부평구
       '282450': '280007', // 계양구
       '282600': '280008', // 서구
-      '287100': '280009', // 강화군
-      '287200': '280010', // 옹진군
+      // 주의: 강화군과 옹진군은 HIRA API에서 제대로 필터링되지 않을 수 있음
+      // '287100': '280009', // 강화군 (주석 처리 - HIRA API 문제로 인해 비활성화)
+      // '287200': '280010', // 옹진군 (주석 처리 - HIRA API 문제로 인해 비활성화)
       // 광주광역시 (sido=29, 행정안전부 코드)
       '291100': '290001', // 동구
       '291400': '290002', // 서구
@@ -162,7 +163,8 @@ class HospitalsAdapter extends BaseAdapter {
       '302000': '300004', // 유성구
       '302300': '300005', // 대덕구
       // 세종특별자치시 (sido=36, 행정안전부 코드)
-      '361100': '360001', // 세종시
+      // 주의: HIRA API에서 세종은 제대로 지원하지 않을 수 있음
+      // '361100': '360001', // 세종시 (주석 처리 - HIRA API 문제로 인해 비활성화)
       // 제주특별자치도 (sido=50, 행정안전부 코드)
       '501100': '500001', // 제주시 (추정)
       '501300': '500002', // 서귀포시 (추정)
@@ -179,8 +181,10 @@ class HospitalsAdapter extends BaseAdapter {
     }
 
     // 매핑이 없으면 원본 코드 반환 (시도해볼 수 있음)
-    console.warn(`⚠️ 시군구 코드 매핑 없음: ${fullCode}, 원본 코드 사용`);
-    return String(sigunguCode).padEnd(6, '0');
+    // 하지만 HIRA API가 행정안전부 코드를 직접 인식하지 못할 수 있으므로,
+    // 매핑이 없는 경우 null을 반환하여 시군구 필터를 사용하지 않도록 함
+    console.warn(`⚠️ 시군구 코드 매핑 없음: ${fullCode}, 시군구 필터 비활성화`);
+    return null; // null을 반환하면 시군구 필터를 사용하지 않음
   }
 
   /**
@@ -225,10 +229,10 @@ class HospitalsAdapter extends BaseAdapter {
           params.sgguCd = hiraSgguCd;
           console.log('📍 시군구 필터 적용:', { sigungu, sgguCd: params.sgguCd });
         } else {
-          // 변환 실패 시 원본 코드 사용 (하위 호환성)
-          const sigunguCode = String(sigungu).padEnd(6, '0');
-          params.sgguCd = sigunguCode;
-          console.log('📍 시군구 필터 적용 (원본 코드):', { sigungu, sgguCd: params.sgguCd });
+          // 변환 실패 시 시군구 필터를 사용하지 않음
+          // (HIRA API가 행정안전부 코드를 직접 인식하지 못하므로)
+          console.warn('⚠️ 시군구 코드 매핑 실패, 시군구 필터 비활성화:', { sigungu, sido });
+          // params.sgguCd를 설정하지 않음 = 시군구 필터 없이 검색
         }
       }
 
