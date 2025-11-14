@@ -241,12 +241,17 @@ class HospitalsAdapter extends BaseAdapter {
       }
 
       // 의료기관 종별 필터
+      // 주의: HIRA API의 clCd 코드 체계가 예상과 다를 수 있음
+      // clCd=21은 실제로 "병원"으로 분류됨
+      // 실제 의원은 clCdNm으로 필터링해야 할 수 있음
       if (type) {
-        // 종합병원: 01, 병원: 11, 의원: 21, 요양병원: 31, 치과: 41, 한의원: 51
+        // HIRA API 실제 코드 체계 (API 응답 확인 결과):
+        // 종합병원: 01, 병원: 11, 병원(소규모): 21, 요양병원: 31, 치과: 41, 한의원: 51
+        // 주의: clCd=21은 "병원"으로 분류되므로, 의원은 clCdNm으로 필터링 필요
         const typeMap = {
           '종합병원': '01',
           '병원': '11',
-          '의원': '21',
+          '의원': null, // clCd로 필터링 불가, clCdNm으로 필터링 필요
           '요양병원': '31',
           '치과': '41',
           '한의원': '51',
@@ -256,36 +261,85 @@ class HospitalsAdapter extends BaseAdapter {
         if (type.includes(',')) {
           const types = type.split(',').map(t => t.trim());
           // HIRA API는 단일 clCd만 지원하므로, 첫 번째 종별만 사용
-          // 또는 여러 번 호출하여 결과를 합치는 방법도 있지만, 현재는 첫 번째만 사용
           const firstType = types[0];
-          params.clCd = typeMap[firstType] || firstType;
+          const clCd = typeMap[firstType];
+          if (clCd) {
+            params.clCd = clCd;
+          }
           console.log(`📍 여러 종별 선택됨: ${types.join(', ')}, 첫 번째 종별만 적용: ${firstType}`);
         } else {
-          params.clCd = typeMap[type] || type;
+          const clCd = typeMap[type];
+          if (clCd) {
+            params.clCd = clCd;
+          }
+          // 의원의 경우 clCd로 필터링하지 않고, 나중에 clCdNm으로 필터링
         }
       }
 
-      console.log('📡 병원 목록 API 호출 파라미터:', { ...params, serviceKey: '***' });
-      const result = await this.fetchAPI(this.apiEndpoint, params);
+      // 페이지네이션을 위한 전체 데이터 수집
+      let allHospitals = [];
+      let pageNo = 1;
+      const pageSize = 100;
+      let totalCount = Infinity;
+      let hasMore = true;
 
-      console.log('📡 API 응답:', result.ok ? '성공' : '실패', result.error?.message || '');
+      while (hasMore && pageNo <= 50) { // 최대 50페이지 (5000개 병원)
+        params.pageNo = pageNo;
+        params.numOfRows = pageSize;
 
-      // API 호출 실패 시 Mock 데이터 사용
-      if (!result.ok) {
-        console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', result.error?.message);
-        return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+        console.log(`📡 병원 목록 API 호출 파라미터 (페이지 ${pageNo}):`, { ...params, serviceKey: '***' });
+        const result = await this.fetchAPI(this.apiEndpoint, params);
+
+        console.log(`📡 API 응답 (페이지 ${pageNo}):`, result.ok ? '성공' : '실패', result.error?.message || '');
+
+        // API 호출 실패 시
+        if (!result.ok) {
+          if (pageNo === 1) {
+            // 첫 페이지 실패 시 Mock 데이터 반환
+            console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', result.error?.message);
+            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+          }
+          // 이후 페이지 실패 시 기존 데이터 반환
+          break;
+        }
+
+        // 데이터가 없는 경우
+        if (!result.data || result.data.length === 0) {
+          if (pageNo === 1) {
+            console.warn('⚠️ API 응답에 데이터가 없습니다. Mock 데이터 반환');
+            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+          }
+          break;
+        }
+
+        // totalCount 업데이트
+        if (result.meta?.total) {
+          totalCount = Number(result.meta.total);
+        }
+
+        // API 응답을 표준 형식으로 변환
+        const hospitals = this.transformHospitalData(result.data);
+        allHospitals = allHospitals.concat(hospitals);
+
+        // 마지막 페이지 확인
+        if (hospitals.length < pageSize || allHospitals.length >= totalCount) {
+          hasMore = false;
+        } else {
+          pageNo += 1;
+        }
       }
 
-      // 데이터가 없는 경우 (totalCount=0 등)
-      if (!result.data || result.data.length === 0) {
-        console.warn('⚠️ API 응답에 데이터가 없습니다. Mock 데이터 반환');
-        return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+      // 의원 필터링: clCdNm으로 필터링 (clCd=21은 실제로 "병원"이므로)
+      if (type === '의원' || (type && type.includes('의원'))) {
+        allHospitals = allHospitals.filter((h) => {
+          // clCdNm이 "의원"인 경우만 필터링
+          return h.clCdNm === '의원' || h.type === '의원';
+        });
+        console.log(`📍 의원 필터링 적용: ${allHospitals.length}개 의원`);
       }
 
-      // API 응답을 표준 형식으로 변환
-      const hospitals = this.transformHospitalData(result.data);
-      console.log(`✅ 실제 API 데이터 반환: ${hospitals.length}개 병원`);
-      return this.formatResponse(hospitals, result.meta);
+      console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${totalCount}개 중)`);
+      return this.formatResponse(allHospitals, { total: String(totalCount), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
       return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
