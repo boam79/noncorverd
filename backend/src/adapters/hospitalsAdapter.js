@@ -322,6 +322,12 @@ class HospitalsAdapter extends BaseAdapter {
         }
 
         // API 응답을 표준 형식으로 변환
+        // 디버깅: 첫 번째 항목의 원본 데이터 확인
+        if (result.data && result.data.length > 0 && pageNo === 1) {
+          console.log(`🔍 [디버깅] 첫 번째 항목 원본 데이터 필드명:`, Object.keys(result.data[0]).slice(0, 15).join(', '));
+          console.log(`🔍 [디버깅] 첫 번째 항목 clCdNm:`, result.data[0].clCdNm);
+          console.log(`🔍 [디버깅] 첫 번째 항목 clCd:`, result.data[0].clCd);
+        }
         const hospitals = this.transformHospitalData(result.data);
         allHospitals = allHospitals.concat(hospitals);
         
