@@ -480,6 +480,14 @@
     - ✅ 공통 항목 표시 로직 개선 (모든 병원의 가격이 표시되도록 수정)
     - ✅ `commonItemCount` 계산 로직 개선 (모든 병원 확인)
     - ✅ 로딩 속도 개선 (useHospitals staleTime 2분, refetchOnMount false)
+  - ✅ **대전광역시 HIRA 코드 매핑 수정** (2025-11-14):
+    - ✅ 대전광역시 시도 코드: 300000 → 250000 (실제 HIRA API 코드)
+    - ✅ 대전광역시 시군구 코드 매핑 수정:
+      - 동구: 300001 → 250004
+      - 중구: 300002 → 250005
+      - 서구: 300003 → 250003
+      - 유성구: 300004 → 250001
+      - 대덕구: 300005 → 250002
   - ⏳ **E2E 테스트 개선 필요**:
     - ✅ `HospitalCard`에 `data-testid="hospital-card"` 및 `article` 태그 추가
     - ⏳ Vercel 배포 후 Playwright E2E 재실행 필요
