@@ -304,7 +304,8 @@ class HospitalsAdapter extends BaseAdapter {
         id: item.ykiho || item.hospCd || item.ykihoEncpt || `hosp_${Date.now()}_${Math.random()}`,
         name: item.yadmNm || item.hospNm || item.yadmNm || '병원명 없음',
         address: item.addr || item.roadAddr || item.addr || '',
-        type: this.mapHospitalType(item.clCd || item.hospTyCd || item.clCdNm),
+        // 종별 매핑: clCd (숫자 코드) 우선, 없으면 clCdNm (종별명) 사용
+        type: this.mapHospitalType(item.clCd || item.clCdNm || item.hospTyCd),
         departments: this.parseDepartments(item.dgsbjtCd || item.deptCd),
         phone: item.telno || item.tel || item.telno || '',
         rating: item.evalScore ? parseFloat(item.evalScore) : undefined,
@@ -320,9 +321,19 @@ class HospitalsAdapter extends BaseAdapter {
 
   /**
    * 병원 종별 코드를 텍스트로 변환
+   * 
+   * @param {string} code - 종별 코드 (숫자: "01", "11" 등) 또는 종별명 (문자열: "종합병원", "요양병원" 등)
+   * @returns {string} 표준화된 종별명
    */
   mapHospitalType(code) {
-    const typeMap = {
+    if (!code) {
+      return '병원';
+    }
+
+    const codeStr = String(code).trim();
+    
+    // 숫자 코드 매핑 (clCd 필드)
+    const codeMap = {
       '01': '종합병원',
       '11': '병원',
       '21': '의원',
@@ -330,7 +341,52 @@ class HospitalsAdapter extends BaseAdapter {
       '41': '치과',
       '51': '한의원',
     };
-    return typeMap[code] || '병원';
+    
+    // 숫자 코드인 경우
+    if (codeMap[codeStr]) {
+      return codeMap[codeStr];
+    }
+    
+    // 문자열 종별명인 경우 (clCdNm 필드)
+    const nameMap = {
+      '종합병원': '종합병원',
+      '상급종합': '종합병원', // 상급종합병원도 종합병원으로 처리
+      '병원': '병원',
+      '의원': '의원',
+      '요양병원': '요양병원',
+      '치과': '치과',
+      '한의원': '한의원',
+      '한방병원': '한의원', // 한방병원도 한의원으로 처리
+    };
+    
+    // 정확한 매칭
+    if (nameMap[codeStr]) {
+      return nameMap[codeStr];
+    }
+    
+    // 부분 매칭 (예: "요양병원"이 포함된 경우)
+    const lowerCode = codeStr.toLowerCase();
+    if (lowerCode.includes('종합') || lowerCode.includes('상급')) {
+      return '종합병원';
+    }
+    if (lowerCode.includes('요양')) {
+      return '요양병원';
+    }
+    if (lowerCode.includes('한의') || lowerCode.includes('한방')) {
+      return '한의원';
+    }
+    if (lowerCode.includes('치과')) {
+      return '치과';
+    }
+    if (lowerCode.includes('의원')) {
+      return '의원';
+    }
+    if (lowerCode.includes('병원')) {
+      return '병원';
+    }
+    
+    // 기본값
+    return '병원';
   }
 
   /**
