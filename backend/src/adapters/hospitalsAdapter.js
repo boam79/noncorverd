@@ -14,12 +14,50 @@ class HospitalsAdapter extends BaseAdapter {
     super('건강보험심사평가원', serviceKey);
     this.apiEndpoint = API_ENDPOINTS.HOSPITAL_INFO;
     
+    // API 호출 절약을 위한 캐시 설정 (in-memory)
+    this.hospitalCache = new Map();
+    this.cacheTTL = 1000 * 60 * 60; // 1시간 캐시 유지
+    
     // 디버깅용 로그
     if (serviceKey) {
       console.log('✅ HospitalsAdapter: Service Key 설정됨 (길이:', serviceKey.length, ')');
     } else {
       console.warn('⚠️ HospitalsAdapter: Service Key 미설정');
     }
+  }
+
+  /**
+   * 캐시 키 생성
+   */
+  getCacheKey(sido, sigungu, type) {
+    return `hospitals:${sido || 'all'}:${sigungu || 'all'}:${type || 'all'}`;
+  }
+
+  /**
+   * 캐시에서 데이터 조회
+   */
+  getFromCache(cacheKey) {
+    const cached = this.hospitalCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      console.log(`💾 캐시에서 데이터 반환: ${cacheKey} (${cached.data.length}개)`);
+      return cached.data;
+    }
+    if (cached) {
+      // 캐시 만료된 경우 삭제
+      this.hospitalCache.delete(cacheKey);
+    }
+    return null;
+  }
+
+  /**
+   * 캐시에 데이터 저장
+   */
+  setCache(cacheKey, data) {
+    this.hospitalCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
+    console.log(`💾 캐시에 데이터 저장: ${cacheKey} (${data.length}개)`);
   }
 
   /**
@@ -409,7 +447,11 @@ class HospitalsAdapter extends BaseAdapter {
       return this.formatResponse(allHospitals, { total: String(finalTotal), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+      const mockData = this.getMockHospitals({ sido, sigungu, type });
+      // Mock 데이터도 캐시에 저장 (짧은 시간 동안)
+      const cacheKey = this.getCacheKey(sido, sigungu, type);
+      this.setCache(cacheKey, mockData);
+      return this.formatResponse(mockData);
     }
   }
 

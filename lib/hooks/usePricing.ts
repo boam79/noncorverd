@@ -21,8 +21,8 @@ export function usePricing(hospitalIds: string[], hospitals?: Hospital[], enable
       throw new Error(response.error?.message || '가격 정보를 불러오는데 실패했습니다.');
     },
     enabled: enabled && hospitalIds.length > 0,
-    staleTime: 12 * 60 * 60 * 1000, // 12시간
-    gcTime: 24 * 60 * 60 * 1000, // 24시간 캐시 유지
+    staleTime: 12 * 60 * 60 * 1000, // 12시간간 fresh 상태 유지 (API 호출 절약)
+    gcTime: 24 * 60 * 60 * 1000, // 24시간 후 캐시 삭제 (API 호출 절약)
     placeholderData: keepPreviousData,
     select: (data) =>
       data.map((pricing) => ({

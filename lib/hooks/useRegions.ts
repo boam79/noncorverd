@@ -22,8 +22,8 @@ export function useRegions(sido?: string) {
       throw new Error(response.error?.message || '지역 정보를 불러오는데 실패했습니다.');
     },
     enabled: true,
-    staleTime: 24 * 60 * 60 * 1000, // 24시간 (지역 정보는 거의 변경되지 않음)
-    gcTime: 48 * 60 * 60 * 1000, // 48시간 캐시 유지
+    staleTime: 24 * 60 * 60 * 1000, // 24시간간 fresh 상태 유지 (지역 정보는 거의 변경되지 않음, API 호출 절약)
+    gcTime: 48 * 60 * 60 * 1000, // 48시간 후 캐시 삭제 (API 호출 절약)
     retry: 1, // 재시도 1회만 (빠른 실패)
     retryDelay: 1000, // 1초 후 재시도
   });
