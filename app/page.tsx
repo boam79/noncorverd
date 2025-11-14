@@ -21,7 +21,8 @@ export default function Home() {
   const [sido, setSido] = useState<string>();
   const [sigungu, setSigungu] = useState<string>();
   const [selectedTypes, setSelectedTypes] = useState<MedicalInstitutionType[]>([]);
-  const [hospitalName, setHospitalName] = useState<string>('');
+  const [hospitalNameInput, setHospitalNameInput] = useState<string>(''); // 입력값
+  const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
   
@@ -101,14 +102,33 @@ export default function Home() {
               <label htmlFor="hospital-name-search" className="block text-sm font-medium text-gray-700 mb-2">
                 의료기관명 검색
               </label>
-              <input
-                id="hospital-name-search"
-                type="text"
-                value={hospitalName}
-                onChange={(e) => setHospitalName(e.target.value)}
-                placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-              />
+              <div className="relative">
+                <input
+                  id="hospital-name-search"
+                  type="text"
+                  value={hospitalNameInput}
+                  onChange={(e) => setHospitalNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      setHospitalName(hospitalNameInput);
+                    }
+                  }}
+                  placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
+                  className="w-full px-4 py-3 text-base text-gray-900 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-gray-500">
+                  <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-gray-700 font-mono">
+                    Enter
+                  </kbd>
+                  <span className="text-gray-400">검색</span>
+                </div>
+              </div>
+              {hospitalNameInput !== hospitalName && hospitalNameInput.trim() && (
+                <p className="mt-2 text-sm text-gray-600">
+                  엔터키를 눌러 검색하세요
+                </p>
+              )}
             </div>
             
             <RegionSelector onRegionChange={handleRegionChange} />
