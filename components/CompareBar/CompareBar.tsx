@@ -8,6 +8,7 @@ interface CompareBarProps {
   selectedHospitals: Hospital[];
   onCompare: () => void;
   onClear: () => void;
+  onRemoveHospital?: (hospitalId: string) => void;
   maxSelection: number;
 }
 
@@ -15,6 +16,7 @@ export function CompareBar({
   selectedHospitals,
   onCompare,
   onClear,
+  onRemoveHospital,
   maxSelection,
 }: CompareBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -38,12 +40,24 @@ export function CompareBar({
             {isExpanded && (
               <div className="flex flex-wrap gap-2">
                 {selectedHospitals.map((hospital) => (
-                  <span
+                  <div
                     key={hospital.id}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                   >
-                    {hospital.name}
-                  </span>
+                    <span>{hospital.name}</span>
+                    {onRemoveHospital && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveHospital(hospital.id);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-bold"
+                        aria-label={`${hospital.name} 선택 해제`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

@@ -118,10 +118,43 @@ export default function Home() {
             />
           </div>
 
+          {/* 선택된 병원 표시 (검색 결과와 독립적으로 표시) */}
+          {selectedHospitals.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                선택된 의료기관 ({selectedHospitals.length}개 / 최대 {maxSelection}개)
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {selectedHospitals.map((hospital) => (
+                  <div
+                    key={hospital.id}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-300 rounded-lg shadow-sm"
+                  >
+                    <span className="text-sm font-medium text-gray-900">
+                      {hospital.name}
+                    </span>
+                    <button
+                      onClick={() => toggleHospital(hospital)}
+                      className="text-red-500 hover:text-red-700 text-lg font-bold"
+                      aria-label={`${hospital.name} 선택 해제`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 검색 결과 섹션 */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               검색 결과 ({hospitals.length}개)
+              {selectedHospitals.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (선택된 {selectedHospitals.length}개 병원은 검색 결과와 독립적으로 유지됩니다)
+                </span>
+              )}
             </h2>
             {isLoading ? (
               <LoadingSpinner />
@@ -148,6 +181,12 @@ export default function Home() {
         selectedHospitals={selectedHospitals}
         onCompare={handleCompare}
         onClear={clearHospitals}
+        onRemoveHospital={(hospitalId) => {
+          const hospital = selectedHospitals.find(h => h.id === hospitalId);
+          if (hospital) {
+            toggleHospital(hospital);
+          }
+        }}
         maxSelection={maxSelection}
       />
       <Footer />
