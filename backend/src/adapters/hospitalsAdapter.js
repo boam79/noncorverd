@@ -332,10 +332,29 @@ class HospitalsAdapter extends BaseAdapter {
       // 의원 필터링: clCdNm으로 필터링 (clCd=21은 실제로 "병원"이므로)
       if (type === '의원' || (type && type.includes('의원'))) {
         allHospitals = allHospitals.filter((h) => {
-          // clCdNm이 "의원"인 경우만 필터링
-          return h.clCdNm === '의원' || h.type === '의원';
+          // clCdNm이 정확히 "의원"인 경우만 필터링
+          return h.clCdNm === '의원';
         });
-        console.log(`📍 의원 필터링 적용: ${allHospitals.length}개 의원`);
+        console.log(`📍 의원 필터링 적용: ${allHospitals.length}개 의원 (clCdNm="의원"만)`);
+      }
+      
+      // 한의원 필터링: clCd=51은 실제로 "치과의원"이므로 clCdNm으로 필터링
+      if (type === '한의원' || (type && type.includes('한의원'))) {
+        allHospitals = allHospitals.filter((h) => {
+          // clCdNm이 "한의원" 또는 "한방병원"인 경우 필터링
+          return h.clCdNm === '한의원' || h.clCdNm === '한방병원';
+        });
+        console.log(`📍 한의원 필터링 적용: ${allHospitals.length}개 한의원 (clCdNm="한의원" 또는 "한방병원")`);
+      }
+      
+      // 종합병원 필터링: clCd=01로 검색했을 때 결과가 없는 경우를 대비
+      if (type === '종합병원' || (type && type.includes('종합병원'))) {
+        // clCdNm으로 한 번 더 필터링하여 정확도 향상
+        allHospitals = allHospitals.filter((h) => {
+          // clCdNm이 "종합병원" 또는 "상급종합"인 경우만 필터링
+          return h.clCdNm === '종합병원' || h.clCdNm === '상급종합';
+        });
+        console.log(`📍 종합병원 필터링 적용: ${allHospitals.length}개 종합병원 (clCdNm="종합병원" 또는 "상급종합")`);
       }
 
       console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${totalCount}개 중)`);
@@ -362,8 +381,9 @@ class HospitalsAdapter extends BaseAdapter {
         id: item.ykiho || item.hospCd || item.ykihoEncpt || `hosp_${Date.now()}_${Math.random()}`,
         name: item.yadmNm || item.hospNm || item.yadmNm || '병원명 없음',
         address: item.addr || item.roadAddr || item.addr || '',
-        // 종별 매핑: clCd (숫자 코드) 우선, 없으면 clCdNm (종별명) 사용
-        type: this.mapHospitalType(item.clCd || item.clCdNm || item.hospTyCd),
+        // 종별 매핑: clCdNm (종별명) 우선, 없으면 clCd (숫자 코드) 사용
+        // clCdNm이 있으면 그대로 사용하여 정확한 종별 매핑
+        type: item.clCdNm ? this.mapHospitalType(item.clCdNm) : this.mapHospitalType(item.clCd || item.hospTyCd),
         departments: this.parseDepartments(item.dgsbjtCd || item.deptCd),
         phone: item.telno || item.tel || item.telno || '',
         rating: item.evalScore ? parseFloat(item.evalScore) : undefined,
