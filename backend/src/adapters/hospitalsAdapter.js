@@ -312,18 +312,25 @@ class HospitalsAdapter extends BaseAdapter {
           break;
         }
 
-        // totalCount 업데이트
+        // totalCount 업데이트 (첫 페이지에서만 또는 업데이트가 필요한 경우)
         if (result.meta?.total) {
-          totalCount = Number(result.meta.total);
+          const newTotalCount = Number(result.meta.total);
+          if (newTotalCount > 0 && (totalCount === Infinity || newTotalCount !== totalCount)) {
+            totalCount = newTotalCount;
+            console.log(`📊 총 병원 수: ${totalCount}개`);
+          }
         }
 
         // API 응답을 표준 형식으로 변환
         const hospitals = this.transformHospitalData(result.data);
         allHospitals = allHospitals.concat(hospitals);
+        
+        console.log(`📄 페이지 ${pageNo}: ${hospitals.length}개 병원 수집 (누적: ${allHospitals.length}개)`);
 
         // 마지막 페이지 확인
-        if (hospitals.length < pageSize || allHospitals.length >= totalCount) {
+        if (hospitals.length < pageSize || (totalCount !== Infinity && allHospitals.length >= totalCount)) {
           hasMore = false;
+          console.log(`✅ 페이지네이션 완료: 총 ${allHospitals.length}개 병원 수집`);
         } else {
           pageNo += 1;
         }
