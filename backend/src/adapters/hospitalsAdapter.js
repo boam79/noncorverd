@@ -380,8 +380,10 @@ class HospitalsAdapter extends BaseAdapter {
         }
       }
 
-      console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${totalCount}개 중)`);
-      return this.formatResponse(allHospitals, { total: String(totalCount), page: '1', limit: String(allHospitals.length) });
+      // totalCount가 Infinity인 경우 (API에서 totalCount를 제공하지 않은 경우) 실제 수집된 개수 사용
+      const finalTotal = totalCount !== Infinity ? totalCount : allHospitals.length;
+      console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${finalTotal}개 중)`);
+      return this.formatResponse(allHospitals, { total: String(finalTotal), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
       return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
