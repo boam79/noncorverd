@@ -68,6 +68,15 @@ export default function Home() {
     return filtered.length > 0 ? filtered : allHospitals;
   }, [allHospitals, sigungu, sigunguList]);
 
+  // 검색 실행 핸들러
+  const handleSearch = useCallback(() => {
+    if (hospitalNameInput.trim()) {
+      setHospitalName(hospitalNameInput.trim());
+    } else {
+      setHospitalName('');
+    }
+  }, [hospitalNameInput]);
+
   // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
   const handleRegionChange = useCallback((newSido?: string, newSigungu?: string) => {
     // 시도가 변경되면 시군구도 초기화
@@ -111,22 +120,32 @@ export default function Home() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      setHospitalName(hospitalNameInput);
+                      handleSearch();
                     }
                   }}
                   placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
-                  className="w-full px-4 py-3 text-base text-gray-900 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-3 pr-32 text-base text-gray-900 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-gray-500">
-                  <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-gray-700 font-mono">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium"
+                  aria-label="검색 실행"
+                >
+                  <kbd className="px-1.5 py-0.5 bg-primary-700 border border-primary-800 rounded text-white font-mono text-xs">
                     Enter
                   </kbd>
-                  <span className="text-gray-400">검색</span>
-                </div>
+                  <span>검색</span>
+                </button>
               </div>
               {hospitalNameInput !== hospitalName && hospitalNameInput.trim() && (
-                <p className="mt-2 text-sm text-gray-600">
-                  엔터키를 눌러 검색하세요
+                <p className="mt-2 text-sm text-blue-600">
+                  엔터키를 누르거나 검색 버튼을 클릭하세요
+                </p>
+              )}
+              {!sido && hospitalNameInput.trim() && (
+                <p className="mt-2 text-sm text-amber-600">
+                  ⚠️ 시도를 선택하면 더 정확한 검색이 가능합니다
                 </p>
               )}
             </div>
