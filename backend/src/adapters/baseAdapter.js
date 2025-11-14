@@ -189,8 +189,11 @@ export class BaseAdapter {
         try {
           const parser = new xml2js.Parser({
             explicitArray: false,
-            mergeAttrs: true,
+            mergeAttrs: false, // 속성을 병합하지 않음 (필드명 유지)
             ignoreAttrs: false,
+            explicitCharkey: false,
+            trim: true,
+            normalize: true,
           });
           
           const parsed = await parser.parseStringPromise(response.data);
