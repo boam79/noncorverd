@@ -56,19 +56,24 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           ? Math.round(prices.reduce((sum, value) => sum + value, 0) / prices.length)
           : 0;
 
+      // 모든 병원에 대한 레코드 초기화 (공통 항목일 경우 모든 병원이 있어야 함)
       const hospitalsRecord: Record<string, ComparisonHospitalEntry> = {};
 
-      entries.forEach((entry) => {
-        const diff = entry.price - averagePrice;
-        const percentDiff = averagePrice > 0 ? Math.round((diff / averagePrice) * 100) : 0;
+      // 실제 데이터가 있는 병원만 entries에 있으므로, 모든 pricingData의 병원을 확인
+      pricingData.forEach((hospital) => {
+        const entry = entries.find((e) => e.hospitalId === hospital.hospitalId);
+        if (entry) {
+          const diff = entry.price - averagePrice;
+          const percentDiff = averagePrice > 0 ? Math.round((diff / averagePrice) * 100) : 0;
 
-        hospitalsRecord[entry.hospitalId] = {
-          ...entry,
-          diff,
-          percentDiff,
-          isHighest: entry.price === maxPrice,
-          isLowest: entry.price === minPrice,
-        };
+          hospitalsRecord[hospital.hospitalId] = {
+            ...entry,
+            diff,
+            percentDiff,
+            isHighest: entry.price === maxPrice,
+            isLowest: entry.price === minPrice,
+          };
+        }
       });
 
       const exemplar = entries.find((entry) => entry.unit || entry.code || entry.url) ?? entries[0];
@@ -91,8 +96,12 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
   const totalUniqueItems = aggregatedItems.length;
   const commonItemCount = useMemo(
-    () => aggregatedItems.filter((item) => item.hospitalCount === pricingData.length).length,
-    [aggregatedItems, pricingData.length]
+    () => aggregatedItems.filter((item) => {
+      // 모든 병원이 해당 항목을 가지고 있어야 함
+      return item.hospitalCount === pricingData.length && 
+             pricingData.every((hospital) => item.hospitals[hospital.hospitalId] !== undefined);
+    }).length,
+    [aggregatedItems, pricingData]
   );
 
   const [viewMode, setViewMode] = useState<ViewMode>('common');
@@ -109,8 +118,15 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
     let items = aggregatedItems;
 
+    // 공통 항목 필터: 모든 병원이 해당 항목을 가지고 있어야 함
     if (viewMode === 'common' && pricingData.length > 0) {
-      items = items.filter((item) => item.hospitalCount === pricingData.length);
+      items = items.filter((item) => {
+        // hospitalCount가 pricingData.length와 같고, 모든 병원의 hospitals 레코드에 항목이 있어야 함
+        const hasAllHospitals = pricingData.every((hospital) => 
+          item.hospitals[hospital.hospitalId] !== undefined
+        );
+        return item.hospitalCount === pricingData.length && hasAllHospitals;
+      });
     }
 
     if (query) {
@@ -150,7 +166,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
     });
 
     return sorted;
-  }, [aggregatedItems, pricingData.length, viewMode, sortMode, searchTerm]);
+  }, [aggregatedItems, pricingData, viewMode, sortMode, searchTerm]);
 
   const visibleItems = filteredItems.slice(0, visibleCount);
   const hasMore = filteredItems.length > visibleCount;

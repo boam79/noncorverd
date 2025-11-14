@@ -29,9 +29,9 @@ export function useHospitals({
       throw new Error(response.error?.message || '병원 정보를 불러오는데 실패했습니다.');
     },
     enabled: enabled && !!sido, // sido가 있을 때만 쿼리 실행
-    staleTime: 0, // 즉시 stale로 처리하여 지역 변경 시 즉시 새 데이터 로드
-    gcTime: 5 * 60 * 1000, // 5분 후 캐시 삭제
-    refetchOnMount: true, // 마운트 시 항상 리패치
+    staleTime: 2 * 60 * 1000, // 2분간 fresh 상태 유지 (로딩 속도 개선)
+    gcTime: 10 * 60 * 1000, // 10분 후 캐시 삭제
+    refetchOnMount: false, // 마운트 시 캐시된 데이터 사용 (로딩 속도 개선)
     refetchOnWindowFocus: false, // 포커스 시 리패치 안 함
   });
 }

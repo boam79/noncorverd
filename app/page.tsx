@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -12,6 +12,7 @@ import { CompareBar } from '@/components/CompareBar/CompareBar';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/Error/ErrorMessage';
 import { useHospitals } from '@/lib/hooks/useHospitals';
+import { useRegions } from '@/lib/hooks/useRegions';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
 import type { MedicalInstitutionType } from '@/types';
 
@@ -23,12 +24,40 @@ export default function Home() {
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
   
-  const { data: hospitals = [], isLoading, error } = useHospitals({
+  // 시군구 목록 가져오기 (필터링용)
+  const { data: sigunguList = [] } = useRegions(sido);
+  
+  const { data: allHospitals = [], isLoading, error } = useHospitals({
     sido,
-    sigungu,
+    sigungu: undefined, // 백엔드 매핑이 없는 경우를 위해 시군구 필터 비활성화, 프론트엔드에서 필터링
     types: selectedTypes,
     enabled: !!sido,
   });
+
+  // 시군구 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 필터링)
+  const hospitals = useMemo(() => {
+    if (!sigungu || allHospitals.length === 0) {
+      return allHospitals;
+    }
+
+    // 시군구명 추출 (예: "경기도 구리시" -> "구리시")
+    const sigunguData = Array.isArray(sigunguList) ? sigunguList.find(s => s.code === sigungu) : null;
+    const sigunguName = sigunguData?.name || '';
+    const cleanSigunguName = sigunguName
+      .replace(/.*?특별시\s*/, '')
+      .replace(/.*?광역시\s*/, '')
+      .replace(/.*?도\s*/, '')
+      .trim();
+
+    if (!cleanSigunguName) {
+      return allHospitals;
+    }
+
+    // 주소에 시군구명이 포함된 병원만 필터링
+    return allHospitals.filter((hospital) => {
+      return hospital.address?.includes(cleanSigunguName) || false;
+    });
+  }, [allHospitals, sigungu, sigunguList]);
 
   // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
   const handleRegionChange = useCallback((newSido?: string, newSigungu?: string) => {
