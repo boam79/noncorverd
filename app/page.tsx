@@ -37,36 +37,41 @@ export default function Home() {
     enabled: !!sido || !!hospitalName.trim(), // sido 또는 병원명이 있을 때 쿼리 실행
   });
 
-  // 시군구 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)
+  // 시군구 및 병원명 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)
   // 백엔드에서 이미 필터링된 경우에도 프론트엔드에서 한 번 더 확인하여 정확도 향상
   const hospitals = useMemo(() => {
-    if (!sigungu || allHospitals.length === 0) {
-      return allHospitals;
+    let filtered = allHospitals;
+
+    // 병원명 필터링 (프론트엔드에서 추가 필터링으로 정확도 향상)
+    if (hospitalName && hospitalName.trim()) {
+      const searchTerm = hospitalName.trim().toLowerCase();
+      filtered = filtered.filter((hospital) => {
+        const hospitalNameLower = hospital.name?.toLowerCase() || '';
+        return hospitalNameLower.includes(searchTerm);
+      });
     }
 
-    // 시군구명 추출 (예: "경기도 구리시" -> "구리시")
-    const sigunguData = Array.isArray(sigunguList) ? sigunguList.find(s => s.code === sigungu) : null;
-    const sigunguName = sigunguData?.name || '';
-    const cleanSigunguName = sigunguName
-      .replace(/.*?특별시\s*/, '')
-      .replace(/.*?광역시\s*/, '')
-      .replace(/.*?도\s*/, '')
-      .trim();
+    // 시군구 필터링
+    if (sigungu && filtered.length > 0) {
+      // 시군구명 추출 (예: "경기도 구리시" -> "구리시")
+      const sigunguData = Array.isArray(sigunguList) ? sigunguList.find(s => s.code === sigungu) : null;
+      const sigunguName = sigunguData?.name || '';
+      const cleanSigunguName = sigunguName
+        .replace(/.*?특별시\s*/, '')
+        .replace(/.*?광역시\s*/, '')
+        .replace(/.*?도\s*/, '')
+        .trim();
 
-    if (!cleanSigunguName) {
-      return allHospitals;
+      if (cleanSigunguName) {
+        // 주소에 시군구명이 포함된 병원만 필터링
+        filtered = filtered.filter((hospital) => {
+          return hospital.address?.includes(cleanSigunguName) || false;
+        });
+      }
     }
 
-    // 주소에 시군구명이 포함된 병원만 필터링
-    // 백엔드 매핑이 있는 경우에도 프론트엔드에서 한 번 더 확인
-    const filtered = allHospitals.filter((hospital) => {
-      return hospital.address?.includes(cleanSigunguName) || false;
-    });
-
-    // 필터링 결과가 너무 적으면 (백엔드 매핑이 작동한 경우) 원본 반환
-    // 필터링 결과가 많으면 (백엔드 매핑이 없는 경우) 필터링된 결과 반환
-    return filtered.length > 0 ? filtered : allHospitals;
-  }, [allHospitals, sigungu, sigunguList]);
+    return filtered;
+  }, [allHospitals, sigungu, sigunguList, hospitalName]);
 
   // 검색 실행 핸들러
   const handleSearch = useCallback(() => {

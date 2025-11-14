@@ -238,7 +238,7 @@ class HospitalsAdapter extends BaseAdapter {
     
     if (!serviceKey) {
       console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+      return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
     }
 
     // Service Key를 임시로 설정
@@ -246,7 +246,7 @@ class HospitalsAdapter extends BaseAdapter {
     console.log('✅ Service Key 확인됨, 실제 API 호출 시도...');
 
     // 캐시 확인 (API 호출 절약)
-    const cacheKey = this.getCacheKey(sido, sigungu, type);
+    const cacheKey = this.getCacheKey(sido, sigungu, type, hospitalName);
     const cachedData = this.getFromCache(cacheKey);
     if (cachedData) {
       return this.formatResponse(cachedData, { 
@@ -259,6 +259,12 @@ class HospitalsAdapter extends BaseAdapter {
 
     try {
       const params = {};
+      
+      // 의료기관명 검색 파라미터 추가
+      if (hospitalName) {
+        params.yadmNm = hospitalName; // 병원명 파라미터
+        console.log(`📍 병원명 필터 적용: ${hospitalName}`);
+      }
       
       // 지역 필터 (공공데이터 API 파라미터명)
       // sido: 시도 코드 (2자리: 11=서울, 26=부산(행정안전부), 21=부산(HIRA))
@@ -358,7 +364,7 @@ class HospitalsAdapter extends BaseAdapter {
             }
             // 데이터가 없으면 Mock 데이터 반환
             console.warn('⚠️ API 호출 실패 및 데이터 없음, Mock 데이터 반환');
-            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
           }
           // 이후 페이지 실패 시 기존 데이터 반환
           break;
@@ -368,7 +374,7 @@ class HospitalsAdapter extends BaseAdapter {
         if (!result.data || result.data.length === 0) {
           if (pageNo === 1) {
             console.warn('⚠️ API 응답에 데이터가 없습니다. Mock 데이터 반환');
-            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type }));
+            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
           }
           break;
         }
@@ -451,9 +457,9 @@ class HospitalsAdapter extends BaseAdapter {
       return this.formatResponse(allHospitals, { total: String(finalTotal), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      const mockData = this.getMockHospitals({ sido, sigungu, type });
+      const mockData = this.getMockHospitals({ sido, sigungu, type, hospitalName });
       // Mock 데이터도 캐시에 저장 (짧은 시간 동안)
-      const cacheKey = this.getCacheKey(sido, sigungu, type);
+      const cacheKey = this.getCacheKey(sido, sigungu, type, hospitalName);
       this.setCache(cacheKey, mockData);
       return this.formatResponse(mockData);
     }
@@ -573,7 +579,7 @@ class HospitalsAdapter extends BaseAdapter {
   /**
    * Mock 병원 데이터 (API 실패 시 사용)
    */
-  getMockHospitals({ sido, sigungu, type }) {
+  getMockHospitals({ sido, sigungu, type, hospitalName }) {
     // 지역별 Mock 데이터
     const mockHospitalsByRegion = {
       '11': [ // 서울특별시
@@ -722,6 +728,15 @@ class HospitalsAdapter extends BaseAdapter {
     // 의료기관 종별 필터링
     if (type) {
       hospitals = hospitals.filter((h) => h.type === type);
+    }
+
+    // 병원명 필터링
+    if (hospitalName && hospitalName.trim()) {
+      const searchTerm = hospitalName.trim().toLowerCase();
+      hospitals = hospitals.filter((h) => {
+        const hospitalNameLower = h.name?.toLowerCase() || '';
+        return hospitalNameLower.includes(searchTerm);
+      });
     }
 
     return hospitals;
