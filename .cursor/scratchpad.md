@@ -511,10 +511,9 @@
     - ✅ 종합병원 필터링: clCdNm='종합병원' 또는 '상급종합'으로 추가 필터링
     - ✅ XML 파서 설정 개선 (mergeAttrs=false로 필드명 유지)
     - ✅ totalCount 처리 개선 (Infinity인 경우 실제 수집 개수 사용)
-    - ⚠️ **API 토큰 할당량 초과 문제**: 현재 "Api token quota exceeded" 오류로 인해 Mock 데이터만 반환됨
-      - 서울: 3개 (Mock 데이터)
-      - 실제 API 호출이 실패하여 페이지네이션이 작동하지 않음
-      - 해결 방안: 공공데이터 포털에서 할당량 확인/증설 필요
+    - ✅ **API 토큰 할당량 증설 완료**: 할당량 증설 후 실제 API 데이터 반환 확인 중
+      - 실제 API 호출 성공 여부 및 페이지네이션 작동 확인 필요
+      - 전국 시도별 데이터 수집 확인 필요
   - ⏳ **E2E 테스트 개선 필요**:
     - ✅ `HospitalCard`에 `data-testid="hospital-card"` 및 `article` 태그 추가
     - ⏳ Vercel 배포 후 Playwright E2E 재실행 필요
