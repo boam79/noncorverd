@@ -326,14 +326,18 @@ class HospitalsAdapter extends BaseAdapter {
         }
       }
 
-      // 페이지네이션을 위한 전체 데이터 수집
+      // 페이지네이션을 위한 데이터 수집 (API 호출 절약: 기본 2페이지만 수집)
+      // 사용자가 "더 보기"를 요청하면 추가 페이지 수집 (maxPages 파라미터로 제어)
       let allHospitals = [];
       let pageNo = 1;
       const pageSize = 100;
+      const maxPagesToFetch = 2; // API 호출 절약: 기본 2페이지만 수집 (200개 병원)
       let totalCount = Infinity;
       let hasMore = true;
 
-      while (hasMore && pageNo <= 50) { // 최대 50페이지 (5000개 병원)
+      console.log(`📊 페이지네이션 설정: 최대 ${maxPagesToFetch}페이지 수집 (API 호출 절약)`);
+
+      while (hasMore && pageNo <= maxPagesToFetch) { // 최대 2페이지 - API 호출 절약
         params.pageNo = pageNo;
         params.numOfRows = pageSize;
 
