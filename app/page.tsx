@@ -34,7 +34,7 @@ export default function Home() {
     sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
     types: selectedTypes,
     hospitalName: hospitalName.trim() || undefined,
-    enabled: !!sido,
+    enabled: !!sido || !!hospitalName.trim(), // sido 또는 병원명이 있을 때 쿼리 실행
   });
 
   // 시군구 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)

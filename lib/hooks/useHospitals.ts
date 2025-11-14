@@ -31,7 +31,7 @@ export function useHospitals({
       }
       throw new Error(response.error?.message || '병원 정보를 불러오는데 실패했습니다.');
     },
-        enabled: enabled && !!sido, // sido가 있을 때만 쿼리 실행
+        enabled: enabled && (!!sido || !!hospitalName), // sido 또는 병원명이 있을 때 쿼리 실행
         staleTime: 60 * 60 * 1000, // 1시간간 fresh 상태 유지 (API 호출 절약)
         gcTime: 2 * 60 * 60 * 1000, // 2시간 후 캐시 삭제 (API 호출 절약)
         refetchOnMount: false, // 마운트 시 캐시된 데이터 사용 (API 호출 절약)
