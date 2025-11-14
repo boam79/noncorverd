@@ -207,6 +207,18 @@ class HospitalsAdapter extends BaseAdapter {
     this.serviceKey = serviceKey;
     console.log('✅ Service Key 확인됨, 실제 API 호출 시도...');
 
+    // 캐시 확인 (API 호출 절약)
+    const cacheKey = this.getCacheKey(sido, sigungu, type);
+    const cachedData = this.getFromCache(cacheKey);
+    if (cachedData) {
+      return this.formatResponse(cachedData, { 
+        total: String(cachedData.length), 
+        page: '1', 
+        limit: String(cachedData.length),
+        cached: true 
+      });
+    }
+
     try {
       const params = {};
       
@@ -390,6 +402,10 @@ class HospitalsAdapter extends BaseAdapter {
       // totalCount가 Infinity인 경우 (API에서 totalCount를 제공하지 않은 경우) 실제 수집된 개수 사용
       const finalTotal = totalCount !== Infinity ? totalCount : allHospitals.length;
       console.log(`✅ 실제 API 데이터 반환: ${allHospitals.length}개 병원 (총 ${finalTotal}개 중)`);
+      
+      // 캐시에 저장 (API 호출 절약)
+      this.setCache(cacheKey, allHospitals);
+      
       return this.formatResponse(allHospitals, { total: String(finalTotal), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
       console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
