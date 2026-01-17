@@ -94,13 +94,14 @@ export default function Home() {
 
   // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
   const handleRegionChange = useCallback((newSido?: string, newSigungu?: string) => {
-    // 시도가 변경되면 시군구도 초기화
+    setSido(newSido);
+    // 시도가 변경된 경우에만 시군구 초기화, 그렇지 않으면 전달받은 값 사용
     if (sido !== newSido) {
       setSigungu(undefined);
+    } else {
+      setSigungu(newSigungu);
     }
-    setSido(newSido);
-    setSigungu(newSigungu);
-    
+
     // 지역 변경 시 선택된 병원 목록은 유지 (초기화하지 않음)
   }, [sido]);
 
