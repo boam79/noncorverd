@@ -58,11 +58,8 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/opendata', authMiddleware, opendataRoutes);
 
-// Error handling
-app.use(errorHandler);
-
-// 404 handler
-app.use((req, res) => {
+// 404 handler (must come before error handler)
+app.use((req, res, next) => {
   res.status(404).json({
     ok: false,
     error: {
@@ -71,6 +68,9 @@ app.use((req, res) => {
     },
   });
 });
+
+// Error handling (must be last - Express requires 4 args to identify error middleware)
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
