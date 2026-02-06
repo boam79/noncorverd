@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // 백엔드 URL 설정 (환경변수 우선, 없으면 기본값)
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://54.180.251.93:3000';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://54.180.251.93:3001';
 // 클라이언트 토큰 설정 (여러 환경변수 이름 지원)
 const CLIENT_TOKEN = process.env.CLIENT_OPENDATA_TOKEN || 
                      process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || 

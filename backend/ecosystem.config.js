@@ -16,7 +16,7 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: process.env.PORT || 3000,
+        PORT: process.env.PORT || 3001,
         FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
         CLIENT_OPENDATA_TOKEN: process.env.CLIENT_OPENDATA_TOKEN || 'dev-client-token-12345',
         // 공공데이터 API Service Keys
