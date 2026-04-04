@@ -68,16 +68,8 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
     });
   }, [queryClient]);
 
-  // 시도 목록이 로드되면 주요 시도들의 시군구를 프리패치
-  useEffect(() => {
-    if (safeSidoList.length > 0) {
-      // 주요 시도들(서울, 경기, 부산 등)의 시군구를 미리 로드
-      const majorSidos = ['11', '41', '26', '27', '28']; // 서울, 경기, 부산, 대구, 인천
-      majorSidos.forEach((code) => {
-        prefetchSigungu(code);
-      });
-    }
-  }, [safeSidoList, prefetchSigungu]);
+  // 시군구 프리패치 비활성화
+  // (시군구 API는 Vercel CDN 캐싱으로 두 번째 요청부터 빠름)
 
   // 시도 변경 시 시군구 초기화
   useEffect(() => {

@@ -63,8 +63,8 @@ export class ApiClient {
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
     const controller = new AbortController();
-    // Render Free 플랜 콜드 스타트(~50초)를 고려해 70초로 설정
-    const timeoutId = setTimeout(() => controller.abort(), 70000);
+    // Vercel 인천 직접 호출 → 30초 타임아웃
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {

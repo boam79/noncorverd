@@ -40,6 +40,7 @@ async function getSigunguList(sido: string) {
   while (allRows.length < total) {
     const { items, total: t } = await fetchPublicData(REGIONS_ENDPOINT, {
       type: 'json', numOfRows: 1000, pageNo,
+      _cache: 86400, // Vercel CDN 24시간 캐싱
     });
     const rows = items as Record<string, string>[];
     allRows.push(...rows);
@@ -47,6 +48,7 @@ async function getSigunguList(sido: string) {
     if (rows.length < 1000) break;
     pageNo++;
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
   const sigunguMap = new Map<string, { code: string; name: string }>();
   for (const row of allRows) {

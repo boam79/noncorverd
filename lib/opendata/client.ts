@@ -27,9 +27,10 @@ export async function fetchPublicData(
   }
 
   const url = `${API_BASE}${endpoint}?${qs.toString()}`;
+  const revalidate = params._cache ? Number(params._cache) : 0;
   const res = await fetch(url, {
     headers: { 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' },
-    next: { revalidate: 0 },
+    next: { revalidate },
   });
 
   const text = await res.text();

@@ -24,9 +24,9 @@ export function useRegions(sido?: string) {
     enabled: true,
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 48 * 60 * 60 * 1000,
-    // Render Free 플랜 콜드 스타트(~50초) 대응: 3회 재시도, 10초 간격
-    retry: 3,
-    retryDelay: 10000,
+    // Vercel 인천 직접 호출 → CDN 캐싱으로 빠름, 재시도 1회
+    retry: 1,
+    retryDelay: 3000,
   });
 }
 
