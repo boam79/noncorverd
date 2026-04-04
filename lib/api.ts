@@ -63,7 +63,8 @@ export class ApiClient {
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃 (더 빠른 피드백)
+    // Render Free 플랜 콜드 스타트(~50초)를 고려해 70초로 설정
+    const timeoutId = setTimeout(() => controller.abort(), 70000);
 
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -117,7 +118,7 @@ export class ApiClient {
           ok: false,
           error: {
             code: "TIMEOUT_ERROR",
-            message: "요청 시간이 초과되었습니다.",
+            message: "서버 응답 시간이 초과되었습니다. 서버가 시작 중일 수 있습니다. 잠시 후 다시 시도해주세요.",
           },
         };
       }

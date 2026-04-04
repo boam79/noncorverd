@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -36,6 +36,19 @@ export default function Home() {
     clearHospitals();
   }, [clearHospitals]);
   
+  // 콜드 스타트 감지 (15초 이상 로딩 중이면 안내 배너 표시)
+  const [showColdStartBanner, setShowColdStartBanner] = useState(false);
+  const { isLoading: isRegionsLoading, isFetching: isRegionsFetching } = useRegions();
+
+  useEffect(() => {
+    if (!isRegionsLoading && !isRegionsFetching) {
+      setShowColdStartBanner(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowColdStartBanner(true), 15000);
+    return () => clearTimeout(timer);
+  }, [isRegionsLoading, isRegionsFetching]);
+
   // 시군구 목록 가져오기 (필터링용)
   const { data: sigunguList = [] } = useRegions(sido);
   
@@ -114,6 +127,24 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 pb-32 md:pb-24">
       <Header onHomeClick={handleHomeClick} />
+
+      {/* 콜드 스타트 안내 배너 */}
+      {showColdStartBanner && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <Container className="py-3">
+            <div className="flex items-center gap-3 text-amber-800">
+              <span className="text-xl animate-spin">⏳</span>
+              <div>
+                <p className="font-medium text-sm">서버를 시작하는 중입니다</p>
+                <p className="text-xs text-amber-600">
+                  무료 플랜 서버가 절전 상태에서 깨어나고 있습니다. 최대 1분 정도 소요될 수 있습니다.
+                </p>
+              </div>
+            </div>
+          </Container>
+        </div>
+      )}
+
       <Container className="py-8">
         <div className="space-y-6">
           {/* 검색 필터 섹션 */}
