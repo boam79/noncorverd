@@ -192,30 +192,31 @@
    - 롤백 계획 수립 및 테스트
    - 성공 기준: 모든 핵심 기능이 정상 작동하며, 에러 상황에서도 적절히 처리됨
 
-   **상세 Task Breakdown (prod-6)**
+   **상세 Task Breakdown (prod-6) — Render 전환 후 기준**
    1. **환경 동기화 및 배포 체크**
-      - Vercel / EC2 환경변수 비교표 작성 (`.env.local`, Vercel Dashboard, backend/.env)
-      - Secrets Manager 값 최신화 확인 (api_key, CLIENT_OPENDATA_TOKEN 등)
-      - 배포 체크리스트 업데이트 (필수 항목, 승인자 명시)
+      - Vercel / Render 환경변수 비교표 확인 (`doc/ENVIRONMENT_MATRIX.md`)
+      - Render Dashboard에서 `api_key`, `CLIENT_OPENDATA_TOKEN` 입력 완료 확인
+      - Vercel Dashboard에서 `NEXT_PUBLIC_API_BASE_URL` → Render URL로 업데이트 확인
       - 성공 기준: 환경변수 및 설정 차이 0건, 체크리스트 승인 완료
    2. **스테이징 플로우 리그레션 테스트**
+      - Render 백엔드 Health Check 확인: `curl https://noncorverd-backend.onrender.com/health`
       - 실 배포 URL 기준으로 QA 체크리스트 핵심 시나리오 재검증 (PC & 모바일)
-      - Playwright E2E를 스테이징 URL로 실행 (`PLAYWRIGHT_BASE_URL` 변경)
-      - 주요 로그(CloudWatch, Vercel)에서 오류 발생 여부 확인
+      - Playwright E2E를 스테이징 URL로 실행 (`PLAYWRIGHT_BASE_URL=https://noncorverd.vercel.app`)
+      - 주요 로그(Render Dashboard Logs, Vercel)에서 오류 발생 여부 확인
       - 성공 기준: E2E 전 케이스 통과, 수동 QA 이슈 없음, 오류 로그 0건
    3. **부하 & 안정성 테스트**
-      - 간이 부하 테스트 스크립트 설계 (k6 또는 autocannon) – 초당 10~20 req, 5분
+      - 간이 부하 테스트 스크립트 실행 (`scripts/load-test.js`) – 초당 10~20 req, 5분
       - 캐시 미스 시 API 응답 시간 분석 (평균 < 2초, 95% < 3초)
-      - PM2/EC2 자원 모니터링: CPU < 70%, 메모리 < 70%
+      - Render Dashboard 메트릭 확인: CPU/메모리 < 70%
       - 성공 기준: SLA 충족, 자원 사용률 기준 이하 유지
    4. **장애/롤백 시나리오 검증**
       - 백엔드 다운 → 프론트엔드의 오류 메시지 및 재시도 동작 확인
       - 공공데이터 API 401/500 Mock 주입 → 에러 핸들링 및 로깅 확인
-      - PM2 롤백 절차 문서화 및 실습 (pm2 save/restore)
+      - Render Dashboard → Deploys 탭에서 롤백 절차 확인
       - 성공 기준: 장애 시 사용자 메시지가 명확하고, 롤백 10분 이내 가능
    5. **릴리즈 Go/No-Go 준비**
       - 배포 일정 확정 및 커뮤니케이션 문안 작성 (내부 공유용)
-      - 모니터링 알람 설정 확인 (Vercel Analytics, Sentry, CloudWatch)
+      - 모니터링 알람 설정 확인 (Vercel Analytics, Sentry, Render Logs)
       - 최종 보고서 작성 (QA 결과, 부하 테스트 결과, 위험 요소)
       - 성공 기준: Go/No-Go 미팅 자료 준비 완료, 위험 요소 없음 또는 대응 계획 수립
 
@@ -404,13 +405,16 @@
   - 다음 단계: 테스트 실행 결과를 정리 후 Planner에게 보고, 필요 시 이슈 티켓 생성
   - ✅ 통합 테스트 스크립트 1차 실행 완료 (서울 종합병원 3개, 성공률 100%, 평균 항목 593개, 공통 항목 179개)
 
-- 🔄 **prod-6 Day 0 – 환경 감사 진행 중**
-  - ✅ 로컬 `.env` 및 `backend/.env` 값 확인 (`api_key`, `CLIENT_OPENDATA_TOKEN` 동일)
-  - ✅ `ecosystem.config.cjs`에서 `api_key` fallback 로직 재확인
-  - 📄 `docs/ENVIRONMENT_MATRIX.md`에 확인 내용 기록 (2025-11-14 기준)
-  - ❗ Vercel Dashboard / EC2 실서버 환경변수는 직접 접속하여 확인 필요 (사용자 수행 항목)
+- ✅ **백엔드 인프라 전환 완료 (2026-04-05): AWS EC2 → Render**
+  - ✅ `render.yaml` Blueprint 생성 (저장소 루트)
+  - ✅ `backend/package.json`에서 PM2 devDependency 제거
+  - ✅ `backend/ecosystem.config.cjs`, `ecosystem.config.js` 삭제
+  - ✅ AWS 전용 배포 스크립트 12개 삭제
+  - ✅ `env.example` → Render URL 기준으로 업데이트
+  - ✅ `doc/` 문서 전체 Render 기준으로 업데이트 (DEPLOYMENT, DEPLOY_CHECKLIST, DEPLOY_CORS_FIX, ENVIRONMENT_MATRIX, RELEASE_CHECKLIST, AWS_DEPLOYMENT, EC2_INFO)
+  - ❗ **다음 필요 작업**: Render Dashboard에서 `api_key`, `CLIENT_OPENDATA_TOKEN` 입력 / Vercel 환경변수 `NEXT_PUBLIC_API_BASE_URL` → Render URL로 변경
 
-- 📅 **prod-6 Day 1 계획 – 스테이징 QA & E2E**
+- 🔄 **prod-6 Day 1 계획 – 스테이징 QA & E2E**
   - 목표: 스테이징 URL 기준 수동 QA와 Playwright E2E 통과
   - 준비: 스테이징 URL/토큰 확보, `PLAYWRIGHT_BASE_URL` 설정, QA 체크리스트 사전 확인
   - 실행 절차:

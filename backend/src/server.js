@@ -47,6 +47,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // preflight 요청 전역 허용
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

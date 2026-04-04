@@ -1,41 +1,45 @@
-# AWS EC2 배포 체크리스트
+# Render 배포 체크리스트
 
 ## ✅ 배포 전 확인사항
 
-- [ ] EC2 인스턴스 생성 완료 (ap-northeast-2, 서울)
-- [ ] 보안 그룹 설정:
-  - [ ] SSH (22) - 내 IP
-  - [ ] HTTP (80) - 모든 IP
-  - [ ] HTTPS (443) - 모든 IP  
-  - [ ] Custom TCP (3001) - 모든 IP
-- [ ] SSH 키 파일 준비 (`~/.ssh/boam79-aws-key.pem`)
-- [ ] `.env` 파일에 Service Key 설정 완료
-- [ ] 로컬에서 `npm install` 완료
+- [ ] `render.yaml`이 저장소 루트에 존재하고 최신 상태인지 확인
+- [ ] `backend/` 코드 최신화 완료 (`git status` clean)
+- [ ] 백엔드 로컬 동작 확인 (`cd backend && npm start`)
+- [ ] 환경변수 값 준비:
+  - [ ] `CLIENT_OPENDATA_TOKEN`
+  - [ ] `api_key` (공공데이터 서비스키)
 
 ## 🚀 배포 실행
 
-```bash
-cd backend
-./quick-deploy.sh
-```
+[Render Blueprint 배포 링크](https://dashboard.render.com/blueprint/new?repo=https://github.com/boam79/noncorverd) 클릭 후:
 
-또는
-
-```bash
-./deploy.sh YOUR_EC2_IP ~/.ssh/boam79-aws-key.pem
-```
+1. GitHub OAuth 인증
+2. 서비스 이름 확인 (`noncorverd-backend`)
+3. `sync: false` 환경변수 직접 입력
+4. **"Apply"** 클릭
 
 ## ✅ 배포 후 확인
 
-- [ ] Health Check 통과: `curl http://YOUR_EC2_IP:3001/health`
-- [ ] API 테스트 통과: `./aws-test.sh YOUR_EC2_IP ~/.ssh/boam79-aws-key.pem`
-- [ ] PM2 서버 실행 중: `pm2 status` (EC2에서)
-- [ ] 로그 확인: `pm2 logs nonvovered-backend` (EC2에서)
+- [ ] Health Check 통과:
+  ```bash
+  curl https://noncorverd-backend.onrender.com/health
+  ```
+- [ ] CORS 검증:
+  ```bash
+  curl -I -H "Origin: https://noncorverd.vercel.app" \
+       -H "X-Client-Token: your-token" \
+       "https://noncorverd-backend.onrender.com/opendata/regions"
+  ```
+- [ ] Render Dashboard → Logs 탭에서 에러 없음 확인
+- [ ] Vercel 프론트엔드에서 병원 검색 정상 동작 확인
 
 ## 🔧 문제 발생 시
 
-1. **SSH 연결 실패**: 키 권한 확인 (`chmod 400`)
-2. **포트 접근 불가**: 보안 그룹 확인
-3. **서버 시작 실패**: PM2 로그 확인
-4. **API 호출 실패**: EC2에서 직접 curl 테스트
+1. **서비스 슬립 상태**: Render Free 플랜은 15분 비활성 후 슬립 → 첫 요청 후 대기
+2. **환경변수 누락**: Render Dashboard → 서비스 → Environment 탭에서 확인/추가
+3. **빌드 실패**: Dashboard → Logs에서 빌드 로그 확인
+4. **CORS 오류**: `CORS_ORIGINS` 값에 Vercel 도메인 포함 여부 확인
 
+## 🔄 롤백 방법
+
+Render Dashboard → 서비스 → **Deploys** 탭에서 이전 배포 선택 후 **"Rollback to this deploy"** 클릭
