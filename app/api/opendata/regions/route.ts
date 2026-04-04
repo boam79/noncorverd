@@ -26,30 +26,9 @@ export async function GET(request: NextRequest) {
 }
 
 async function getSidoList() {
-  const { items } = await fetchPublicData(REGIONS_ENDPOINT, {
-    type: 'json', numOfRows: 20, pageNo: 1,
-    locatadd_nm: '', regSeCd: 'A', // 시도 레벨만
-  });
-
-  // API가 시도 레벨 항목을 직접 제공하지 않을 수 있으므로
-  // 전체에서 시도 코드만 추출
-  if (items.length === 0) return FALLBACK_SIDO;
-
-  const sidoMap = new Map<string, string>();
-  for (const row of items as Record<string, string>[]) {
-    const sidoCd = String(row.sido_cd ?? '').padStart(2, '0');
-    const isSido = row.sgg_cd === '000' && row.umd_cd === '000' && row.ri_cd === '00';
-    if (sidoCd && isSido && !sidoMap.has(sidoCd)) {
-      sidoMap.set(sidoCd, row.locatadd_nm || row.locallow_nm || '');
-    }
-  }
-
-  const list = [...sidoMap.entries()]
-    .filter(([, name]) => name)
-    .map(([code, name]) => ({ code, name }))
-    .sort((a, b) => Number(a.code) - Number(b.code));
-
-  return list.length > 0 ? list : FALLBACK_SIDO;
+  // 시도 목록은 거의 변경되지 않으므로 정적 데이터 반환
+  // (행정안전부 API의 시도 레벨 단독 조회는 지원하지 않음)
+  return FALLBACK_SIDO;
 }
 
 async function getSigunguList(sido: string) {
