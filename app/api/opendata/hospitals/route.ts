@@ -4,14 +4,19 @@ import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
 
-const CLINIC_TYPE_MAP: Record<string, string | null> = {
-  '종합병원': '01',
-  '병원': '11',
-  '의원': null,   // clCdNm으로 후처리 필터링
-  '요양병원': '31',
-  '치과': '41',
-  '한의원': '51',
-};
+// clCdNm 기반 정확한 타입 매칭 함수
+// HIRA API의 clCdNm 실제 반환값: 종합병원, 상급종합, 병원, 요양병원, 정신병원, 의원, 치과의원, 한의원, 한방병원
+function matchesType(clCdNm: string, selectedType: string): boolean {
+  switch (selectedType) {
+    case '종합병원': return clCdNm === '종합병원' || clCdNm === '상급종합';
+    case '병원':     return clCdNm === '병원' || clCdNm === '정신병원';
+    case '의원':     return clCdNm === '의원';
+    case '요양병원': return clCdNm === '요양병원';
+    case '치과':     return clCdNm.includes('치과');
+    case '한의원':   return clCdNm.includes('한의') || clCdNm === '한방병원';
+    default:         return clCdNm.includes(selectedType);
+  }
+}
 
 interface RawHospital {
   ykiho?: string;
@@ -72,12 +77,9 @@ export async function GET(request: NextRequest) {
 
     const typeNames = type ? type.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-    // 단일 종별 선택 시에만 clCd 파라미터 사용 (API 수준 필터링)
-    // 여러 종별 선택 시 clCd 미사용 → 전체 조회 후 프론트에서 필터링
-    if (typeNames.length === 1) {
-      const clCd = CLINIC_TYPE_MAP[typeNames[0]];
-      if (clCd) params.clCd = clCd;
-    }
+    // clCd API 파라미터 사용하지 않음
+    // 이유: HIRA API의 clCd 체계가 실제 clCdNm과 불일치 (clCd=11이 소규모 병원 제외)
+    // 전체 조회 후 clCdNm 기반 서버사이드 필터링으로 정확도 확보
 
     // 최대 2페이지 수집 (API 할당량 절약)
     const allHospitals: ReturnType<typeof mapHospital>[] = [];
@@ -89,9 +91,9 @@ export async function GET(request: NextRequest) {
       if (items.length < 100) break;
     }
 
-    // 종별명 후처리 필터
+    // clCdNm 기반 정확한 종별 필터링
     const filtered = typeNames.length > 0
-      ? allHospitals.filter(h => typeNames.some(t => h.type.includes(t)))
+      ? allHospitals.filter(h => typeNames.some(t => matchesType(h.type, t)))
       : allHospitals;
 
     return NextResponse.json({
