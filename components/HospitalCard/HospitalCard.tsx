@@ -37,21 +37,23 @@ export function HospitalCard({
             )}
           </div>
           <p className="text-sm text-gray-600 mb-2">{hospital.address}</p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {hospital.departments.slice(0, 3).map((dept) => (
-              <span
-                key={dept}
-                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-              >
-                {dept}
-              </span>
-            ))}
-            {hospital.departments.length > 3 && (
-              <span className="px-2 py-1 text-xs text-gray-500">
-                +{hospital.departments.length - 3}
-              </span>
-            )}
-          </div>
+          {(hospital.departments ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(hospital.departments ?? []).slice(0, 3).map((dept) => (
+                <span
+                  key={dept}
+                  className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                >
+                  {dept}
+                </span>
+              ))}
+              {(hospital.departments ?? []).length > 3 && (
+                <span className="px-2 py-1 text-xs text-gray-500">
+                  +{(hospital.departments ?? []).length - 3}
+                </span>
+              )}
+            </div>
+          )}
           {hospital.phone && (
             <p className="text-sm text-gray-500">📞 {hospital.phone}</p>
           )}

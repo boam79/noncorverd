@@ -1,10 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useMemo } from 'react';
 import { useRegions } from '@/lib/hooks/useRegions';
-import { apiClient } from '@/lib/api';
-import type { Region } from '@/types';
 
 interface RegionSelectorProps {
   onRegionChange: (sido?: string, sigungu?: string) => void;
@@ -15,7 +12,6 @@ interface RegionSelectorProps {
 export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: parentSigungu }: RegionSelectorProps) {
   const [selectedSido, setSelectedSido] = useState<string>('');
   const [selectedSigungu, setSelectedSigungu] = useState<string>('');
-  const queryClient = useQueryClient();
   
   // 부모 컴포넌트의 상태와 동기화
   useEffect(() => {
@@ -37,49 +33,10 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
   const safeSidoList = useMemo(() => (Array.isArray(sidoList) ? sidoList : []), [sidoList]);
   const safeSigunguList = useMemo(() => (Array.isArray(sigunguList) ? sigunguList : []), [sigunguList]);
 
-  // 시군구 프리패치 함수
-  const prefetchSigungu = useCallback(async (sidoCode: string) => {
-    const queryKey = ['regions', sidoCode];
-    
-    // 이미 캐시에 있고 fresh한 데이터가 있으면 스킵
-    const cached = queryClient.getQueryState(queryKey);
-    if (cached?.data && cached?.dataUpdatedAt && Date.now() - cached.dataUpdatedAt < 24 * 60 * 60 * 1000) {
-      return;
-    }
-
-    // 백그라운드에서 프리패치
-    queryClient.prefetchQuery({
-      queryKey,
-      queryFn: async () => {
-        const response = await apiClient.getRegions(sidoCode);
-        if (response.ok && response.data) {
-          const data = response.data;
-          if (Array.isArray(data)) {
-            return data as Region[];
-          }
-          if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
-            return (data as { data: Region[] }).data;
-          }
-          throw new Error('지역 정보 형식이 올바르지 않습니다.');
-        }
-        throw new Error(response.error?.message || '지역 정보를 불러오는데 실패했습니다.');
-      },
-      staleTime: 24 * 60 * 60 * 1000, // 24시간
-    });
-  }, [queryClient]);
-
-  // 시군구 프리패치 비활성화
-  // (시군구 API는 Vercel CDN 캐싱으로 두 번째 요청부터 빠름)
-
   // 시도 변경 시 시군구 초기화
   useEffect(() => {
-    if (selectedSido) {
-      // 시도 변경 시 시군구 초기화
-      setSelectedSigungu('');
-      // 선택된 시도의 시군구를 프리패치 (이미 로드 중이면 스킵)
-      prefetchSigungu(selectedSido);
-    }
-  }, [selectedSido, prefetchSigungu]);
+    if (selectedSido) setSelectedSigungu('');
+  }, [selectedSido]);
 
   // 지역 변경 알림 (시도와 시군구 변경 시)
   useEffect(() => {
