@@ -15,7 +15,13 @@ const TYPE_CLCDS: Record<string, string[]> = {
   '요양병원': ['28'],
   '의원':     ['31'],
   '치과':     ['41', '51'],
-  '한의원':   ['31'],   // clCd=31 + 이름 필터
+  '한의원':   ['31'],  // yadmNm=한의원 파라미터 추가로 이름 검색
+};
+
+// 한의원은 clCd=31(의원)에 포함되어 있고 이름 순 정렬 시 뒤에 위치
+// → yadmNm 파라미터로 직접 검색
+const TYPE_EXTRA_PARAMS: Record<string, Record<string, string>> = {
+  '한의원': { yadmNm: '한의원' },
 };
 
 // 한의원은 clCd=31(의원)에 포함 → 이름에 '한의'/'한방' 포함 여부로 구분
@@ -66,11 +72,12 @@ async function fetchHospitalsForType(
   typeName: string
 ): Promise<ReturnType<typeof mapHospital>[]> {
   const clCds = TYPE_CLCDS[typeName] ?? [];
+  const extraParams = TYPE_EXTRA_PARAMS[typeName] ?? {};
   const results: ReturnType<typeof mapHospital>[] = [];
   const seen = new Set<string>();
 
   for (const clCd of clCds) {
-    const params: Record<string, string | number> = { ...baseParams, clCd };
+    const params: Record<string, string | number> = { ...baseParams, ...extraParams, clCd };
 
     for (let page = 1; page <= 2; page++) {
       params.pageNo = page;
