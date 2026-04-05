@@ -20,8 +20,9 @@ const TYPE_CLCDS: Record<string, string[]> = {
 
 // 한의원은 clCd=31(의원)에 포함되어 있고 이름 순 정렬 시 뒤에 위치
 // → yadmNm 파라미터로 직접 검색
+// yadmNm 부분 검색: '한의원'(3자)보다 '한의'(2자)가 더 많은 결과 반환
 const TYPE_EXTRA_PARAMS: Record<string, Record<string, string>> = {
-  '한의원': { yadmNm: '한의원' },
+  '한의원': { yadmNm: '한의' },
 };
 
 // 한의원은 clCd=31(의원)에 포함 → 이름에 '한의'/'한방' 포함 여부로 구분
