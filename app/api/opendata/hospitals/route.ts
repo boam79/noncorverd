@@ -70,10 +70,14 @@ export async function GET(request: NextRequest) {
       if (hiraSigungu) params.sgguCd = hiraSigungu;
     }
 
-    // 종별 코드 — 첫 번째 종별만 적용 (HIRA API 단일 clCd 지원)
-    const primaryType = type.split(',')[0].trim();
-    const clCd = CLINIC_TYPE_MAP[primaryType];
-    if (clCd) params.clCd = clCd;
+    const typeNames = type ? type.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    // 단일 종별 선택 시에만 clCd 파라미터 사용 (API 수준 필터링)
+    // 여러 종별 선택 시 clCd 미사용 → 전체 조회 후 프론트에서 필터링
+    if (typeNames.length === 1) {
+      const clCd = CLINIC_TYPE_MAP[typeNames[0]];
+      if (clCd) params.clCd = clCd;
+    }
 
     // 최대 2페이지 수집 (API 할당량 절약)
     const allHospitals: ReturnType<typeof mapHospital>[] = [];
@@ -85,9 +89,8 @@ export async function GET(request: NextRequest) {
       if (items.length < 100) break;
     }
 
-    // 종별명 후처리 필터 (의원/한의원 등 clCd 없는 케이스)
-    const typeNames = type ? type.split(',').map(t => t.trim()) : [];
-    const filtered = typeNames.length > 0 && !clCd
+    // 종별명 후처리 필터
+    const filtered = typeNames.length > 0
       ? allHospitals.filter(h => typeNames.some(t => h.type.includes(t)))
       : allHospitals;
 
