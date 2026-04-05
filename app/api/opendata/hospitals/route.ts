@@ -4,8 +4,7 @@ import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
 
-// clCdNm 기반 정확한 타입 매칭 함수
-// HIRA API의 clCdNm 실제 반환값: 종합병원, 상급종합, 병원, 요양병원, 정신병원, 의원, 치과의원, 한의원, 한방병원
+// clCdNm 기반 정확한 타입 매칭
 function matchesType(clCdNm: string, selectedType: string): boolean {
   switch (selectedType) {
     case '종합병원': return clCdNm === '종합병원' || clCdNm === '상급종합';
@@ -17,6 +16,17 @@ function matchesType(clCdNm: string, selectedType: string): boolean {
     default:         return clCdNm.includes(selectedType);
   }
 }
+
+// clCd 필터 사용 가능 여부
+// 병원(clCd=11)은 소규모 병원(clCd=21) 누락 문제로 사용 안 함
+// 의원은 clCd 없음
+// 치과(41)/한의원(51)/종합병원(01)/요양병원(31)은 안전
+const SAFE_CLCD: Record<string, string> = {
+  '종합병원': '01',
+  '요양병원': '31',
+  '치과':     '41',
+  '한의원':   '51',
+};
 
 interface RawHospital {
   ykiho?: string;
@@ -77,9 +87,12 @@ export async function GET(request: NextRequest) {
 
     const typeNames = type ? type.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-    // clCd API 파라미터 사용하지 않음
-    // 이유: HIRA API의 clCd 체계가 실제 clCdNm과 불일치 (clCd=11이 소규모 병원 제외)
-    // 전체 조회 후 clCdNm 기반 서버사이드 필터링으로 정확도 확보
+    // 단일 종별이고 SAFE_CLCD에 있으면 API 수준 필터 적용 (치과/한의원/종합병원/요양병원)
+    // → HIRA가 크기 순 정렬이라 clCd 없으면 200건 안에 안 들어올 수 있음
+    // 병원/의원은 clCd 미사용 → 전체 조회 후 클라이언트 필터링
+    if (typeNames.length === 1 && SAFE_CLCD[typeNames[0]]) {
+      params.clCd = SAFE_CLCD[typeNames[0]];
+    }
 
     // 최대 2페이지 수집 (API 할당량 절약)
     const allHospitals: ReturnType<typeof mapHospital>[] = [];
