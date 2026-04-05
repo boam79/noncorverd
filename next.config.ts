@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     typedEnv: true,
   },
+  turbopack: {
+    root: '.',
+  },
   // 성능 최적화
   compress: true,
   poweredByHeader: false,
