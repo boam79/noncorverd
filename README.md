@@ -27,16 +27,17 @@
 - **State Management**: Zustand
 - **Data Fetching**: TanStack Query (React Query)
 
-### Backend
-- **Runtime**: Node.js 20 LTS
-- **Framework**: Express.js
-- **API Gateway**: `/opendata` 엔드포인트
+### Backend (Vercel API Routes)
+- **Runtime**: Node.js (Vercel Serverless Functions)
+- **Region**: 인천(icn1) — 한국 공공데이터 API 직접 호출
+- **API Gateway**: `app/api/opendata/` (Next.js Route Handlers)
 - **Authentication**: X-Client-Token
+- **Render** (보조): 백엔드 서버 (Express.js, 현재 미사용)
 
 ### Infrastructure
-- **Frontend Hosting**: Vercel
-- **Backend Hosting**: AWS EC2 (t3.micro, Ubuntu 22.04)
-- **Region**: ap-northeast-2 (서울)
+- **Frontend + API**: Vercel (인천 icn1 리전)
+- **Backend**: Render (Free Plan, Singapore — 현재 대기 상태)
+- **공공데이터 API**: Vercel 인천 노드에서 직접 호출
 
 ## 🚀 시작하기
 
@@ -97,43 +98,36 @@ nonvovered/
 
 ## 🔐 환경변수 설정
 
-### Frontend (`.env.local`)
+### Frontend / Vercel API Routes (`.env.local`)
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/opendata
-CLIENT_OPENDATA_TOKEN=your-client-token-here
+# 공공데이터 API 서비스키 (서버 사이드 전용, NEXT_PUBLIC_ 불필요)
+OPENDATA_API_KEY=your-public-data-service-key
+
+# 클라이언트 인증 토큰
+NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
+CLIENT_OPENDATA_TOKEN=dev-client-token-12345
 ```
 
-### Backend (`backend/.env`)
-
-```env
-PORT=3001
-FRONTEND_URL=http://localhost:3000
-CLIENT_OPENDATA_TOKEN=your-client-token-here
-
-# 공공데이터 API 서비스키
-ADMINISTRATIVE_CODE_SERVICE_KEY=your-administrative-code-service-key
-HIRA_SERVICE_KEY=your-hira-service-key
-HIRA_PRICING_SERVICE_KEY=your-hira-pricing-service-key
-```
+> **참고**: `NEXT_PUBLIC_API_BASE_URL`은 Vercel 배포 시 `/api/opendata`로 자동 라우팅되어 불필요합니다.
 
 ## 📡 API 엔드포인트
 
-### Frontend → Backend
+### Vercel API Routes (`app/api/opendata/`)
 
 모든 요청은 `X-Client-Token` 헤더를 포함해야 합니다.
 
-- `GET /opendata/regions?sido={sido}` - 지역 정보 조회
-- `GET /opendata/hospitals?sido={sido}&sigungu={sigungu}&type={type}&hospitalName={name}` - 병원 목록 조회
-  - `sido`: 시도 코드 (2자리, 예: 11=서울, 26=부산)
-  - `sigungu`: 시군구 코드 (6자리, 예: 111100=서울 종로구)
-  - `type`: 의료기관 종별 (종합병원, 병원, 의원, 요양병원, 치과, 한의원)
-  - `hospitalName`: 병원명 (부분 검색 지원)
-- `POST /opendata/pricing` - 비급여 가격 정보 조회
+- `GET /api/opendata/regions?sido={sido}` — 지역 정보 조회 (시도/시군구)
+- `GET /api/opendata/hospitals?sido={sido}&sigungu={sigungu}&type={type}&hospitalName={name}` — 병원 목록 조회
+  - `sido`: 행정안전부 시도 코드 (2자리, 예: 11=서울, 26=부산)
+  - `sigungu`: 행정안전부 시군구 코드 (6자리, 예: 111100=서울 종로구)
+  - `type`: 의료기관 종별, 쉼표 구분 다중 선택 가능 (종합병원, 병원, 의원, 요양병원, 치과, 한의원)
+  - `hospitalName`: 병원명 부분 검색
+- `POST /api/opendata/pricing` — 비급여 가격 정보 조회
   ```json
   {
-    "hospitalIds": ["id1", "id2", ...],
-    "hospitals": [{"id": "id1", "name": "병원명"}, ...]
+    "hospitalIds": ["id1", "id2"],
+    "hospitals": [{"id": "id1", "name": "병원명"}]
   }
   ```
 
@@ -158,30 +152,19 @@ npm run test:e2e:headed
 
 ## 📦 배포
 
-### Vercel 배포 (Frontend)
+### Vercel 배포 (Frontend + API)
 
-1. Vercel에 프로젝트 연결
-2. 환경변수 설정 (Vercel Dashboard)
-3. 자동 배포 (GitHub 연동 시)
+1. GitHub 저장소 연결 후 자동 배포
+2. 필수 환경변수 설정 (Vercel Dashboard):
+   - `OPENDATA_API_KEY`: 공공데이터포털 서비스키
+   - `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`: 클라이언트 인증 토큰
+3. `vercel.json`에 `"regions": ["icn1"]` 설정으로 인천 리전 사용
 
-### AWS EC2 배포 (Backend)
+### Render 배포 (백엔드 보조 서버)
 
-```bash
-# EC2 서버에 접속
-ssh -i your-key.pem ubuntu@your-ec2-ip
+저장소 루트의 `render.yaml`을 통해 Blueprint 배포:
 
-# 프로젝트 클론 및 설정
-cd /var/www
-git clone your-repo-url
-cd nonvovered/backend
-npm install
-
-# PM2로 프로세스 관리 (권장)
-npm install -g pm2
-pm2 start src/server.js --name nonvovered-backend
-pm2 save
-pm2 startup
-```
+[Render Blueprint 배포 링크](https://dashboard.render.com/blueprint/new?repo=https://github.com/boam79/noncorverd)
 
 ## 📊 공공데이터 API
 
@@ -216,36 +199,61 @@ pm2 startup
 - [API 상태](./doc/API_STATUS.md) - API 통합 상태
 - [운영 계정 설정](./doc/OPERATIONAL_ACCOUNT_SETUP.md) - 운영 계정 서비스 키 설정
 
-### 백엔드 문서
-- [AWS 배포 가이드](./doc/AWS_DEPLOYMENT.md) - AWS EC2 배포 가이드
-- [API 통합 상태](./doc/API_INTEGRATION_STATUS.md) - 백엔드 API 통합 현황
-- [API 테스트 가이드](./doc/API_TEST_GUIDE.md) - API 테스트 방법
-- [API 테스트 결과](./doc/API_TEST_RESULTS.md) - API 테스트 결과
-- [데이터 소스 상태](./doc/DATA_SOURCE_STATUS.md) - 데이터 소스 현황
-- [배포 체크리스트](./doc/DEPLOY_CHECKLIST.md) - 배포 전 체크리스트
-- [배포 상태](./doc/DEPLOYMENT_STATUS.md) - 배포 현황
-- [EC2 정보](./doc/EC2_INFO.md) - EC2 인스턴스 정보
-- [README AWS](./doc/README_AWS.md) - AWS 관련 README
+### 배포/인프라 문서
+- [배포 가이드](./doc/DEPLOYMENT.md) - Vercel + Render 배포 절차
+- [배포 체크리스트](./doc/DEPLOY_CHECKLIST.md) - Render 배포 전 체크리스트
+- [CORS 가이드](./doc/DEPLOY_CORS_FIX.md) - CORS 설정
+- [환경변수 매트릭스](./doc/ENVIRONMENT_MATRIX.md) - 환경변수 비교표
+- [릴리즈 체크리스트](./doc/RELEASE_CHECKLIST.md) - Go/No-Go 체크리스트
+- [Render 서버 정보](./doc/EC2_INFO.md) - Render 서비스 정보
 - [트러블슈팅](./doc/TROUBLESHOOTING.md) - 문제 해결 가이드
 
 ### 테스트 문서
 - [프론트엔드/백엔드 테스트](./doc/FRONTEND_BACKEND_TEST.md) - 통합 테스트 가이드
 
-## 🎯 최근 업데이트
+## 🎯 업데이트 이력
 
-### 2025-11-14
-- ✅ 병원명 검색 기능 추가 (병원명만으로도 검색 가능)
-- ✅ 메인 타이틀 클릭 시 초기화 및 홈 이동 기능
-- ✅ 푸터에 제작자 표시 추가 (Boam79)
-- ✅ API 호출 최적화 (캐싱, 페이지네이션 최적화)
-- ✅ 검색 결과 속도 개선 (React Query 캐시 설정 최적화)
-- ✅ Enter 키 및 검색 버튼으로 검색 실행 가능
-- ✅ 선택된 병원 독립 표시 및 관리 기능
+### 2026-04-05 — 인프라 전환 및 API 정확도 개선
 
-### 성능 최적화
-- **API 호출 절약**: 백엔드 캐싱 (1시간 TTL) 및 페이지네이션 최적화 (초기 2페이지만 수집)
-- **검색 속도 개선**: React Query `staleTime` 1분, `gcTime` 10분으로 조정
-- **프론트엔드 필터링**: 백엔드 필터링과 함께 프론트엔드에서 추가 필터링으로 정확도 향상
+#### 인프라 변경
+- ✅ **백엔드 인프라: AWS EC2 → Render** 전환 (`render.yaml` 추가)
+- ✅ **공공데이터 API 직접 호출**: Render(싱가포르) 경유 제거 → Vercel **인천(icn1)** 노드에서 직접 호출
+  - 기존: 브라우저 → Vercel → Render(싱가포르) → 공공데이터 API
+  - 현재: 브라우저 → Vercel(인천) → 공공데이터 API 직접
+
+#### 병원 종별 필터링 전면 수정
+- ✅ **HIRA API 실제 clCd 매핑 확인 및 적용** (기존 매핑 오류 수정)
+
+| UI 종별 | 기존 (오류) | 수정 후 |
+|---------|------------|---------|
+| 종합병원 | clCd=01 | clCd=**01+11** (상급종합+종합병원) |
+| 병원 | clCd=11 | clCd=**21** |
+| 요양병원 | clCd=31 | clCd=**28** |
+| 의원 | clCd=31 | clCd=**31** + 한의원 이름 제외 |
+| 치과 | clCd=41 | clCd=**41+51** (치과병원+치과의원) |
+| 한의원 | clCd=51 | clCd=**31** + `yadmNm=한의` 검색 |
+
+#### HIRA 시군구 코드 전면 수정 (실측값 기반)
+- ✅ **인천광역시**: 280xxx → **220xxx** 전수 교체 (실측)
+  - 중구=220004, 동구=220002, 미추홀구=220001, 연수구=220007, 남동구=220006, 부평구=220003, 계양구=220008, 서구=220005
+- ✅ **광주광역시**: 북구↔광산구 순서 오류 수정 (실측)
+  - 동구=240001, 북구=240002, 서구=240003, 광산구=240004, 남구=240005
+- ✅ **울산광역시**: 울주군 260005 → **260100** 수정
+
+#### 서버 준비 상태 배너
+- ✅ 서버 시작 시 앰버 배너 표시 (스피너 + 경과 시간)
+- ✅ 준비 완료 시 초록 배너 "이제 사용하셔도 됩니다" + 4초 자동 닫기
+- ✅ 2초 이내 응답 시 배너 미표시
+
+#### 버그 수정
+- ✅ `HospitalCard` departments 필드 undefined 크래시 수정
+- ✅ `RegionSelector` 시군구 자동 프리패치 제거 (페이지 로드 시 불필요한 20초 API 호출 제거)
+- ✅ Vercel 빌드 오류 수정 (`e2e/` TypeScript 오류, tsconfig exclude 추가)
+
+### 2025-11-14 — MVP 기능 구현
+- ✅ 병원명 검색, 지역/종별 필터, 비교 기능 구현
+- ✅ 비급여 가격 비교 테이블 (실데이터 886개 항목)
+- ✅ API 호출 최적화 (캐싱, 페이지네이션)
 
 ## 👨‍💻 제작자
 
