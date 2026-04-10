@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MobileComparisonView } from './MobileComparisonView';
 import type { HospitalPricing } from '@/types';
-import type { ComparisonHospitalEntry, ComparisonItemEntry } from './types';
+import type {
+  ComparisonHospitalEntry,
+  ComparisonItemEntry,
+  QuantityByItemName,
+} from './types';
+import {
+  calculateEstimatedTotalsByHospital,
+  getItemQuantity,
+} from '@/lib/utils/costEstimator';
 
 interface ComparisonTableProps {
   pricingData: HospitalPricing[];
@@ -108,6 +116,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   const [sortMode, setSortMode] = useState<SortMode>('popularity');
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
+  const [quantities, setQuantities] = useState<QuantityByItemName>({});
 
   useEffect(() => {
     setVisibleCount(30);
@@ -170,6 +179,10 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
   const visibleItems = filteredItems.slice(0, visibleCount);
   const hasMore = filteredItems.length > visibleCount;
+  const estimatedTotalsByHospitalId = useMemo(
+    () => calculateEstimatedTotalsByHospital(pricingData, quantities),
+    [pricingData, quantities]
+  );
 
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) {
@@ -249,7 +262,11 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
       </div>
 
       {/* 모바일 뷰 */}
-      <MobileComparisonView pricingData={pricingData} items={visibleItems} />
+      <MobileComparisonView
+        pricingData={pricingData}
+        items={visibleItems}
+        estimatedTotalsByHospitalId={estimatedTotalsByHospitalId}
+      />
 
       {/* 데스크톱 뷰 */}
       <div className="hidden md:block overflow-x-auto custom-scrollbar">
@@ -267,6 +284,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                   <div className="font-semibold text-gray-900">{hospital.hospitalName}</div>
                   <div className="text-xs text-gray-500 mt-1">
                     항목 수: {hospital.items.length.toLocaleString()}개
+                  </div>
+                  <div className="text-xs text-primary-700 font-semibold mt-1">
+                    예상 총비용: {(estimatedTotalsByHospitalId[hospital.hospitalId] ?? 0).toLocaleString()}원
                   </div>
                   {hospital.averagePrice && (
                     <div className="text-xs text-gray-400 mt-1">
@@ -300,6 +320,29 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                   <td className="px-4 py-3 text-sm text-gray-900">
                     <div className="font-medium">{item.name}</div>
                     <div className="mt-1 text-xs text-gray-500 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor={`quantity-${item.name}`} className="text-gray-600">
+                          횟수
+                        </label>
+                        <input
+                          id={`quantity-${item.name}`}
+                          type="number"
+                          min={0}
+                          max={99}
+                          value={getItemQuantity(quantities, item.name)}
+                          onChange={(event) => {
+                            const rawValue = Number(event.target.value);
+                            const nextValue = Number.isFinite(rawValue)
+                              ? Math.min(99, Math.max(0, Math.floor(rawValue)))
+                              : 0;
+                            setQuantities((prev) => ({
+                              ...prev,
+                              [item.name]: nextValue,
+                            }));
+                          }}
+                          className="w-20 rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
                       <div>
                         평균 {item.averagePrice.toLocaleString()}원 · 비교 병원{' '}
                         {item.hospitalCount}곳

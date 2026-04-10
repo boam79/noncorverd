@@ -7,11 +7,13 @@ import type { ComparisonItemEntry } from './types';
 interface MobileComparisonViewProps {
   pricingData: HospitalPricing[];
   items: ComparisonItemEntry[];
+  estimatedTotalsByHospitalId: Record<string, number>;
 }
 
 export function MobileComparisonView({
   pricingData,
   items,
+  estimatedTotalsByHospitalId,
 }: MobileComparisonViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -25,6 +27,7 @@ export function MobileComparisonView({
 
   const currentHospital = pricingData[currentIndex];
   const avgPrice = currentHospital.averagePrice || 0;
+  const estimatedTotal = estimatedTotalsByHospitalId[currentHospital.hospitalId] ?? 0;
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % pricingData.length);
@@ -57,6 +60,9 @@ export function MobileComparisonView({
               평균: {avgPrice.toLocaleString()}원
             </div>
           )}
+          <div className="text-xs text-primary-700 font-semibold mt-1">
+            예상 총비용: {estimatedTotal.toLocaleString()}원
+          </div>
         </div>
         <button
           onClick={goToNext}
