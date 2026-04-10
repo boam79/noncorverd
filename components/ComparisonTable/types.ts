@@ -27,4 +27,9 @@ export interface ComparisonItemEntry {
   hospitals: Record<string, ComparisonHospitalEntry>;
 }
 
+// 비용 시뮬레이터(티켓 A-1) 데이터 모델
+export type QuantityByItemName = Record<string, number>;
+
+export type EstimatedTotalByHospitalId = Record<string, number>;
+
 
