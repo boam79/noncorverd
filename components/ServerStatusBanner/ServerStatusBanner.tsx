@@ -15,7 +15,7 @@ export function ServerStatusBanner() {
   if (status === 'checking') {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           {/* 스피너 */}
           <div className="flex-shrink-0 w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           <div className="flex-1 min-w-0">
@@ -40,7 +40,7 @@ export function ServerStatusBanner() {
   if (status === 'ready') {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white shadow-lg animate-fade-in">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           {/* 체크 아이콘 */}
           <div className="flex-shrink-0 w-6 h-6 bg-white rounded-full flex items-center justify-center">
             <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -68,7 +68,7 @@ export function ServerStatusBanner() {
   if (status === 'error') {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <span className="flex-shrink-0 text-lg">⚠️</span>
           <div className="flex-1">
             <p className="font-semibold text-sm">서버 연결에 문제가 발생했습니다.</p>

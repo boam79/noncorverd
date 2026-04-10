@@ -18,10 +18,10 @@ export function HospitalCard({
   return (
     <article
       data-testid="hospital-card"
-      className={`border rounded-lg p-4 transition-all duration-300 animate-fade-in ${
+      className={`border rounded-xl p-4 transition-all duration-300 animate-fade-in ${
         isSelected
-          ? 'border-primary-500 bg-primary-50 shadow-md scale-[1.02]'
-          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+          ? 'border-primary-400 bg-primary-50 shadow-md scale-[1.01]'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
       } ${maxSelectionReached && !isSelected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <div className="flex items-start justify-between">
