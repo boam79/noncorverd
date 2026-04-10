@@ -14,6 +14,8 @@ export default function ComparisonPage() {
   const { selectedHospitals, clearHospitals } = useComparisonStore();
   const hospitalIds = selectedHospitals.map((h) => h.id);
   const { data: pricingData, isLoading, error } = usePricing(hospitalIds, selectedHospitals);
+  const hospitalsWithNoItems =
+    pricingData?.filter((hospital) => !hospital.items || hospital.items.length === 0) ?? [];
 
   // 메인 타이틀 클릭 시 선택된 병원 초기화
   const handleHomeClick = () => {
@@ -68,6 +70,15 @@ export default function ComparisonPage() {
               </Link>
             </div>
           </div>
+
+          {!isLoading && !error && hospitalsWithNoItems.length > 0 && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              비급여 항목이 없는 병원이 {hospitalsWithNoItems.length}곳 있습니다:{' '}
+              <span className="font-medium">
+                {hospitalsWithNoItems.map((hospital) => hospital.hospitalName).join(', ')}
+              </span>
+            </div>
+          )}
 
           {isLoading ? (
             <LoadingSpinner />

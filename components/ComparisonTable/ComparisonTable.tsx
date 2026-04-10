@@ -265,6 +265,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[170px]"
                 >
                   <div className="font-semibold text-gray-900">{hospital.hospitalName}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    항목 수: {hospital.items.length.toLocaleString()}개
+                  </div>
                   {hospital.averagePrice && (
                     <div className="text-xs text-gray-400 mt-1">
                       평균: {hospital.averagePrice.toLocaleString()}원
