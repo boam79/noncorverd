@@ -19,6 +19,7 @@ interface ComparisonTableProps {
 
 type ViewMode = 'common' | 'all';
 type SortMode = 'popularity' | 'priceDesc' | 'variance' | 'name';
+const QUANTITIES_STORAGE_KEY = 'comparison-item-quantities-v1';
 
 export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   const aggregatedItems = useMemo<ComparisonItemEntry[]>(() => {
@@ -117,6 +118,30 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
   const [quantities, setQuantities] = useState<QuantityByItemName>({});
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(QUANTITIES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as QuantityByItemName;
+      if (parsed && typeof parsed === 'object') {
+        setQuantities(parsed);
+      }
+    } catch {
+      // ignore corrupted localStorage values
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        QUANTITIES_STORAGE_KEY,
+        JSON.stringify(quantities)
+      );
+    } catch {
+      // ignore storage write errors
+    }
+  }, [quantities]);
 
   useEffect(() => {
     setVisibleCount(30);
