@@ -12,6 +12,11 @@ import {
   calculateEstimatedTotalsByHospital,
   getItemQuantity,
 } from '@/lib/utils/costEstimator';
+import {
+  DEFAULT_OUTLIER_THRESHOLD_PERCENT,
+  detectOutliers,
+  getTopOutliersByHospital,
+} from '@/lib/utils/anomalyDetector';
 
 interface ComparisonTableProps {
   pricingData: HospitalPricing[];
@@ -208,6 +213,14 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
     () => calculateEstimatedTotalsByHospital(pricingData, quantities),
     [pricingData, quantities]
   );
+  const outliers = useMemo(
+    () => detectOutliers(aggregatedItems, DEFAULT_OUTLIER_THRESHOLD_PERCENT),
+    [aggregatedItems]
+  );
+  const topOutliersByHospital = useMemo(
+    () => getTopOutliersByHospital(outliers, 3),
+    [outliers]
+  );
 
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) {
@@ -278,6 +291,14 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           총 {totalUniqueItems}개 항목 중{' '}
           <span className="font-semibold text-gray-700">{filteredItems.length}</span>개
           를 표시 중입니다. 현재 선택된 병원 수: {pricingData.length}곳.
+        </div>
+        <div className="text-xs text-gray-500">
+          평균 대비 {DEFAULT_OUTLIER_THRESHOLD_PERCENT}% 이상 높은 주의 항목 {outliers.length}건
+          {pricingData.length > 0 && (
+            <span>
+              {' '}· 병원별 Top3 이상치 계산 완료 ({Object.keys(topOutliersByHospital).length}개 병원)
+            </span>
+          )}
         </div>
         {viewMode === 'common' && commonItemCount === 0 && totalUniqueItems > 0 && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

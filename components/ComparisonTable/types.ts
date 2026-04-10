@@ -32,4 +32,13 @@ export type QuantityByItemName = Record<string, number>;
 
 export type EstimatedTotalByHospitalId = Record<string, number>;
 
+export interface OutlierEntry {
+  hospitalId: string;
+  hospitalName: string;
+  itemName: string;
+  price: number;
+  averagePrice: number;
+  ratioPercent: number;
+}
+
 
