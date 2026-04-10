@@ -300,6 +300,15 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
             </span>
           )}
         </div>
+        {outliers.length > 0 && (
+          <div
+            className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-800"
+            title={`주의 항목 기준: 평균 대비 ${DEFAULT_OUTLIER_THRESHOLD_PERCENT}% 이상 높은 가격`}
+          >
+            <span className="font-semibold">주의 기준</span>
+            <span>평균 대비 +{DEFAULT_OUTLIER_THRESHOLD_PERCENT}%</span>
+          </div>
+        )}
         {viewMode === 'common' && commonItemCount === 0 && totalUniqueItems > 0 && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             공통 항목이 없습니다. 병원별 개별 항목은 <span className="font-semibold">전체 항목</span> 탭에서 확인할 수 있습니다.
@@ -448,6 +457,14 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                             <span className="font-medium">
                               {entry.price.toLocaleString()}원
                             </span>
+                            {entry.percentDiff >= DEFAULT_OUTLIER_THRESHOLD_PERCENT && (
+                              <span
+                                className="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200"
+                                title={`주의 항목: 평균 대비 +${entry.percentDiff}%`}
+                              >
+                                주의
+                              </span>
+                            )}
                             {entry.diff !== 0 && (
                               <span
                                 className={`text-xs font-semibold px-2 py-0.5 rounded ${
