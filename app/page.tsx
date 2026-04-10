@@ -117,11 +117,11 @@ export default function Home() {
       <Header onHomeClick={handleHomeClick} />
       <ServerStatusBanner />
 
-      <Container className="py-8">
-        <div className="space-y-6">
+      <Container className="py-10 md:py-12">
+        <div className="space-y-8">
           {/* 검색 필터 섹션 */}
-          <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900">검색 조건</h2>
+          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100">
+            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
             
             {/* 의료기관명 검색란 */}
             <div>
@@ -180,7 +180,7 @@ export default function Home() {
 
           {/* 선택된 병원 표시 (검색 결과와 독립적으로 표시) */}
           {selectedHospitals.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl shadow-sm p-6 md:p-7">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 선택된 의료기관 ({selectedHospitals.length}개 / 최대 {maxSelection}개)
               </h2>
@@ -207,7 +207,7 @@ export default function Home() {
           )}
 
           {/* 검색 결과 섹션 */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               검색 결과 ({hospitals.length}개)
               {selectedHospitals.length > 0 && (
