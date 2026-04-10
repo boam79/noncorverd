@@ -113,11 +113,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32 md:pb-24">
+    <div className="min-h-screen bg-gray-50 pb-28 md:pb-24">
       <Header onHomeClick={handleHomeClick} />
       <ServerStatusBanner />
 
-      <Container className="py-10 md:py-12">
+      <Container className="py-8 md:py-12">
         <div className="space-y-8">
           {/* 검색 필터 섹션 */}
           <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100">
@@ -210,7 +210,7 @@ export default function Home() {
           )}
 
           {/* 검색 결과 섹션 */}
-          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100 min-h-[260px]">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               검색 결과 ({hospitals.length}개)
               {selectedHospitals.length > 0 && (

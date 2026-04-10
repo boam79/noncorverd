@@ -20,14 +20,17 @@ export function HospitalCardList({
 
   if (hospitals.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">검색 결과가 없습니다.</p>
+      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-center py-14">
+        <p className="text-gray-700 font-medium">검색 결과가 없습니다.</p>
+        <p className="mt-2 text-sm text-gray-500">
+          시도/시군구 또는 의료기관명을 변경해 다시 검색해보세요.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
       {hospitals.map((hospital) => (
         <HospitalCard
           key={hospital.id}
