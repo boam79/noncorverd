@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Container } from '@/components/Layout/Container';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -14,8 +15,18 @@ export default function ComparisonPage() {
   const { selectedHospitals, clearHospitals } = useComparisonStore();
   const hospitalIds = selectedHospitals.map((h) => h.id);
   const { data: pricingData, isLoading, error } = usePricing(hospitalIds, selectedHospitals);
+  const [excludeZeroItemHospitals, setExcludeZeroItemHospitals] = useState(true);
   const hospitalsWithNoItems =
     pricingData?.filter((hospital) => !hospital.items || hospital.items.length === 0) ?? [];
+  const visiblePricingData = useMemo(() => {
+    if (!pricingData || !Array.isArray(pricingData)) {
+      return [];
+    }
+    if (!excludeZeroItemHospitals) {
+      return pricingData;
+    }
+    return pricingData.filter((hospital) => hospital.items && hospital.items.length > 0);
+  }, [pricingData, excludeZeroItemHospitals]);
 
   // 메인 타이틀 클릭 시 선택된 병원 초기화
   const handleHomeClick = () => {
@@ -80,6 +91,15 @@ export default function ComparisonPage() {
               <div className="mt-1 text-amber-700">
                 해당 기관은 공공데이터 API에서 비급여 항목이 제공되지 않을 수 있습니다.
               </div>
+              <label className="mt-3 inline-flex items-center gap-2 text-amber-900">
+                <input
+                  type="checkbox"
+                  checked={excludeZeroItemHospitals}
+                  onChange={(event) => setExcludeZeroItemHospitals(event.target.checked)}
+                  className="h-4 w-4 rounded border-amber-400 text-amber-700 focus:ring-amber-600"
+                />
+                비급여 항목 0건 병원 자동 제외
+              </label>
             </div>
           )}
 
@@ -92,7 +112,13 @@ export default function ComparisonPage() {
               onRetry={() => window.location.reload()}
             />
           ) : pricingData && Array.isArray(pricingData) && pricingData.length > 0 ? (
-            <ComparisonTable pricingData={pricingData} />
+            visiblePricingData.length > 0 ? (
+              <ComparisonTable pricingData={visiblePricingData} />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                표시할 비급여 항목이 없습니다. 자동 제외 옵션을 해제하거나 다른 병원을 선택해주세요.
+              </div>
+            )
           ) : pricingData && Array.isArray(pricingData) && pricingData.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               선택한 병원의 가격 정보가 없습니다.
