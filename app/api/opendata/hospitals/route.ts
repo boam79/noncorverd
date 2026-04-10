@@ -14,14 +14,9 @@ const TYPE_CLCDS: Record<string, string[]> = {
   '병원':     ['21'],
   '요양병원': ['28'],
   '치과':     ['41', '51'],
-  // 성형외과는 의원/병원 단위 모두 포함될 수 있어 21/31을 대상으로 검색
-  '성형외과': ['21', '31'],
 };
 
-// 성형외과는 기관 종별 코드만으로 정확히 분리되지 않으므로
-// yadmNm 키워드 검색을 함께 사용해 결과 정확도를 높입니다.
 const TYPE_EXTRA_PARAMS: Record<string, Record<string, string>> = {
-  '성형외과': { yadmNm: '성형외과' },
 };
 
 // 종별별 후처리 필터
@@ -31,7 +26,6 @@ function matchesType(clCdNm: string, name: string, selectedType: string): boolea
     case '병원':     return clCdNm === '병원' || clCdNm === '정신병원';
     case '요양병원': return clCdNm === '요양병원';
     case '치과':     return clCdNm.includes('치과');
-    case '성형외과': return name.includes('성형외과');
     default:         return clCdNm.includes(selectedType);
   }
 }

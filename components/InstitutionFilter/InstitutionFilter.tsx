@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { MedicalInstitutionType } from '@/types';
 
 const INSTITUTION_TYPES: MedicalInstitutionType[] = [
@@ -8,7 +7,6 @@ const INSTITUTION_TYPES: MedicalInstitutionType[] = [
   '병원',
   '요양병원',
   '치과',
-  '성형외과',
 ];
 
 interface InstitutionFilterProps {

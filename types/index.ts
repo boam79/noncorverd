@@ -26,8 +26,7 @@ export type MedicalInstitutionType =
   | "종합병원"
   | "병원"
   | "요양병원"
-  | "치과"
-  | "성형외과";
+  | "치과";
 
 // 병원 정보 타입
 export interface Hospital {
