@@ -15,7 +15,9 @@ import { ServerStatusBanner } from '@/components/ServerStatusBanner/ServerStatus
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useRegions } from '@/lib/hooks/useRegions';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
-import type { MedicalInstitutionType } from '@/types';
+import { apiClient } from '@/lib/api';
+import { recommendHospitals } from '@/lib/utils/recommendation';
+import type { HospitalPricing, MedicalInstitutionType } from '@/types';
 
 export default function Home() {
   const router = useRouter();
@@ -24,6 +26,8 @@ export default function Home() {
   const [selectedTypes, setSelectedTypes] = useState<MedicalInstitutionType[]>([]);
   const [hospitalNameInput, setHospitalNameInput] = useState<string>(''); // 입력값
   const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [recommendMessage, setRecommendMessage] = useState<string>('');
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
 
@@ -112,6 +116,64 @@ export default function Home() {
     }
   };
 
+  // 추천 병원 자동 선택
+  const handleAutoRecommend = useCallback(async () => {
+    const remainingSlots = Math.max(0, maxSelection - selectedHospitals.length);
+    if (remainingSlots <= 0) {
+      setRecommendMessage(`최대 ${maxSelection}개까지 선택 가능합니다.`);
+      return;
+    }
+
+    const candidates = hospitals
+      .filter((hospital) => !selectedHospitals.some((selected) => selected.id === hospital.id))
+      .slice(0, 8); // API 호출 비용 절약을 위해 상위 8개만 분석
+
+    if (candidates.length === 0) {
+      setRecommendMessage('추천할 병원 후보가 없습니다.');
+      return;
+    }
+
+    setIsRecommending(true);
+    setRecommendMessage('');
+    try {
+      const response = await apiClient.getNonCoveredPricing(
+        candidates.map((hospital) => hospital.id),
+        candidates.map((hospital) => ({ id: hospital.id, name: hospital.name }))
+      );
+
+      if (!response.ok || !Array.isArray(response.data)) {
+        throw new Error(response.error?.message || '추천 데이터를 가져오지 못했습니다.');
+      }
+
+      const pricingData = response.data as HospitalPricing[];
+      const recommendations = recommendHospitals(pricingData, Math.min(3, remainingSlots));
+      if (recommendations.length === 0) {
+        setRecommendMessage('추천 점수를 계산할 데이터가 부족합니다.');
+        return;
+      }
+
+      const recommendedHospitals = recommendations
+        .map((recommendation) =>
+          candidates.find((hospital) => hospital.id === recommendation.hospitalId)
+        )
+        .filter((hospital): hospital is NonNullable<typeof hospital> => Boolean(hospital));
+
+      recommendedHospitals.forEach((hospital) => {
+        if (!selectedHospitals.some((selected) => selected.id === hospital.id)) {
+          toggleHospital(hospital);
+        }
+      });
+
+      setRecommendMessage(`추천 병원 ${recommendedHospitals.length}곳을 자동 선택했습니다.`);
+    } catch (error) {
+      setRecommendMessage(
+        error instanceof Error ? error.message : '추천 병원 선택 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setIsRecommending(false);
+    }
+  }, [hospitals, maxSelection, selectedHospitals, toggleHospital]);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-24">
       <Header onHomeClick={handleHomeClick} />
@@ -179,6 +241,19 @@ export default function Home() {
               selectedTypes={selectedTypes}
               onChange={setSelectedTypes}
             />
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleAutoRecommend}
+                disabled={isRecommending || hospitals.length === 0}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {isRecommending ? '추천 계산 중...' : '추천 병원 불러오기'}
+              </button>
+              {recommendMessage && (
+                <p className="text-sm text-gray-600">{recommendMessage}</p>
+              )}
+            </div>
           </div>
 
           {/* 선택된 병원 표시 (검색 결과와 독립적으로 표시) */}
