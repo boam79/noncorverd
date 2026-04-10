@@ -13,27 +13,25 @@ const TYPE_CLCDS: Record<string, string[]> = {
   '종합병원': ['01', '11'],
   '병원':     ['21'],
   '요양병원': ['28'],
-  '의원':     ['31'],
   '치과':     ['41', '51'],
-  '한의원':   ['31'],  // yadmNm=한의원 파라미터 추가로 이름 검색
+  // 성형외과는 의원/병원 단위 모두 포함될 수 있어 21/31을 대상으로 검색
+  '성형외과': ['21', '31'],
 };
 
-// 한의원은 clCd=31(의원)에 포함되어 있고 이름 순 정렬 시 뒤에 위치
-// → yadmNm 파라미터로 직접 검색
-// yadmNm 부분 검색: '한의원'(3자)보다 '한의'(2자)가 더 많은 결과 반환
+// 성형외과는 기관 종별 코드만으로 정확히 분리되지 않으므로
+// yadmNm 키워드 검색을 함께 사용해 결과 정확도를 높입니다.
 const TYPE_EXTRA_PARAMS: Record<string, Record<string, string>> = {
-  '한의원': { yadmNm: '한의' },
+  '성형외과': { yadmNm: '성형외과' },
 };
 
-// 한의원은 clCd=31(의원)에 포함 → 이름에 '한의'/'한방' 포함 여부로 구분
+// 종별별 후처리 필터
 function matchesType(clCdNm: string, name: string, selectedType: string): boolean {
   switch (selectedType) {
     case '종합병원': return clCdNm === '종합병원' || clCdNm === '상급종합';
     case '병원':     return clCdNm === '병원' || clCdNm === '정신병원';
     case '요양병원': return clCdNm === '요양병원';
-    case '의원':     return clCdNm === '의원' && !name.includes('한의') && !name.includes('한방');
     case '치과':     return clCdNm.includes('치과');
-    case '한의원':   return clCdNm === '의원' && (name.includes('한의') || name.includes('한방'));
+    case '성형외과': return name.includes('성형외과');
     default:         return clCdNm.includes(selectedType);
   }
 }

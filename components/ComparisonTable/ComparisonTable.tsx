@@ -104,7 +104,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
     [aggregatedItems, pricingData]
   );
 
-  const [viewMode, setViewMode] = useState<ViewMode>('common');
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('popularity');
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
@@ -241,6 +241,11 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           <span className="font-semibold text-gray-700">{filteredItems.length}</span>개
           를 표시 중입니다. 현재 선택된 병원 수: {pricingData.length}곳.
         </div>
+        {viewMode === 'common' && commonItemCount === 0 && totalUniqueItems > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            공통 항목이 없습니다. 병원별 개별 항목은 <span className="font-semibold">전체 항목</span> 탭에서 확인할 수 있습니다.
+          </div>
+        )}
       </div>
 
       {/* 모바일 뷰 */}

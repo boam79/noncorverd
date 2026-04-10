@@ -6,10 +6,9 @@ import type { MedicalInstitutionType } from '@/types';
 const INSTITUTION_TYPES: MedicalInstitutionType[] = [
   '종합병원',
   '병원',
-  '의원',
   '요양병원',
   '치과',
-  '한의원',
+  '성형외과',
 ];
 
 interface InstitutionFilterProps {

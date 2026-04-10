@@ -25,10 +25,9 @@ export interface Region {
 export type MedicalInstitutionType =
   | "종합병원"
   | "병원"
-  | "의원"
   | "요양병원"
   | "치과"
-  | "한의원";
+  | "성형외과";
 
 // 병원 정보 타입
 export interface Hospital {
