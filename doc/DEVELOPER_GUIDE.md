@@ -72,9 +72,10 @@ npm install
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/opendata
 NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN=dev-client-token-12345
+OPENDATA_API_KEY=your-service-key-here
 ```
 
-#### 백엔드 (`backend/.env`)
+#### 백엔드 (`backend/.env`) *(legacy backend 사용 시)*
 
 ```env
 PORT=3001
@@ -226,6 +227,17 @@ Content-Type: application/json
                   → ComparisonTable
 ```
 
+### 4. 추천 병원 자동 선택 플로우
+
+```
+사용자 → 추천 병원 불러오기 버튼
+  → app/page.tsx (후보 병원 8개 선별)
+    → lib/api.ts (getNonCoveredPricing)
+      → /opendata/pricing
+        → 추천 점수 계산 (lib/utils/recommendation.ts)
+          → comparisonStore 선택 반영
+```
+
 ## 상태 관리
 
 ### Zustand Store (`lib/stores/comparisonStore.ts`)
@@ -247,6 +259,36 @@ interface ComparisonStore {
 - **지역 데이터**: `staleTime: 24시간`, `gcTime: 48시간`
 - **병원 목록**: `staleTime: 10분`, `gcTime: 30분`
 - **비급여 가격**: `staleTime: 12시간`, `gcTime: 24시간`
+
+## 고도화 모듈
+
+### 비용 시뮬레이터
+- 위치: `components/ComparisonTable/ComparisonTable.tsx`
+- 모델/유틸:
+  - `components/ComparisonTable/types.ts` (`QuantityByItemName`, `EstimatedTotalByHospitalId`)
+  - `lib/utils/costEstimator.ts`
+- 동작:
+  - 항목별 횟수 입력(0~99, 기본 1회)
+  - 병원별 예상 총비용 실시간 계산
+  - localStorage 키: `comparison-item-quantities-v1`
+
+### 이상치 탐지
+- 위치: `lib/utils/anomalyDetector.ts`
+- 기준: 평균 대비 `+30%` 이상
+- 산출:
+  - 전체 이상치 목록
+  - 병원별 Top3 이상치
+- UI 반영: `ComparisonTable` 상단 요약 + 셀 단위 `주의` 배지
+
+### 추천 점수식 v1
+- 위치: `lib/utils/recommendation.ts`
+- 가중치:
+  - 데이터 완전성 40
+  - 항목 수 30
+  - 평균가 안정성 30
+- 출력:
+  - 병원별 총점 및 세부 점수
+  - 상위 N개 추천(기본 3)
 
 ## 테스트
 
@@ -272,6 +314,12 @@ npm run test:e2e:debug
 cd backend
 node scripts/test-pricing-integration.js --sido 11 --type 종합병원 --count 3
 ```
+
+### 신규 회귀 시나리오 (Q-1)
+- 비용 시뮬레이터 횟수 변경 시 총비용 갱신
+- 추천 병원 불러오기 버튼 동작
+- 이상치 기준 안내/주의 항목 노출
+- 파일: `e2e/hospital-comparison.spec.ts`
 
 ## 성능 최적화
 
