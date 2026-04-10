@@ -35,7 +35,11 @@ export function InstitutionFilter({
         {INSTITUTION_TYPES.map((type) => (
           <label
             key={type}
-            className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors touch-target min-h-[48px]"
+            className={`flex items-center space-x-2 p-3 border rounded-xl cursor-pointer transition-all touch-target min-h-[48px] ${
+              selectedTypes.includes(type)
+                ? 'border-primary-400 bg-primary-50 shadow-sm'
+                : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
+            }`}
           >
             <input
               type="checkbox"
@@ -44,7 +48,7 @@ export function InstitutionFilter({
               className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition-all"
               aria-label={`${type} ${selectedTypes.includes(type) ? '선택 해제' : '선택'}`}
             />
-            <span className="text-sm text-gray-700 font-medium">{type}</span>
+            <span className={`text-sm font-medium ${selectedTypes.includes(type) ? 'text-primary-700' : 'text-gray-700'}`}>{type}</span>
           </label>
         ))}
       </div>

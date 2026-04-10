@@ -121,11 +121,14 @@ export default function Home() {
         <div className="space-y-8">
           {/* 검색 필터 섹션 */}
           <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
+              <p className="text-sm text-gray-500">지역과 의료기관 종별을 선택해 비교할 병원을 찾아보세요.</p>
+            </div>
             
             {/* 의료기관명 검색란 */}
             <div>
-              <label htmlFor="hospital-name-search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="hospital-name-search" className="block text-sm font-medium text-gray-800 mb-2">
                 의료기관명 검색
               </label>
               <div className="relative">
@@ -141,12 +144,12 @@ export default function Home() {
                     }
                   }}
                   placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
-                  className="w-full px-4 py-3 pr-32 text-base text-gray-900 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-3.5 pr-36 text-base text-gray-900 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400 bg-white"
                 />
                 <button
                   type="button"
                   onClick={handleSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3.5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-semibold shadow-sm"
                   aria-label="검색 실행"
                 >
                   <kbd className="px-1.5 py-0.5 bg-primary-700 border border-primary-800 rounded text-white font-mono text-xs">

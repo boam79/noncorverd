@@ -65,13 +65,13 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* 시도 선택 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-800 mb-2">
             시도
           </label>
           <select
             value={selectedSido}
             onChange={(e) => setSelectedSido(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 touch-target transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3.5 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 touch-target transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             disabled={loading}
             aria-label="시도 선택"
           >
@@ -92,13 +92,13 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
 
         {/* 시군구 선택 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-800 mb-2">
             시군구
           </label>
           <select
             value={selectedSigungu}
             onChange={(e) => setSelectedSigungu(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-target transition-all"
+            className="w-full px-4 py-3.5 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-target transition-all"
             disabled={!selectedSido || loading}
             aria-label="시군구 선택"
           >
