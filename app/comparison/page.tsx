@@ -77,6 +77,9 @@ export default function ComparisonPage() {
               <span className="font-medium">
                 {hospitalsWithNoItems.map((hospital) => hospital.hospitalName).join(', ')}
               </span>
+              <div className="mt-1 text-amber-700">
+                해당 기관은 공공데이터 API에서 비급여 항목이 제공되지 않을 수 있습니다.
+              </div>
             </div>
           )}
 
