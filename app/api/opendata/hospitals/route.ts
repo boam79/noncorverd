@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
 import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
-import { parseDgsbjtCdToDepartments } from '@/lib/constants/clinicalFocusBuckets';
+import {
+  parseDgsbjtCdToDepartments,
+  splitDgsbjtCdNm,
+} from '@/lib/constants/clinicalFocusBuckets';
 import type { Hospital } from '@/types';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
@@ -52,13 +55,19 @@ interface RawHospital {
 
 function mapHospital(raw: RawHospital): Hospital {
   const dgsbjtRaw = raw.dgsbjtCd ?? raw.deptCd;
+  const fromCodes = parseDgsbjtCdToDepartments(dgsbjtRaw);
+  const fromNm = splitDgsbjtCdNm(raw.dgsbjtCdNm);
+  const departments: string[] = [...fromCodes];
+  for (const n of fromNm) {
+    if (n && !departments.includes(n)) departments.push(n);
+  }
   return {
     id: raw.ykiho ?? '',
     name: raw.yadmNm ?? '',
     address: raw.addr ?? '',
     phone: raw.telno ?? '',
     type: (raw.clCdNm ?? raw.clCd ?? '병원') as Hospital['type'],
-    departments: parseDgsbjtCdToDepartments(dgsbjtRaw),
+    departments,
     dgsbjtCdRaw: dgsbjtRaw,
     sidoCd: raw.sidoCd ?? '',
     sgguCd: raw.sgguCd ?? '',

@@ -86,7 +86,8 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
   {
     id: 'obstetrics',
     label: '산부인과',
-    description: '이름에 산부인과 또는 진료과목 코드 05',
+    description:
+      '이름에 산부인·산부전문·분만 등, 진료과명, 또는 진료과목 코드 05',
   },
   {
     id: 'pediatrics',
@@ -109,30 +110,56 @@ function normName(h: Pick<Hospital, 'name'>): string {
   return (h.name || '').replace(/\s+/g, '');
 }
 
-function deptTokensFromHospital(h: Hospital): string[] {
-  const raw = h.dgsbjtCdRaw;
+/**
+ * HIRA `dgsbjtCd` / `deptCd` 원문을 2자리 진료과 코드 배열로 분해합니다.
+ * - 구분자(, ; | 공백 등)로 나뉜 조각마다 처리
+ * - 조각이 숫자만이고 길이가 짝수면 2글자씩 묶음(예: "010305" → 01, 03, 05). 기존에는
+ *   첫 2글자만 보아 산부인과(05) 등이 누락되는 경우가 있었습니다.
+ * - 한 자리 숫자는 0패딩(예: "5" → "05")
+ */
+export function parseAllDeptCodesFromRaw(raw?: string): string[] {
   if (!raw) return [];
-  return String(raw)
-    .split(/[,;\s|]+/u)
-    .map((t) => t.trim())
+  const out: string[] = [];
+  const pushKey = (two: string) => {
+    const k =
+      two.length === 1 ? `0${two}` : two.slice(0, 2).padStart(2, '0');
+    if (!out.includes(k)) out.push(k);
+  };
+
+  for (const seg of String(raw).split(/[,;\s|]+/u)) {
+    const t = seg.trim();
+    if (!t) continue;
+    if (/^\d+$/.test(t)) {
+      if (t.length === 1) {
+        pushKey(t);
+      } else {
+        const evenLen = t.length - (t.length % 2);
+        for (let i = 0; i < evenLen; i += 2) {
+          pushKey(t.slice(i, i + 2));
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** HIRA 응답 `dgsbjtCdNm`(한글 진료과명) 분리 — 쉼표·슬래시 등 */
+export function splitDgsbjtCdNm(nm?: string): string[] {
+  if (!nm) return [];
+  return String(nm)
+    .split(/[,;/|、]+/u)
+    .map((s) => s.trim())
     .filter(Boolean);
 }
 
 export function parseDgsbjtCdToDepartments(dgsbjtCd?: string): string[] {
   if (!dgsbjtCd) return [];
   const labels: string[] = [];
-  for (const tok of String(dgsbjtCd).split(/[,;\s|]+/u)) {
-    const t = tok.trim();
-    if (!t) continue;
-    const key = t.length === 1 ? `0${t}` : t.slice(0, 2).padStart(2, '0');
+  for (const key of parseAllDeptCodesFromRaw(dgsbjtCd)) {
     const lab = HIRA_DEPT_CODE_LABEL[key];
     if (lab && !labels.includes(lab)) labels.push(lab);
   }
   return labels;
-}
-
-function nameHas(h: Hospital, sub: string): boolean {
-  return normName(h).includes(sub.replace(/\s+/g, ''));
 }
 
 function isClinicLevel(h: Hospital): boolean {
@@ -154,11 +181,11 @@ function isHospitalLevel(h: Hospital): boolean {
 
 function deptLabels(h: Hospital): string[] {
   const fromField = h.departments ?? [];
-  const fromCodes = deptTokensFromHospital(h).map((code) => {
-    const key = code.length === 1 ? `0${code}` : code.slice(0, 2).padStart(2, '0');
-    return HIRA_DEPT_CODE_LABEL[key];
-  });
-  return [...fromField, ...fromCodes.filter(Boolean)] as string[];
+  const fromCodes = parseAllDeptCodesFromRaw(h.dgsbjtCdRaw).map(
+    (key) => HIRA_DEPT_CODE_LABEL[key]
+  );
+  const merged = [...fromField, ...fromCodes.filter(Boolean)] as string[];
+  return [...new Set(merged)];
 }
 
 export function hospitalMatchesClinicalFocus(
@@ -169,32 +196,26 @@ export function hospitalMatchesClinicalFocus(
 
   const name = normName(h);
   const depts = deptLabels(h);
+  const deptCodes = parseAllDeptCodesFromRaw(h.dgsbjtCdRaw);
 
   const hasOrthoInName =
     name.includes('정형외과') || name.includes('정형');
   const hasOrthoInDept = depts.some(
     (d) => d.includes('정형') || d.includes('정형외과')
   );
-  const hasOrthoCode = deptTokensFromHospital(h).some((c) => {
-    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
-    return k === '03';
-  });
+  const hasOrthoCode = deptCodes.includes('03');
 
   const hasEyeInName = name.includes('안과');
   const hasEyeInDept = depts.some((d) => d.includes('안과'));
-  const hasEyeCode = deptTokensFromHospital(h).some((c) => {
-    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
-    return k === '07';
-  });
+  const hasEyeCode = deptCodes.includes('07');
   const hasEye = hasEyeInName || hasEyeInDept || hasEyeCode;
 
   const hasObInName =
-    name.includes('산부인과') || name.includes('산부인과의원');
+    name.includes('산부인') ||
+    name.includes('산부전문') ||
+    name.includes('분만');
   const hasObInDept = depts.some((d) => d.includes('산부인'));
-  const hasObCode = deptTokensFromHospital(h).some((c) => {
-    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
-    return k === '05';
-  });
+  const hasObCode = deptCodes.includes('05');
 
   const hasPedInName =
     name.includes('소아과') ||
@@ -203,10 +224,7 @@ export function hospitalMatchesClinicalFocus(
   const hasPedInDept = depts.some(
     (d) => d.includes('소아청소년') || d === '소아과' || d.includes('소아과')
   );
-  const hasPedCode = deptTokensFromHospital(h).some((c) => {
-    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
-    return k === '06';
-  });
+  const hasPedCode = deptCodes.includes('06');
 
   const notHanui = !name.includes('한의원') && !(h.clCdNm || '').includes('한의');
 

@@ -294,15 +294,17 @@ interface ComparisonStore {
 
 ### 관심 분야(기관 성격) 필터
 - 위치:
-  - 규칙·코드 매핑: `lib/constants/clinicalFocusBuckets.ts` (`hospitalMatchesClinicalFocus`, `parseDgsbjtCdToDepartments`)
+  - 규칙·코드 매핑: `lib/constants/clinicalFocusBuckets.ts` (`hospitalMatchesClinicalFocus`, `parseAllDeptCodesFromRaw`, `parseDgsbjtCdToDepartments`, `splitDgsbjtCdNm`)
   - UI: `components/ClinicalFocusFilter/ClinicalFocusSelector.tsx`
   - 목록 필터: `app/page.tsx`의 `hospitals` `useMemo` (API 결과 `allHospitals` 이후 클라이언트 적용)
-- 데이터: `GET /api/opendata/hospitals`의 `mapHospital`이 `dgsbjtCd`/`deptCd`를 `departments`·`dgsbjtCdRaw`로 넘김(HIRA 응답에 필드가 있을 때만 유효).
+- 데이터: `GET /api/opendata/hospitals`의 `mapHospital`이 `dgsbjtCd`/`deptCd`를 코드→한글 `departments`와 `dgsbjtCdRaw`로 넘기고, 있으면 `dgsbjtCdNm` 한글명도 `departments`에 합칩니다.
 - 추천: `handleAutoRecommend`는 필터된 `hospitals` 상위 8곳만 비급여 API에 보냄.
 
 ## 테스트
 
 ### E2E 테스트 (Playwright)
+
+로컬에서 Next만 실행할 때 OpenData 백엔드(3001)가 없으면 지역·병원 API가 비어 실패합니다. 비교 플로우는 `e2e/fixtures/opendata-routes.ts`의 `installComparisonFlowMocks` 등으로 네트워크 응답을 고정합니다.
 
 ```bash
 # 모든 테스트 실행
