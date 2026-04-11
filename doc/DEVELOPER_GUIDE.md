@@ -13,11 +13,13 @@ nonvovered/
 │   ├── Layout/              # Header, Footer, Container
 │   ├── RegionSelector/      # 지역 선택 컴포넌트
 │   ├── InstitutionFilter/   # 의료기관 필터
+│   ├── ClinicalFocusFilter/ # 관심 분야(기관 성격) 라디오
 │   ├── HospitalCard/        # 병원 카드
 │   ├── CompareBar/          # 비교 바 (Floating)
 │   └── ComparisonTable/     # 비교 테이블
 ├── lib/                     # 유틸리티
 │   ├── api.ts               # API 클라이언트
+│   ├── constants/           # 도메인 상수 (관심 분야 버킷 등)
 │   ├── hooks/               # React Query hooks
 │   │   ├── useRegions.ts    # 지역 데이터 fetching
 │   │   ├── useHospitals.ts  # 병원 목록 fetching
@@ -289,6 +291,14 @@ interface ComparisonStore {
 - 출력:
   - 병원별 총점 및 세부 점수
   - 상위 N개 추천(기본 3)
+
+### 관심 분야(기관 성격) 필터
+- 위치:
+  - 규칙·코드 매핑: `lib/constants/clinicalFocusBuckets.ts` (`hospitalMatchesClinicalFocus`, `parseDgsbjtCdToDepartments`)
+  - UI: `components/ClinicalFocusFilter/ClinicalFocusSelector.tsx`
+  - 목록 필터: `app/page.tsx`의 `hospitals` `useMemo` (API 결과 `allHospitals` 이후 클라이언트 적용)
+- 데이터: `GET /api/opendata/hospitals`의 `mapHospital`이 `dgsbjtCd`/`deptCd`를 `departments`·`dgsbjtCdRaw`로 넘김(HIRA 응답에 필드가 있을 때만 유효).
+- 추천: `handleAutoRecommend`는 필터된 `hospitals` 상위 8곳만 비급여 API에 보냄.
 
 ## 테스트
 

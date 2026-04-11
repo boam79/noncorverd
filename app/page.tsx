@@ -23,6 +23,7 @@ import {
 } from '@/lib/utils/recommendation';
 import type { HospitalPricing, MedicalInstitutionType } from '@/types';
 import {
+  CLINICAL_FOCUS_OPTIONS,
   hospitalMatchesClinicalFocus,
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
@@ -111,6 +112,16 @@ export default function Home() {
 
     return filtered;
   }, [allHospitals, sigungu, sigunguList, hospitalName, clinicalFocus]);
+
+  const clinicalFocusExcludedAll =
+    clinicalFocus !== 'none' &&
+    !isLoading &&
+    !error &&
+    allHospitals.length > 0 &&
+    hospitals.length === 0;
+
+  const clinicalFocusLabel =
+    CLINICAL_FOCUS_OPTIONS.find((o) => o.id === clinicalFocus)?.label ?? '';
 
   // 검색 실행 핸들러
   const handleSearch = useCallback(() => {
@@ -277,7 +288,8 @@ export default function Home() {
               value={clinicalFocus}
               onChange={setClinicalFocus}
             />
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-col gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={handleAutoRecommend}
@@ -314,6 +326,13 @@ export default function Home() {
                   </ul>
                 </details>
               )}
+            </div>
+            {clinicalFocusExcludedAll && (
+              <p className="text-sm text-amber-800">
+                「{clinicalFocusLabel}」 조건에 맞는 병원이 없어 추천을 실행할 수 없습니다.
+                관심 분야를 ‘선택 안 함’으로 바꾸거나 종별·지역을 조정해 보세요.
+              </p>
+            )}
             </div>
           </div>
 
@@ -366,12 +385,35 @@ export default function Home() {
                 }}
               />
             ) : (
-              <HospitalCardList
-                hospitals={hospitals}
-                selectedHospitals={selectedHospitals}
-                onToggleHospital={toggleHospital}
-                maxSelection={maxSelection}
-              />
+              <>
+                {clinicalFocusExcludedAll && (
+                  <div
+                    className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    role="status"
+                  >
+                    <p className="font-medium">
+                      관심 분야 「{clinicalFocusLabel}」에 맞는 병원이 없습니다.
+                    </p>
+                    <p className="mt-1 text-amber-800">
+                      검색 결과 {allHospitals.length}곳 중 조건을 만족하는 기관이 없습니다.
+                      이름·종별 기반 추정이라 실제와 다를 수 있습니다.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setClinicalFocus('none')}
+                      className="mt-3 text-sm font-semibold text-amber-950 underline decoration-amber-600 hover:text-amber-700"
+                    >
+                      관심 분야 선택 해제
+                    </button>
+                  </div>
+                )}
+                <HospitalCardList
+                  hospitals={hospitals}
+                  selectedHospitals={selectedHospitals}
+                  onToggleHospital={toggleHospital}
+                  maxSelection={maxSelection}
+                />
+              </>
             )}
           </div>
         </div>

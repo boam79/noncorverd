@@ -909,6 +909,11 @@
 - 로컬 커밋: `bad290e` — **원격 푸시는 SSH(github.com:22) 타임아웃으로 실패**; 네트워크 복구 후 `git push origin main` 필요
 - Planner: 수동으로 지역·종별 조합별 오탐/미탐 스팟체크 후 v1 규칙 조정 가능
 
+### ✅ Executor 진행 기록 (2026-04-12) — 관심 분야 0건 UX + 개발자 가이드
+- `app/page.tsx`: API 결과는 있는데 관심 분야 필터로 0건일 때 안내 배너·「선택 해제」버튼, 추천 영역 보조 문구
+- `doc/USER_GUIDE.md`, `doc/DEVELOPER_GUIDE.md`: 동작·파일 위치 반영
+- 검증: `npm run build` 통과
+
 ### 🧭 Planner 업데이트 (2026-04-12) — 기관 성격(전문 분야) 필터
 
 #### Background and Motivation (추가)
