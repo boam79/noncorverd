@@ -979,3 +979,12 @@
 - E2E `관심 분야 선택 후 추천 병원 불러오기`: Playwright만 Next 띄울 때 **백엔드(3001) 부재**로 시도 옵션이 비는 문제 → `page.route`로 `/opendata/regions|hospitals|pricing` 모킹. `getByLabel('병원 선택')`은 카드 `…병원 선택`과 충돌 → `getByRole('checkbox', { name: '병원 선택', exact: true })`.
 - 검증: `npx playwright test e2e/hospital-comparison.spec.ts -g "관심 분야 선택 후" --project=chromium` 통과(약 9s).
 
+### ✅ Executor 진행 기록 (2026-04-11) — 시군구 오탐(양주/남양주) + 관심 분야 회귀
+- **원인**: `address.includes('양주시')`가 **남양주시** 주소에서도 참이 되어 시군구 필터가 깨짐.
+- **조치**: `lib/utils/addressSigunguMatch.ts` 추가 — API `name` 전체 포함, 공백 토큰 일치, `(^|\\s)시군구(\\s|$)` 경계 매칭.
+- **관심 분야**: `clinicalFocusBuckets.ts`에 산부인과(산전·부인과 등)·척추·관절(디스크·요통·정형외과 조합 등) 키워드·설명 보강.
+- **E2E**: `e2e/clinical-focus-matching.spec.ts`에 시군구 매칭·보강 키워드 케이스 추가.
+- **검증**: `npm run build` 성공, `npx playwright test --project=chromium` **31 passed, 1 skipped**.
+- **Planner/휴먼**: 배포 후 **경기 양주시 + 소아/산부인과/척추·관절** 조합으로 운영 URL 스팟 체크 요청(데이터는 이름·코드 추정 한계 안내 유지).
+- **Git**: `main` 푸시 완료 `c12fd45`.
+
