@@ -913,6 +913,7 @@
 - `app/page.tsx`: API 결과는 있는데 관심 분야 필터로 0건일 때 안내 배너·「선택 해제」버튼, 추천 영역 보조 문구
 - `doc/USER_GUIDE.md`, `doc/DEVELOPER_GUIDE.md`: 동작·파일 위치 반영
 - 검증: `npm run build` 통과
+- 로컬 커밋: `7ff059a` — 원격 푸시는 GitHub SSH 타임아웃으로 미완료(이전 `bad290e`·`915078e` 포함 3커밋 ahead)
 
 ### 🧭 Planner 업데이트 (2026-04-12) — 기관 성격(전문 분야) 필터
 
