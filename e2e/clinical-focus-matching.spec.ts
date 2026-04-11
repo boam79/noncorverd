@@ -307,6 +307,41 @@ test.describe('관심 분야 보강 키워드', () => {
     ).toBe(true);
   });
 
+  test('척추·관절: 좋은아침·굿모닝 등 과목 누락 병원명', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'gm', name: '구리좋은아침병원', clCdNm: '병원' }),
+        'spine_joint'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'gm2', name: '○○굿모닝병원', clCdNm: '병원' }),
+        'spine_joint'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'md', name: '○○편한마디의원', clCdNm: '의원' }),
+        'spine_joint'
+      )
+    ).toBe(true);
+  });
+
+  test('척추·관절: 진료과명에만 척추·디스크(코드 없음)', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({
+          id: 'spd',
+          name: '○○병원',
+          clCdNm: '병원',
+          departments: ['척추외래', '내과'],
+        }),
+        'spine_joint'
+      )
+    ).toBe(true);
+  });
+
   test('척추·관절: 시군구 단위 목록에서 정형외과가 한 곳이라도 잡히는지', () => {
     const pool = [
       h({ id: 'p1', name: '구리○○정형외과의원', clCdNm: '의원' }),

@@ -105,7 +105,7 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'spine_joint',
     label: '척추·관절',
     description:
-      '정형외과(이름·진료과·코드 03) 전체 및 척추·디스크·요통·관절병원 등 키워드(이름·코드 기준 추정)',
+      '정형외과(이름·진료과·코드 03), 진료과명에 척추·디스크 등, 또는 마디·허리·관절염·좋은아침·굿모닝 등 흔한 척추·관절 표기(이름 기준 추정)',
   },
   {
     id: 'plastic_surgery',
@@ -228,6 +228,41 @@ function deptLabels(h: Hospital): string[] {
   return [...new Set(merged)];
 }
 
+/** 이름에 정형·척추 키워드가 없어도 척추·관절 전문으로 쓰는 상호(공공데이터 과목 누락 대비) */
+function spineJointNameMarketingHint(norm: string): boolean {
+  const hints = [
+    '마디',
+    '관절염',
+    '허리',
+    '척추전문',
+    '척추센터',
+    '척추클리닉',
+    '좋은아침',
+    '굿모닝',
+    'spine',
+  ];
+  return hints.some((k) => norm.includes(k));
+}
+
+/** 진료과명 문자열에 척추·관절 질환/부위가 들어가는 경우(과목 코드만 비어 있는 병원) */
+function spineJointDeptTextHint(depts: string[]): boolean {
+  return depts.some((d) => {
+    const t = d.replace(/\s+/g, '');
+    return (
+      t.includes('척추') ||
+      t.includes('디스크') ||
+      t.includes('요통') ||
+      t.includes('협착') ||
+      t.includes('척추관절') ||
+      t.includes('관절염') ||
+      t.includes('경추') ||
+      t.includes('요추') ||
+      t.includes('수핵') ||
+      (t.includes('관절') && t.includes('척추'))
+    );
+  });
+}
+
 export function hospitalMatchesClinicalFocus(
   h: Hospital,
   focus: ClinicalFocusId
@@ -318,6 +353,8 @@ export function hospitalMatchesClinicalFocus(
       // 정형외과·코드 03: 상지·하지·척추를 아우르는 과이므로 척추·관절 검색에 포함
       // (이전에는 이름에 척추·요통 등이 있을 때만 정형외과를 인정해 결과 0건이 잦았음)
       if (hasOrthoInName || hasOrthoInDept || hasOrthoCode) return true;
+      if (spineJointDeptTextHint(depts)) return true;
+      if (spineJointNameMarketingHint(name)) return true;
       return (
         name.includes('척추') ||
         name.includes('척추관절') ||
