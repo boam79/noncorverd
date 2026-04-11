@@ -906,14 +906,14 @@
 ### ✅ Executor 진행 기록 (2026-04-12) — 기관 성격 필터 dept-bucket 전 구간
 - 구현: `lib/constants/clinicalFocusBuckets.ts`(버킷·`parseDgsbjtCdToDepartments`·`hospitalMatchesClinicalFocus`), `components/ClinicalFocusFilter/ClinicalFocusSelector.tsx`, `app/page.tsx` 필터·홈 초기화, `app/api/opendata/hospitals/route.ts`의 `dgsbjtCd`/`deptCd` 매핑, `types`에 `dgsbjtCdRaw`, `doc/USER_GUIDE.md`, E2E 1건
 - 검증: `npm run build`, Playwright `관심 분야 라디오 그룹 노출`(chromium) 통과
-- 로컬 커밋: `bad290e` — **원격 푸시는 SSH(github.com:22) 타임아웃으로 실패**; 네트워크 복구 후 `git push origin main` 필요
+- 로컬 커밋: `bad290e` — 이후 **443 SSH**(아래 Lessons)로 원격 반영됨
 - Planner: 수동으로 지역·종별 조합별 오탐/미탐 스팟체크 후 v1 규칙 조정 가능
 
 ### ✅ Executor 진행 기록 (2026-04-12) — 관심 분야 0건 UX + 개발자 가이드
 - `app/page.tsx`: API 결과는 있는데 관심 분야 필터로 0건일 때 안내 배너·「선택 해제」버튼, 추천 영역 보조 문구
 - `doc/USER_GUIDE.md`, `doc/DEVELOPER_GUIDE.md`: 동작·파일 위치 반영
 - 검증: `npm run build` 통과
-- 로컬 커밋: `7ff059a` — 원격 푸시는 GitHub SSH 타임아웃으로 미완료(이전 `bad290e`·`915078e` 포함 3커밋 ahead)
+- 로컬 커밋: `7ff059a` — **푸시 완료**: `GIT_SSH_COMMAND="ssh -o Hostname=ssh.github.com -p 443 -o StrictHostKeyChecking=accept-new …"` 로 `main` 반영(`ef84608..4c7914b`)
 
 ### 🧭 Planner 업데이트 (2026-04-12) — 기관 성격(전문 분야) 필터
 
@@ -969,4 +969,7 @@
 #### Executor's Feedback or Assistance Requests (Planner → 휴먼)
 - Executor는 **dept-bucket-1부터 순서대로** 진행하고, 각 단계 완료 시 본 보드 체크와 스크래치패드에 검증 결과를 남길 것.
 - 버킷 명칭·키워드는 비기술 이해관계자 검토가 있으면 오탐률이 내려간다. 가능하면 시판 용어 기준으로 1회 리뷰 요청.
+
+#### Lessons (GitHub 푸시)
+- `github.com:22` SSH가 타임아웃일 때: `GIT_SSH_COMMAND='ssh -o Hostname=ssh.github.com -p 443 -o StrictHostKeyChecking=accept-new' git push origin main` (최초 1회 호스트 키 등록 안내 가능)
 
