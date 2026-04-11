@@ -104,7 +104,7 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'spine_joint',
     label: '척추·관절',
     description:
-      '척추·디스크·요통 등 키워드, 또는 정형외과명과 척추·디스크·요통·허리·경추·요추 등 조합',
+      '정형외과(이름·진료과·코드 03) 전체 및 척추·디스크·요통·관절병원 등 키워드(이름·코드 기준 추정)',
   },
   {
     id: 'plastic_surgery',
@@ -292,6 +292,9 @@ export function hospitalMatchesClinicalFocus(
         !name.includes('소아치과')
       );
     case 'spine_joint':
+      // 정형외과·코드 03: 상지·하지·척추를 아우르는 과이므로 척추·관절 검색에 포함
+      // (이전에는 이름에 척추·요통 등이 있을 때만 정형외과를 인정해 결과 0건이 잦았음)
+      if (hasOrthoInName || hasOrthoInDept || hasOrthoCode) return true;
       return (
         name.includes('척추') ||
         name.includes('척추관절') ||
@@ -304,21 +307,7 @@ export function hospitalMatchesClinicalFocus(
         name.includes('척추내시경') ||
         name.includes('척추신경') ||
         name.includes('요추') ||
-        name.includes('경추') ||
-        (hasOrthoInName &&
-          (name.includes('척추') ||
-            name.includes('디스크') ||
-            name.includes('요통') ||
-            name.includes('허리') ||
-            name.includes('요추') ||
-            name.includes('경추'))) ||
-        (hasOrthoInDept &&
-          (name.includes('척추') ||
-            name.includes('디스크') ||
-            name.includes('요통') ||
-            name.includes('허리') ||
-            name.includes('요추') ||
-            name.includes('경추')))
+        name.includes('경추')
       );
     case 'plastic_surgery':
       return name.includes('성형외과') || name.includes('성형');

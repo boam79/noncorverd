@@ -275,7 +275,7 @@ test.describe('관심 분야 보강 키워드', () => {
     ).toBe(true);
   });
 
-  test('척추·관절: 디스크·정형외과+요통', () => {
+  test('척추·관절: 디스크·정형외과(이름만)·코드 03', () => {
     expect(
       hospitalMatchesClinicalFocus(
         h({ id: 'sj', name: '○○디스크병원', clCdNm: '병원' }),
@@ -287,13 +287,35 @@ test.describe('관심 분야 보강 키워드', () => {
         h({ id: 'sj2', name: '○○정형외과', clCdNm: '의원' }),
         'spine_joint'
       )
-    ).toBe(false);
+    ).toBe(true);
     expect(
       hospitalMatchesClinicalFocus(
         h({ id: 'sj3', name: '○○정형외과요통클리닉', clCdNm: '의원' }),
         'spine_joint'
       )
     ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({
+          id: 'sj4',
+          name: '○○의원',
+          clCdNm: '의원',
+          dgsbjtCdRaw: '03',
+        }),
+        'spine_joint'
+      )
+    ).toBe(true);
+  });
+
+  test('척추·관절: 시군구 단위 목록에서 정형외과가 한 곳이라도 잡히는지', () => {
+    const pool = [
+      h({ id: 'p1', name: '구리○○정형외과의원', clCdNm: '의원' }),
+      h({ id: 'p2', name: '○○내과의원', clCdNm: '의원' }),
+      h({ id: 'p3', name: '○○치과의원', clCdNm: '치과의원' }),
+      h({ id: 'p4', name: '○○의원', clCdNm: '의원', dgsbjtCdRaw: '0105' }),
+    ];
+    const spine = pool.filter((x) => hospitalMatchesClinicalFocus(x, 'spine_joint'));
+    expect(spine.length).toBeGreaterThanOrEqual(1);
   });
 });
 

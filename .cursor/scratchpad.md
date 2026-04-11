@@ -996,3 +996,11 @@
 - **버그픽스**: `useHospitals`에서 `types` 미전달 시 `types?.sort().join` 런타임 오류 방지(`typesKey`).
 - **검증**: Playwright chromium **37 passed, 1 skipped**; `main` 푸시 `f92dea8`.
 
+#### Lessons (관심 분야)
+- **척추·관절(`spine_joint`)**: 이름에 척추·요통이 없으면 정형외과만으로는 매칭에서 제외되어 지역 200건 전부 탈락할 수 있음 → **정형외과(이름·진료과·코드 03)는 척추·관절에 포함**하는 것이 실사용에 맞음.
+
+### ✅ Executor 진행 기록 (2026-04-11) — 척추·관절 0건(구리 등) 수정
+- **원인**: `spine_joint`가 정형외과인데 이름에 척추·디스크·요통 등이 없으면 제외하는 조건이었음.
+- **조치**: `hasOrthoInName || hasOrthoInDept || hasOrthoCode`이면 즉시 통과, 나머지는 기존 키워드·코드 보조.
+- **문서·테스트**: `USER_GUIDE.md` 안내, E2E 보강(정형외과만·코드 03·다건 샘플).
+
