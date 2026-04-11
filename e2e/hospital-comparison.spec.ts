@@ -27,10 +27,6 @@ async function prepareComparisonPage(page: import('@playwright/test').Page) {
   const jongnoVal = await jongnoOpt.getAttribute('value');
   expect(jongnoVal, '종로구 옵션 value').toBeTruthy();
   await sigunguSelect.selectOption(jongnoVal!);
-  await page.waitForTimeout(800);
-
-  // 종별 선택(종합병원)
-  await page.getByLabel('종합병원 선택').check();
   await page.waitForTimeout(1200);
 
   // 병원 2개 선택
@@ -52,11 +48,10 @@ async function prepareComparisonPage(page: import('@playwright/test').Page) {
  * 시나리오:
  *   1. 메인 페이지 접속
  *   2. 지역 선택 (서울 → 종로구)
- *   3. 의료기관 종별 필터 선택 (종합병원)
- *   4. 병원 검색 결과 확인
- *   5. 병원 2개 선택
- *   6. 비교 페이지 이동
- *   7. 비교 테이블 표시 확인
+ *   3. 병원 검색 결과 확인
+ *   4. 병원 2개 선택
+ *   5. 비교 페이지 이동
+ *   6. 비교 테이블 표시 확인
  */
 test.describe('병원 비교 핵심 플로우', () => {
   test('지역 선택 → 병원 검색 → 비교 페이지 이동', async ({ page }) => {
@@ -117,8 +112,15 @@ test.describe('병원 비교 핵심 플로우', () => {
       timeout: 30000,
     });
     await sido.selectOption('11');
-    await page.waitForTimeout(700);
-    await page.getByLabel('종합병원 선택').check();
+    await page.waitForTimeout(800);
+
+    const sigunguSelect = page.getByLabel('시군구 선택');
+    await expect(sigunguSelect).toBeEnabled({ timeout: 30000 });
+    const jongnoOpt = sigunguSelect.locator('option').filter({ hasText: '종로' }).first();
+    await expect(jongnoOpt).toBeAttached({ timeout: 20000 });
+    const jongnoVal = await jongnoOpt.getAttribute('value');
+    expect(jongnoVal).toBeTruthy();
+    await sigunguSelect.selectOption(jongnoVal!);
     await page.waitForTimeout(1200);
 
     const recommendButton = page.getByRole('button', { name: /추천 병원 불러오기/ });
@@ -171,13 +173,16 @@ test.describe('병원 비교 핵심 플로우', () => {
       timeout: 15000,
     });
     await sidoSelect.selectOption('11');
-    await page.waitForTimeout(400);
-    await page.getByRole('checkbox', { name: '병원 선택', exact: true }).check();
-    await page.waitForTimeout(400);
-
-    await page.getByLabel('의료기관명 검색').fill('산부인과');
-    await page.getByRole('button', { name: '검색 실행' }).click();
     await page.waitForTimeout(600);
+
+    const sigunguSelect = page.getByLabel('시군구 선택');
+    await expect(sigunguSelect).toBeEnabled({ timeout: 30000 });
+    const jongnoOpt = sigunguSelect.locator('option').filter({ hasText: '종로' }).first();
+    await expect(jongnoOpt).toBeAttached({ timeout: 20000 });
+    const jongnoVal = await jongnoOpt.getAttribute('value');
+    expect(jongnoVal).toBeTruthy();
+    await sigunguSelect.selectOption(jongnoVal!);
+    await page.waitForTimeout(800);
 
     await page.getByRole('radio', { name: '산부인과' }).check();
     await page.waitForTimeout(200);

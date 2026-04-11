@@ -54,7 +54,13 @@ export type ClinicalFocusId =
   | 'obstetrics'
   | 'pediatrics'
   | 'spine_joint'
-  | 'plastic_surgery';
+  | 'plastic_surgery'
+  | 'internal_medicine'
+  | 'neurology'
+  | 'ent'
+  | 'dermatology'
+  | 'urology'
+  | 'dentistry';
 
 export interface ClinicalFocusOption {
   id: ClinicalFocusId;
@@ -87,7 +93,7 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'obstetrics',
     label: '산부인과',
     description:
-      '이름에 산부인·산부전문·분만·산전·임신·출산·부인과 등, 진료과명, 또는 코드 05',
+      '이름에 산부인·여성병원·산부전문·분만·산전·임신·출산·부인과 등, 진료과명, 또는 코드 05',
   },
   {
     id: 'pediatrics',
@@ -104,6 +110,36 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'plastic_surgery',
     label: '성형외과',
     description: '이름에 성형외과·성형 키워드',
+  },
+  {
+    id: 'internal_medicine',
+    label: '내과',
+    description: '이름·진료과에 내과(가정의학과 제외), 또는 코드 01',
+  },
+  {
+    id: 'neurology',
+    label: '신경과',
+    description: '이름·진료과에 신경과, 또는 코드 02',
+  },
+  {
+    id: 'ent',
+    label: '이비인후과',
+    description: '이름·진료과에 이비인후과·코·귀 등, 또는 코드 08',
+  },
+  {
+    id: 'dermatology',
+    label: '피부과',
+    description: '이름·진료과에 피부과, 또는 코드 09',
+  },
+  {
+    id: 'urology',
+    label: '비뇨의학과',
+    description: '이름·진료과에 비뇨의학·비뇨기 등, 또는 코드 10',
+  },
+  {
+    id: 'dentistry',
+    label: '치과',
+    description: '종별·이름에 치과, 또는 치과 진료과 코드(50~60대)',
   },
 ];
 
@@ -213,13 +249,16 @@ export function hospitalMatchesClinicalFocus(
 
   const hasObInName =
     name.includes('산부인') ||
+    name.includes('여성병원') ||
     name.includes('산부전문') ||
     name.includes('분만') ||
     name.includes('산전') ||
     name.includes('임신') ||
     name.includes('출산') ||
     name.includes('부인과');
-  const hasObInDept = depts.some((d) => d.includes('산부인'));
+  const hasObInDept = depts.some(
+    (d) => d.includes('산부인') || d.includes('부인과')
+  );
   const hasObCode = deptCodes.includes('05');
 
   const hasPedInName =
@@ -283,6 +322,54 @@ export function hospitalMatchesClinicalFocus(
       );
     case 'plastic_surgery':
       return name.includes('성형외과') || name.includes('성형');
+    case 'internal_medicine': {
+      const deptOk = depts.some(
+        (d) =>
+          (d.includes('내과') && !d.includes('가정의학과')) || d === '내과'
+      );
+      const nameOk =
+        (name.includes('내과') && !name.includes('가정의학과')) ||
+        name.includes('내과의원') ||
+        name.includes('내과병원');
+      return deptCodes.includes('01') || deptOk || nameOk;
+    }
+    case 'neurology':
+      return (
+        name.includes('신경과') ||
+        depts.some((d) => d.includes('신경과')) ||
+        deptCodes.includes('02')
+      );
+    case 'ent':
+      return (
+        name.includes('이비인후과') ||
+        name.includes('이비인후') ||
+        depts.some((d) => d.includes('이비인후')) ||
+        deptCodes.includes('08')
+      );
+    case 'dermatology':
+      return (
+        name.includes('피부과') ||
+        depts.some((d) => d.includes('피부')) ||
+        deptCodes.includes('09')
+      );
+    case 'urology':
+      return (
+        name.includes('비뇨의학과') ||
+        name.includes('비뇨기') ||
+        depts.some((d) => d.includes('비뇨')) ||
+        deptCodes.includes('10')
+      );
+    case 'dentistry': {
+      const dentalCodes = [
+        '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60',
+      ];
+      const cl = h.clCdNm || String(h.type || '');
+      return (
+        cl.includes('치과') ||
+        name.includes('치과') ||
+        dentalCodes.some((c) => deptCodes.includes(c))
+      );
+    }
     default:
       return true;
   }

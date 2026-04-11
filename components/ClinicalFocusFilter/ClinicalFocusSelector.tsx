@@ -28,7 +28,7 @@ export function ClinicalFocusSelector({
       <div
         role="radiogroup"
         aria-labelledby="clinical-focus-label"
-        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+        className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
       >
         {CLINICAL_FOCUS_OPTIONS.map((opt) => (
           <label

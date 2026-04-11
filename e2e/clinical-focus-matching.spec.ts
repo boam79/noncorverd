@@ -254,7 +254,7 @@ test.describe('시군구 주소 매칭', () => {
 });
 
 test.describe('관심 분야 보강 키워드', () => {
-  test('산부인과: 산전·부인과', () => {
+  test('산부인과: 산전·부인과·여성병원', () => {
     expect(
       hospitalMatchesClinicalFocus(
         h({ id: 'ob', name: '○○산전진단센터', clCdNm: '의원' }),
@@ -264,6 +264,12 @@ test.describe('관심 분야 보강 키워드', () => {
     expect(
       hospitalMatchesClinicalFocus(
         h({ id: 'ob2', name: '○○부인과의원', clCdNm: '의원' }),
+        'obstetrics'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ob3', name: '나무정원여성병원', clCdNm: '병원' }),
         'obstetrics'
       )
     ).toBe(true);
@@ -301,6 +307,12 @@ test.describe('관심 분야 ID 전수(스모크)', () => {
     'pediatrics',
     'spine_joint',
     'plastic_surgery',
+    'internal_medicine',
+    'neurology',
+    'ent',
+    'dermatology',
+    'urology',
+    'dentistry',
   ];
 
   for (const focus of ids) {

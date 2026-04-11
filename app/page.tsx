@@ -6,7 +6,6 @@ import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
 import { Container } from '@/components/Layout/Container';
 import { RegionSelector } from '@/components/RegionSelector/RegionSelector';
-import { InstitutionFilter } from '@/components/InstitutionFilter/InstitutionFilter';
 import { ClinicalFocusSelector } from '@/components/ClinicalFocusFilter/ClinicalFocusSelector';
 import { HospitalCardList } from '@/components/HospitalCard/HospitalCardList';
 import { CompareBar } from '@/components/CompareBar/CompareBar';
@@ -21,7 +20,7 @@ import {
   recommendHospitals,
   type HospitalRecommendation,
 } from '@/lib/utils/recommendation';
-import type { HospitalPricing, MedicalInstitutionType } from '@/types';
+import type { HospitalPricing } from '@/types';
 import {
   CLINICAL_FOCUS_OPTIONS,
   hospitalMatchesClinicalFocus,
@@ -33,7 +32,6 @@ export default function Home() {
   const router = useRouter();
   const [sido, setSido] = useState<string>();
   const [sigungu, setSigungu] = useState<string>();
-  const [selectedTypes, setSelectedTypes] = useState<MedicalInstitutionType[]>([]);
   const [hospitalNameInput, setHospitalNameInput] = useState<string>(''); // 입력값
   const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
   const [isRecommending, setIsRecommending] = useState(false);
@@ -49,7 +47,6 @@ export default function Home() {
   const handleHomeClick = useCallback(() => {
     setSido(undefined);
     setSigungu(undefined);
-    setSelectedTypes([]);
     setHospitalNameInput('');
     setHospitalName('');
     setClinicalFocus('none');
@@ -67,7 +64,6 @@ export default function Home() {
   } = useHospitals({
     sido,
     sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
-    types: selectedTypes,
     hospitalName: hospitalName.trim() || undefined,
     enabled: !!sido || !!hospitalName.trim(), // sido 또는 병원명이 있을 때 쿼리 실행
   });
@@ -231,8 +227,8 @@ export default function Home() {
             <div className="space-y-1">
               <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
               <p className="text-sm text-gray-500">
-              지역·종별·관심 분야(선택)로 비교할 병원을 찾아보세요.
-            </p>
+                지역·관심 분야(선택)·의료기관명으로 비교할 병원을 찾아보세요.
+              </p>
             </div>
             
             {/* 의료기관명 검색란 */}
@@ -284,10 +280,6 @@ export default function Home() {
               sido={sido}
               sigungu={sigungu}
             />
-            <InstitutionFilter
-              selectedTypes={selectedTypes}
-              onChange={setSelectedTypes}
-            />
             <ClinicalFocusSelector
               value={clinicalFocus}
               onChange={setClinicalFocus}
@@ -334,7 +326,7 @@ export default function Home() {
             {clinicalFocusExcludedAll && (
               <p className="text-sm text-amber-800">
                 「{clinicalFocusLabel}」 조건에 맞는 병원이 없어 추천을 실행할 수 없습니다.
-                관심 분야를 ‘선택 안 함’으로 바꾸거나 종별·지역을 조정해 보세요.
+                관심 분야를 ‘선택 안 함’으로 바꾸거나 지역·병원명을 조정해 보세요.
               </p>
             )}
             </div>
@@ -400,7 +392,7 @@ export default function Home() {
                     </p>
                     <p className="mt-1 text-amber-800">
                       검색 결과 {allHospitals.length}곳 중 조건을 만족하는 기관이 없습니다.
-                      이름·종별 기반 추정이라 실제와 다를 수 있습니다.
+                      이름·진료과 코드 기반 추정이라 실제와 다를 수 있습니다.
                     </p>
                     <button
                       type="button"

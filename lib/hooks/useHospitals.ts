@@ -21,8 +21,10 @@ export function useHospitals({
   hospitalName,
   enabled = true,
 }: UseHospitalsParams) {
+  const typesKey =
+    types && types.length > 0 ? [...types].sort().join(',') : '';
   return useQuery({
-    queryKey: ['hospitals', sido, sigungu, types?.sort().join(','), hospitalName],
+    queryKey: ['hospitals', sido, sigungu, typesKey, hospitalName],
     queryFn: async () => {
       const response = await apiClient.getHospitals({
         sido,

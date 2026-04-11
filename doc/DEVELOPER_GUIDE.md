@@ -206,7 +206,7 @@ Content-Type: application/json
 ### 2. 병원 검색 플로우
 
 ```
-사용자 → InstitutionFilter + RegionSelector
+사용자 → RegionSelector + ClinicalFocusSelector(선택)
   → useHospitals hook
     → lib/api.ts (getHospitals)
       → /opendata/hospitals
