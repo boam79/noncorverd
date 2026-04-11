@@ -138,5 +138,116 @@ test.describe('병원 비교 핵심 플로우', () => {
       page.getByRole('radiogroup', { name: '관심 분야 (선택)' })
     ).toBeVisible();
   });
+
+  test('관심 분야 선택 후 추천 병원 불러오기', async ({ page }) => {
+    // 로컬 Playwright는 Next만 띄우고 백엔드(3001)가 없을 수 있어 OpenData 요청을 모킹합니다.
+    await page.route(/\/opendata\/regions/, async (route) => {
+      const url = new URL(route.request().url());
+      const sidoParam = url.searchParams.get('sido');
+      const body =
+        sidoParam === '11'
+          ? JSON.stringify({
+              ok: true,
+              data: [{ code: '111100000000', name: '종로구' }],
+            })
+          : JSON.stringify({
+              ok: true,
+              data: [{ code: '11', name: '서울특별시' }],
+            });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body,
+      });
+    });
+
+    await page.route(/\/opendata\/hospitals/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data: [
+            {
+              id: 'mock-ob-1',
+              name: '모의산부인과병원',
+              address: '서울특별시 종로구',
+              type: '병원',
+              departments: ['산부인과'],
+            },
+            {
+              id: 'mock-ob-2',
+              name: '모의테스트산부인과',
+              address: '서울특별시 종로구',
+              type: '병원',
+              departments: [],
+              dgsbjtCdRaw: '05',
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.route(/\/opendata\/pricing/, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data: [
+            {
+              hospitalId: 'mock-ob-1',
+              hospitalName: '모의산부인과병원',
+              items: [
+                { id: 'i1', name: '초음파', price: 50000, code: 'X1' },
+                { id: 'i2', name: '산전검사', price: 70000, code: 'X2' },
+              ],
+              averagePrice: 60000,
+              totalItems: 2,
+            },
+            {
+              hospitalId: 'mock-ob-2',
+              hospitalName: '모의테스트산부인과',
+              items: [{ id: 'i1', name: '초음파', price: 55000, code: 'X1' }],
+              averagePrice: 55000,
+              totalItems: 1,
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.goto('/');
+    await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+
+    const sidoSelect = page.getByLabel('시도 선택');
+    await expect(sidoSelect).toBeEnabled({ timeout: 30000 });
+    await expect(sidoSelect.locator('option[value="11"]')).toHaveCount(1, {
+      timeout: 15000,
+    });
+    await sidoSelect.selectOption('11');
+    await page.waitForTimeout(400);
+    await page.getByRole('checkbox', { name: '병원 선택', exact: true }).check();
+    await page.waitForTimeout(400);
+
+    await page.getByLabel('의료기관명 검색').fill('산부인과');
+    await page.getByRole('button', { name: '검색 실행' }).click();
+    await page.waitForTimeout(600);
+
+    await page.getByRole('radio', { name: '산부인과' }).check();
+    await page.waitForTimeout(200);
+
+    const recommendButton = page.getByRole('button', { name: /추천 병원 불러오기/ });
+    await expect(recommendButton).toBeEnabled({ timeout: 15000 });
+    await recommendButton.click();
+
+    await expect(
+      page.getByText(/추천 병원 \d+곳을 자동 선택했습니다/)
+    ).toBeVisible({ timeout: 15000 });
+  });
 });
 

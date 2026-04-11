@@ -51,6 +51,8 @@ export type ClinicalFocusId =
   | 'ophthal_clinic'
   | 'ophthal_hospital'
   | 'orthopedics'
+  | 'obstetrics'
+  | 'pediatrics'
   | 'spine_joint'
   | 'plastic_surgery';
 
@@ -80,6 +82,16 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'orthopedics',
     label: '정형외과',
     description: '이름 또는 등록 진료과에 정형외과',
+  },
+  {
+    id: 'obstetrics',
+    label: '산부인과',
+    description: '이름에 산부인과 또는 진료과목 코드 05',
+  },
+  {
+    id: 'pediatrics',
+    label: '소아과',
+    description: '이름에 소아과·소아청소년과 등 또는 코드 06(소아치과 제외)',
   },
   {
     id: 'spine_joint',
@@ -176,6 +188,26 @@ export function hospitalMatchesClinicalFocus(
   });
   const hasEye = hasEyeInName || hasEyeInDept || hasEyeCode;
 
+  const hasObInName =
+    name.includes('산부인과') || name.includes('산부인과의원');
+  const hasObInDept = depts.some((d) => d.includes('산부인'));
+  const hasObCode = deptTokensFromHospital(h).some((c) => {
+    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
+    return k === '05';
+  });
+
+  const hasPedInName =
+    name.includes('소아과') ||
+    name.includes('소아청소년') ||
+    (name.includes('소아') && !name.includes('소아치과'));
+  const hasPedInDept = depts.some(
+    (d) => d.includes('소아청소년') || d === '소아과' || d.includes('소아과')
+  );
+  const hasPedCode = deptTokensFromHospital(h).some((c) => {
+    const k = c.length === 1 ? `0${c}` : c.slice(0, 2).padStart(2, '0');
+    return k === '06';
+  });
+
   const notHanui = !name.includes('한의원') && !(h.clCdNm || '').includes('한의');
 
   switch (focus) {
@@ -190,6 +222,13 @@ export function hospitalMatchesClinicalFocus(
       return hasEye && isHospitalLevel(h) && notHanui;
     case 'orthopedics':
       return hasOrthoInName || hasOrthoInDept || hasOrthoCode;
+    case 'obstetrics':
+      return hasObInName || hasObInDept || hasObCode;
+    case 'pediatrics':
+      return (
+        (hasPedInName || hasPedInDept || hasPedCode) &&
+        !name.includes('소아치과')
+      );
     case 'spine_joint':
       return (
         name.includes('척추') ||

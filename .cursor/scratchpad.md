@@ -973,3 +973,9 @@
 #### Lessons (GitHub 푸시)
 - `github.com:22` SSH가 타임아웃일 때: `GIT_SSH_COMMAND='ssh -o Hostname=ssh.github.com -p 443 -o StrictHostKeyChecking=accept-new' git push origin main` (최초 1회 호스트 키 등록 안내 가능)
 
+### Executor 진행 기록 (2026-04-11) — 산부인과·소아과 + 추천 E2E
+- 관심 분야: `lib/constants/clinicalFocusBuckets.ts`에 **산부인과(`obstetrics`)·소아과(`pediatrics`)** 옵션·매칭 규칙 반영(이전 세션에서 완료, 본 세션에서 재확인).
+- 추천 연동: `app/page.tsx`의 `hospitals`가 관심 분야로 필터된 뒤 `handleAutoRecommend`가 그 목록만 사용함(별도 수정 없이 일관).
+- E2E `관심 분야 선택 후 추천 병원 불러오기`: Playwright만 Next 띄울 때 **백엔드(3001) 부재**로 시도 옵션이 비는 문제 → `page.route`로 `/opendata/regions|hospitals|pricing` 모킹. `getByLabel('병원 선택')`은 카드 `…병원 선택`과 충돌 → `getByRole('checkbox', { name: '병원 선택', exact: true })`.
+- 검증: `npx playwright test e2e/hospital-comparison.spec.ts -g "관심 분야 선택 후" --project=chromium` 통과(약 9s).
+
