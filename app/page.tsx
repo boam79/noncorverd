@@ -7,6 +7,7 @@ import { Footer } from '@/components/Layout/Footer';
 import { Container } from '@/components/Layout/Container';
 import { RegionSelector } from '@/components/RegionSelector/RegionSelector';
 import { InstitutionFilter } from '@/components/InstitutionFilter/InstitutionFilter';
+import { ClinicalFocusSelector } from '@/components/ClinicalFocusFilter/ClinicalFocusSelector';
 import { HospitalCardList } from '@/components/HospitalCard/HospitalCardList';
 import { CompareBar } from '@/components/CompareBar/CompareBar';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
@@ -21,6 +22,10 @@ import {
   type HospitalRecommendation,
 } from '@/lib/utils/recommendation';
 import type { HospitalPricing, MedicalInstitutionType } from '@/types';
+import {
+  hospitalMatchesClinicalFocus,
+  type ClinicalFocusId,
+} from '@/lib/constants/clinicalFocusBuckets';
 
 export default function Home() {
   const router = useRouter();
@@ -34,7 +39,8 @@ export default function Home() {
   const [recommendBreakdown, setRecommendBreakdown] = useState<
     HospitalRecommendation[] | null
   >(null);
-  
+  const [clinicalFocus, setClinicalFocus] = useState<ClinicalFocusId>('none');
+
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
 
   // 메인 타이틀 클릭 시 모든 상태 초기화
@@ -44,6 +50,7 @@ export default function Home() {
     setSelectedTypes([]);
     setHospitalNameInput('');
     setHospitalName('');
+    setClinicalFocus('none');
     clearHospitals();
   }, [clearHospitals]);
   
@@ -96,8 +103,14 @@ export default function Home() {
       }
     }
 
+    if (clinicalFocus !== 'none') {
+      filtered = filtered.filter((h) =>
+        hospitalMatchesClinicalFocus(h, clinicalFocus)
+      );
+    }
+
     return filtered;
-  }, [allHospitals, sigungu, sigunguList, hospitalName]);
+  }, [allHospitals, sigungu, sigunguList, hospitalName, clinicalFocus]);
 
   // 검색 실행 핸들러
   const handleSearch = useCallback(() => {
@@ -202,7 +215,9 @@ export default function Home() {
           <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100">
             <div className="space-y-1">
               <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
-              <p className="text-sm text-gray-500">지역과 의료기관 종별을 선택해 비교할 병원을 찾아보세요.</p>
+              <p className="text-sm text-gray-500">
+              지역·종별·관심 분야(선택)로 비교할 병원을 찾아보세요.
+            </p>
             </div>
             
             {/* 의료기관명 검색란 */}
@@ -257,6 +272,10 @@ export default function Home() {
             <InstitutionFilter
               selectedTypes={selectedTypes}
               onChange={setSelectedTypes}
+            />
+            <ClinicalFocusSelector
+              value={clinicalFocus}
+              onChange={setClinicalFocus}
             />
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <button

@@ -903,3 +903,63 @@
 - 검증: `npm run build` 성공
 - 커밋·푸시 완료: `d40eb32` (Planner 수동 QA·문서 반영 여부 확인 요청)
 
+### ✅ Executor 진행 기록 (2026-04-12) — 기관 성격 필터 dept-bucket 전 구간
+- 구현: `lib/constants/clinicalFocusBuckets.ts`(버킷·`parseDgsbjtCdToDepartments`·`hospitalMatchesClinicalFocus`), `components/ClinicalFocusFilter/ClinicalFocusSelector.tsx`, `app/page.tsx` 필터·홈 초기화, `app/api/opendata/hospitals/route.ts`의 `dgsbjtCd`/`deptCd` 매핑, `types`에 `dgsbjtCdRaw`, `doc/USER_GUIDE.md`, E2E 1건
+- 검증: `npm run build`, Playwright `관심 분야 라디오 그룹 노출`(chromium) 통과
+- Planner: 수동으로 지역·종별 조합별 오탐/미탐 스팟체크 후 v1 규칙 조정 가능
+
+### 🧭 Planner 업데이트 (2026-04-12) — 기관 성격(전문 분야) 필터
+
+#### Background and Motivation (추가)
+- 사용자가 말하는 "진료과 선택"은 **행정 진료과목 코드를 고르는 UI**가 아니라, **안과의원·정형외과·안과전문병원·척추·관절 병원** 등 **일상적으로 구분하는 기관 성격·관심 분야**로 검색·추천 범위를 좁히고 싶은 요구이다.
+- 현재 **종별 필터**(종합병원·병원·요양병원·치과)와 **추천 점수**(비급여 항목 수·평균가 안정성)만으로는 이런 **전문 분야 의도**를 반영하기 어렵다.
+- 목표: **종별과 별도의 선택적 "관심 분야" 필터**를 두고, 검색 결과와 **추천 병원 후보 선정**에 동일 규칙을 적용한다. (의학 온톨로지·완전한 행정 분류 재현은 범위 밖)
+
+#### Key Challenges and Analysis
+1. **데이터**: Vercel 경로 `app/api/opendata/hospitals/route.ts`는 현재 `departments: []` 고정이라, **이름(`yadmNm`)·종별명(`clCdNm`)** 기반 규칙이 1차 현실적이다. HIRA `getHospBasisList`에 **진료과목 코드 필드**가 안정적으로 오면 프록시 `mapHospital`에서 파싱해 정확도를 올릴 수 있다(Executor 전 **필드 감사** 단계).
+2. **매칭 전략**: `성형외과`와 같이 **API `type` + 병원명 키워드**를 병행한 패턴을 다른 버킷에 재사용한다. **척추·관절**, **안과** 등은 키워드 화이트리스트 + 예외(미탐·오탐)를 문서에 명시한다.
+3. **UX·신뢰**: 버킷은 **공공데이터·이름 기반 추정**임을 짧은 보조 문구로 밝힌다. 후보가 0건이면 **필터 완화 유도** 메시지를 둔다.
+4. **추천**: `handleAutoRecommend`의 상위 8곳 후보를 **버킷 통과 목록에서만** 채운다. 8곳 미만이면 가능한 만큼만 추천하고 부족 시 안내.
+
+#### High-level Task Breakdown (Planner → Executor)
+각 단계는 **한 번에 하나만** 구현하고, 성공 기준을 만족한 뒤 다음 단계로 넘긴다.
+
+1. **dept-bucket-1 — 버킷 정의 v0**
+   - 산출물: 버킷 목록(예: 안과의원, 안과전문병원, 정형외과, 척추·관절, 성형외과 연계 규칙 명시) + 각각 **포함 키워드·제외 키워드(선택)·clCdNm/종별 제약**
+   - 성공 기준: 한 파일(상수 또는 `doc/` 단락)에 규칙이 고정되어 Executor가 그대로 코딩 가능
+
+2. **dept-bucket-2 — HIRA 응답 필드 감사(읽기 전용)**
+   - 실제 API 샘플에서 `dgsbjtCd` 등 진료과 관련 필드 유무 확인
+   - 성공 기준: "필드 활용 가능 / 불가" 결론과 근거 1~2문장
+
+3. **dept-bucket-3 — 병원 매핑 확장(선택)**
+   - 2번이 가능하면 `mapHospital`에서 태그 배열 채움; 불가하면 스킵
+   - 성공 기준: 샘플 20기관 수동 스팟체크에서 의도와 불일치 시 조정 가능한 주석·테이블 유지
+
+4. **dept-bucket-4 — UI "관심 분야(선택)"**
+   - Planner 권장: **단일 선택**(다중은 후속)으로 혼동 최소화
+   - `InstitutionFilter`와 시각적으로 구분(라벨·접기 가능)
+   - 성공 기준: 선택/해제 시 결과 건수·빈 상태 문구가 일관됨
+
+5. **dept-bucket-5 — 목록 필터 + 추천 연동**
+   - `useMemo` 필터 또는 API 쿼리 확장으로 버킷 적용
+   - 추천 후보 8곳을 버킷 만족 병원으로 제한
+   - 성공 기준: 동일 지역·종별에서 버킷 ON/OFF 비교 시 결과 집합이 의도대로 달라짐
+
+6. **dept-bucket-6 — 테스트·가이드**
+   - E2E 1건(모킹 허용) 또는 순수 함수 단위 테스트
+   - `doc/USER_GUIDE.md`에 "이름 기반 추정" 안내
+   - 성공 기준: `npm run lint` 및 `npm run build` 통과
+
+#### Project Status Board (기관 성격 필터)
+- [x] dept-bucket-1: 버킷·매칭 규칙 v0 (`lib/constants/clinicalFocusBuckets.ts`)
+- [x] dept-bucket-2: HIRA `dgsbjtCd`/`deptCd` 수용 + 코드→한글 일부 매핑(파일 주석·구현)
+- [x] dept-bucket-3: `mapHospital`에 `departments`·`dgsbjtCdRaw` 반영
+- [x] dept-bucket-4: `ClinicalFocusSelector` UI
+- [x] dept-bucket-5: 홈 목록 필터 + 추천 후보(필터된 `hospitals`) 연동
+- [x] dept-bucket-6: E2E(라디오 그룹) + `doc/USER_GUIDE.md`
+
+#### Executor's Feedback or Assistance Requests (Planner → 휴먼)
+- Executor는 **dept-bucket-1부터 순서대로** 진행하고, 각 단계 완료 시 본 보드 체크와 스크래치패드에 검증 결과를 남길 것.
+- 버킷 명칭·키워드는 비기술 이해관계자 검토가 있으면 오탐률이 내려간다. 가능하면 시판 용어 기준으로 1회 리뷰 요청.
+

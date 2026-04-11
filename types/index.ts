@@ -35,6 +35,8 @@ export interface Hospital {
   address: string;
   type: MedicalInstitutionType;
   departments: string[];
+  /** HIRA getHospBasisList `dgsbjtCd` 원문(있을 때만) */
+  dgsbjtCdRaw?: string;
   phone?: string;
   rating?: number;
   sidoCd?: string;

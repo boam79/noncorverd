@@ -131,5 +131,12 @@ test.describe('병원 비교 핵심 플로우', () => {
     const indicators = page.getByLabel(/병원 \d+로 이동/).first();
     await expect(indicators).toBeVisible();
   });
+
+  test('관심 분야 라디오 그룹 노출', async ({ page }) => {
+    await page.goto('/');
+    await expect(
+      page.getByRole('radiogroup', { name: '관심 분야 (선택)' })
+    ).toBeVisible();
+  });
 });
 

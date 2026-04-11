@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
 import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
+import { parseDgsbjtCdToDepartments } from '@/lib/constants/clinicalFocusBuckets';
+import type { Hospital } from '@/types';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
 
@@ -42,17 +44,22 @@ interface RawHospital {
   postNo?: string;
   XPos?: string;
   YPos?: string;
+  dgsbjtCd?: string;
+  dgsbjtCdNm?: string;
+  deptCd?: string;
   [key: string]: string | undefined;
 }
 
-function mapHospital(raw: RawHospital) {
+function mapHospital(raw: RawHospital): Hospital {
+  const dgsbjtRaw = raw.dgsbjtCd ?? raw.deptCd;
   return {
     id: raw.ykiho ?? '',
     name: raw.yadmNm ?? '',
     address: raw.addr ?? '',
     phone: raw.telno ?? '',
-    type: raw.clCdNm ?? raw.clCd ?? '병원',
-    departments: [] as string[],
+    type: (raw.clCdNm ?? raw.clCd ?? '병원') as Hospital['type'],
+    departments: parseDgsbjtCdToDepartments(dgsbjtRaw),
+    dgsbjtCdRaw: dgsbjtRaw,
     sidoCd: raw.sidoCd ?? '',
     sgguCd: raw.sgguCd ?? '',
     clCdNm: raw.clCdNm ?? '',
@@ -63,10 +70,10 @@ function mapHospital(raw: RawHospital) {
 async function fetchHospitalsForType(
   baseParams: Record<string, string | number>,
   typeName: string
-): Promise<ReturnType<typeof mapHospital>[]> {
+): Promise<Hospital[]> {
   const clCds = TYPE_CLCDS[typeName] ?? [];
   const extraParams = TYPE_EXTRA_PARAMS[typeName] ?? {};
-  const results: ReturnType<typeof mapHospital>[] = [];
+  const results: Hospital[] = [];
   const seen = new Set<string>();
 
   for (const clCd of clCds) {
@@ -119,11 +126,11 @@ export async function GET(request: NextRequest) {
 
     const typeNames = type ? type.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-    let filtered: ReturnType<typeof mapHospital>[];
+    let filtered: Hospital[];
 
     if (typeNames.length === 0) {
       // 종별 없이 전체 조회 (최대 2페이지)
-      const allHospitals: ReturnType<typeof mapHospital>[] = [];
+      const allHospitals: Hospital[] = [];
       for (let page = 1; page <= 2; page++) {
         const { items } = await fetchPublicData(HOSPITAL_ENDPOINT, { ...baseParams, pageNo: page });
         if (items.length === 0) break;
@@ -134,7 +141,7 @@ export async function GET(request: NextRequest) {
     } else {
       // 종별별로 각각 API 호출 후 합산 (중복 제거)
       const seen = new Set<string>();
-      const results: ReturnType<typeof mapHospital>[] = [];
+      const results: Hospital[] = [];
       for (const typeName of typeNames) {
         const hospitals = await fetchHospitalsForType(baseParams, typeName);
         for (const h of hospitals) {
