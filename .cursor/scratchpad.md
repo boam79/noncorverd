@@ -901,5 +901,5 @@
   - `lib/utils/trustScore.ts`, `ComparisonTable`/`MobileComparisonView`: 신뢰도·핀·밀집 모드
   - `app/page.tsx`: 추천 점수 `<details>` 분해, 병원 목록 오류 시 `refetchHospitals`
 - 검증: `npm run build` 성공
-- Planner 확인 후 커밋·푸시 및 수동 QA 요청
+- 커밋·푸시 완료: `d40eb32` (Planner 수동 QA·문서 반영 여부 확인 요청)
 
