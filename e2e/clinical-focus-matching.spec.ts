@@ -319,6 +319,148 @@ test.describe('관심 분야 보강 키워드', () => {
   });
 });
 
+test.describe('관심 분야 전 항목(이름·코드 보강)', () => {
+  test('안과의원: 눈만 있는 의원, 눈성형은 안과의원 아님', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'eye1', name: '밝은눈의원', clCdNm: '의원' }),
+        'ophthal_clinic'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'eye2', name: '○○눈성형외과', clCdNm: '의원' }),
+        'ophthal_clinic'
+      )
+    ).toBe(false);
+  });
+
+  test('안과·병원급: 눈 + 병원', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'eye3', name: '○○눈병원', clCdNm: '병원' }),
+        'ophthal_hospital'
+      )
+    ).toBe(true);
+  });
+
+  test('성형외과: 미용외과·미용+성형', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ps1', name: '○○미용외과', clCdNm: '의원' }),
+        'plastic_surgery'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ps2', name: '○○미용성형센터', clCdNm: '의원' }),
+        'plastic_surgery'
+      )
+    ).toBe(true);
+  });
+
+  test('소아과: 아동병원', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'pd1', name: '○○아동병원', clCdNm: '병원' }),
+        'pediatrics'
+      )
+    ).toBe(true);
+  });
+
+  test('산부인과: 산후·진료과 산후조리', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ob4', name: '○○산후조리원', clCdNm: '의원' }),
+        'obstetrics'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({
+          id: 'ob5',
+          name: '행복의원',
+          departments: ['산후조리원'],
+          clCdNm: '의원',
+        }),
+        'obstetrics'
+      )
+    ).toBe(true);
+  });
+
+  test('신경과: 신경외과·코드 02', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'nv1', name: '○○신경외과', clCdNm: '의원' }),
+        'neurology'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'nv2', name: '○○의원', dgsbjtCdRaw: '02', clCdNm: '의원' }),
+        'neurology'
+      )
+    ).toBe(true);
+  });
+
+  test('이비인후과: 이목후·ENT', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ent1', name: '○○이목후과', clCdNm: '의원' }),
+        'ent'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ent2', name: '서울ENT의원', clCdNm: '의원' }),
+        'ent'
+      )
+    ).toBe(true);
+  });
+
+  test('피부과: 피부만 이름', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'dm1', name: '○○피부의원', clCdNm: '의원' }),
+        'dermatology'
+      )
+    ).toBe(true);
+  });
+
+  test('비뇨의학과: 전립선·비뇨기과', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ur1', name: '○○전립선비뇨기과', clCdNm: '의원' }),
+        'urology'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ur2', name: '○○비뇨기과의원', clCdNm: '의원' }),
+        'urology'
+      )
+    ).toBe(true);
+  });
+
+  test('치과: 치과병원 종별', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'dt1', name: '○○치과', clCdNm: '치과의원' }),
+        'dentistry'
+      )
+    ).toBe(true);
+  });
+
+  test('내과: 코드 01만', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'im1', name: '○○의원', dgsbjtCdRaw: '01', clCdNm: '의원' }),
+        'internal_medicine'
+      )
+    ).toBe(true);
+  });
+});
+
 test.describe('관심 분야 ID 전수(스모크)', () => {
   const ids: ClinicalFocusId[] = [
     'none',
