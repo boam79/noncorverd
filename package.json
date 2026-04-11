@@ -9,6 +9,7 @@
     "lint": "next lint",
     "vercel-build": "next build",
     "analyze": "ANALYZE=true next build",
+    "smoke:http": "node scripts/smoke-http.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

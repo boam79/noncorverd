@@ -8,6 +8,8 @@ import type {
   ComparisonItemEntry,
   QuantityByItemName,
 } from './types';
+import { COMPARISON_QUANTITIES_STORAGE_KEY } from './types';
+import { computeHospitalDataTrust } from '@/lib/utils/trustScore';
 import {
   calculateEstimatedTotalsByHospital,
   getItemQuantity,
@@ -24,7 +26,7 @@ interface ComparisonTableProps {
 
 type ViewMode = 'common' | 'all';
 type SortMode = 'popularity' | 'priceDesc' | 'variance' | 'name';
-const QUANTITIES_STORAGE_KEY = 'comparison-item-quantities-v1';
+type DensityMode = 'comfortable' | 'compact';
 
 export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   const aggregatedItems = useMemo<ComparisonItemEntry[]>(() => {
@@ -120,13 +122,31 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('popularity');
+  const [densityMode, setDensityMode] = useState<DensityMode>('comfortable');
+  const [pinnedItemNames, setPinnedItemNames] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
   const [quantities, setQuantities] = useState<QuantityByItemName>({});
 
+  const cellPad =
+    densityMode === 'compact' ? 'px-2 py-1.5' : 'px-4 py-3';
+  const headPad =
+    densityMode === 'compact' ? 'px-2 py-2' : 'px-4 py-3';
+
+  const trustByHospitalId = useMemo(() => {
+    const map: Record<
+      string,
+      ReturnType<typeof computeHospitalDataTrust>
+    > = {};
+    pricingData.forEach((h) => {
+      map[h.hospitalId] = computeHospitalDataTrust(h);
+    });
+    return map;
+  }, [pricingData]);
+
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(QUANTITIES_STORAGE_KEY);
+      const raw = window.localStorage.getItem(COMPARISON_QUANTITIES_STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as QuantityByItemName;
       if (parsed && typeof parsed === 'object') {
@@ -140,7 +160,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   useEffect(() => {
     try {
       window.localStorage.setItem(
-        QUANTITIES_STORAGE_KEY,
+        COMPARISON_QUANTITIES_STORAGE_KEY,
         JSON.stringify(quantities)
       );
     } catch {
@@ -207,8 +227,26 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
     return sorted;
   }, [aggregatedItems, pricingData, viewMode, sortMode, searchTerm]);
 
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = filteredItems.length > visibleCount;
+  const sortedWithPins = useMemo(() => {
+    const pinSet = new Set(pinnedItemNames);
+    const pinnedList = pinnedItemNames
+      .map((name) => filteredItems.find((item) => item.name === name))
+      .filter((item): item is ComparisonItemEntry => Boolean(item));
+    const rest = filteredItems.filter((item) => !pinSet.has(item.name));
+    return [...pinnedList, ...rest];
+  }, [filteredItems, pinnedItemNames]);
+
+  const visibleItems = sortedWithPins.slice(0, visibleCount);
+  const hasMore = sortedWithPins.length > visibleCount;
+
+  const togglePinItem = (name: string) => {
+    setPinnedItemNames((prev) => {
+      if (prev.includes(name)) {
+        return prev.filter((n) => n !== name);
+      }
+      return [...prev, name];
+    });
+  };
   const estimatedTotalsByHospitalId = useMemo(
     () => calculateEstimatedTotalsByHospital(pricingData, quantities),
     [pricingData, quantities]
@@ -259,6 +297,23 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               }`}
             >
               전체 항목 ({totalUniqueItems})
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setDensityMode((d) =>
+                  d === 'comfortable' ? 'compact' : 'comfortable'
+                )
+              }
+              className={`px-3 py-1.5 rounded-full text-sm border ${
+                densityMode === 'compact'
+                  ? 'border-primary-500 text-primary-600 bg-primary-50'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
+              aria-pressed={densityMode === 'compact'}
+              aria-label="표 밀도 전환"
+            >
+              {densityMode === 'compact' ? '여유 보기' : '밀집 보기'}
             </button>
           </div>
           <div className="flex flex-wrap gap-2 md:items-center">
@@ -321,6 +376,8 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
         pricingData={pricingData}
         items={visibleItems}
         estimatedTotalsByHospitalId={estimatedTotalsByHospitalId}
+        densityMode={densityMode}
+        trustByHospitalId={trustByHospitalId}
       />
 
       {/* 데스크톱 뷰 */}
@@ -328,15 +385,36 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12`}
+              >
+                핀
+              </th>
+              <th
+                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider`}
+              >
                 항목
               </th>
               {pricingData.map((hospital) => (
                 <th
                   key={hospital.hospitalId}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[170px]"
+                  className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[170px]`}
                 >
                   <div className="font-semibold text-gray-900">{hospital.hospitalName}</div>
+                  {(() => {
+                    const t = trustByHospitalId[hospital.hospitalId];
+                    return t ? (
+                      <div
+                        className="mt-1 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700"
+                        title={t.hints.join(' · ')}
+                      >
+                        데이터 신뢰도{' '}
+                        <span className="font-semibold text-primary-700">
+                          {t.score}점 ({t.label})
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
                   <div className="text-xs text-gray-500 mt-1">
                     항목 수: {hospital.items.length.toLocaleString()}개
                   </div>
@@ -350,7 +428,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                   )}
                 </th>
               ))}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
+              <th
+                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]`}
+              >
                 평균가
               </th>
             </tr>
@@ -359,7 +439,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
             {visibleItems.length === 0 && (
               <tr>
                 <td
-                  colSpan={pricingData.length + 2}
+                  colSpan={pricingData.length + 3}
                   className="px-4 py-6 text-center text-sm text-gray-500"
                 >
                   조건에 맞는 비급여 항목이 없습니다. 검색어나 필터를 변경해보세요.
@@ -372,7 +452,26 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
               return (
                 <tr key={item.name} className="hover:bg-gray-50 align-top">
-                  <td className="px-4 py-3 text-sm text-gray-900">
+                  <td className={`${cellPad} text-sm text-gray-500 align-middle`}>
+                    <button
+                      type="button"
+                      onClick={() => togglePinItem(item.name)}
+                      className={`rounded-md border px-2 py-1 text-xs font-medium touch-target ${
+                        pinnedItemNames.includes(item.name)
+                          ? 'border-amber-300 bg-amber-50 text-amber-900'
+                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                      aria-pressed={pinnedItemNames.includes(item.name)}
+                      aria-label={
+                        pinnedItemNames.includes(item.name)
+                          ? `${item.name} 핀 해제`
+                          : `${item.name} 위로 핀`
+                      }
+                    >
+                      {pinnedItemNames.includes(item.name) ? '★' : '☆'}
+                    </button>
+                  </td>
+                  <td className={`${cellPad} text-sm text-gray-900`}>
                     <div className="font-medium">{item.name}</div>
                     <div className="mt-1 text-xs text-gray-500 space-y-1">
                       <div className="flex items-center gap-2">
@@ -434,7 +533,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                       return (
                         <td
                           key={`${item.name}-${hospital.hospitalId}`}
-                          className="px-4 py-3 text-sm text-gray-400 text-center"
+                          className={`${cellPad} text-sm text-gray-400 text-center`}
                         >
                           -
                         </td>
@@ -444,7 +543,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                     return (
                       <td
                         key={`${item.name}-${hospital.hospitalId}`}
-                        className={`px-4 py-3 text-sm ${
+                        className={`${cellPad} text-sm ${
                           entry.isHighest
                             ? 'text-red-600 font-semibold'
                             : entry.isLowest
@@ -487,7 +586,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                       </td>
                     );
                   })}
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td
+                    className={`${cellPad} whitespace-nowrap text-sm font-medium text-gray-900`}
+                  >
                     {item.averagePrice.toLocaleString()}원
                   </td>
                 </tr>
@@ -504,7 +605,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
             onClick={() => setVisibleCount((prev) => prev + 30)}
             className="px-4 py-2 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50"
           >
-            더 보기 ({filteredItems.length - visibleCount}개 남음)
+            더 보기 ({sortedWithPins.length - visibleCount}개 남음)
           </button>
         </div>
       )}

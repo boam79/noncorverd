@@ -3,19 +3,27 @@
 import { useState } from 'react';
 import type { HospitalPricing } from '@/types';
 import type { ComparisonItemEntry } from './types';
+import type { TrustScoreResult } from '@/lib/utils/trustScore';
 
 interface MobileComparisonViewProps {
   pricingData: HospitalPricing[];
   items: ComparisonItemEntry[];
   estimatedTotalsByHospitalId: Record<string, number>;
+  densityMode?: 'comfortable' | 'compact';
+  trustByHospitalId?: Record<string, TrustScoreResult>;
 }
 
 export function MobileComparisonView({
   pricingData,
   items,
   estimatedTotalsByHospitalId,
+  densityMode = 'comfortable',
+  trustByHospitalId,
 }: MobileComparisonViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const cardPad = densityMode === 'compact' ? 'p-3' : 'p-4';
+  const titleClass =
+    densityMode === 'compact' ? 'text-sm font-medium' : 'font-medium';
 
   if (pricingData.length === 0 || items.length === 0) {
     return (
@@ -28,6 +36,7 @@ export function MobileComparisonView({
   const currentHospital = pricingData[currentIndex];
   const avgPrice = currentHospital.averagePrice || 0;
   const estimatedTotal = estimatedTotalsByHospitalId[currentHospital.hospitalId] ?? 0;
+  const trust = trustByHospitalId?.[currentHospital.hospitalId];
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % pricingData.length);
@@ -63,6 +72,17 @@ export function MobileComparisonView({
           <div className="text-xs text-primary-700 font-semibold mt-1">
             예상 총비용: {estimatedTotal.toLocaleString()}원
           </div>
+          {trust && (
+            <div
+              className="mt-1 text-[11px] text-gray-600"
+              title={trust.hints.join(' · ')}
+            >
+              데이터 신뢰도{' '}
+              <span className="font-semibold text-primary-700">
+                {trust.score}점 ({trust.label})
+              </span>
+            </div>
+          )}
         </div>
         <button
           onClick={goToNext}
@@ -89,11 +109,11 @@ export function MobileComparisonView({
           return (
             <div
               key={`${item.name}-${currentHospital.hospitalId}`}
-              className="bg-white border border-gray-200 rounded-lg p-4 animate-fade-in"
+              className={`bg-white border border-gray-200 rounded-lg ${cardPad} animate-fade-in`}
             >
               <div className="flex items-start justify-between mb-2 gap-3">
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{item.name}</h3>
+                  <h3 className={`${titleClass} text-gray-900`}>{item.name}</h3>
                   <div className="mt-1 text-xs text-gray-500 space-y-1">
                     {item.unit && <div>{item.unit} 기준</div>}
                     {item.code && <div>코드: {item.code}</div>}

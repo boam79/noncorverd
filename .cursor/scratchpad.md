@@ -11,6 +11,17 @@
 - 분석 결과는 Executor가 참조할 수 있도록 구조화된 요약과 검증 포인트를 제공해야 함.
 - 신규 요구사항(Vercel 배포 + AWS 연동 테스트)을 기존 인프라 설계와 모순 없이 문서에 녹여야 함.
 
+### New Request – 메인 화면 비율/디자인 개선 (2026-02-01)
+- 현재 메인 화면은 콘텐츠 영역이 넓게 퍼져 보이고, 컴포넌트 밀도와 시각적 계층(타이틀/입력/결과)의 구분이 약함.
+- 검색 섹션과 결과 섹션의 카드 톤이 유사해 시선 흐름이 단조롭고, 상단/하단 여백 비율이 다소 어색함.
+- 모바일/데스크톱 공통으로 “폭, 여백, 타이포, 버튼 강조”를 체계적으로 맞추는 디자인 패스가 필요함.
+
+### New Issue – 주소 검색/비교 비급여 미노출 재검증 (2026-02-01)
+- 현재 운영 백엔드 엔드포인트 호출이 타임아웃되어 주소 기반 병원 검색 자체가 실패하는 상황 확인됨.
+- 비교 페이지 기본 뷰가 `공통 항목`으로 설정되어 있어, 병원별 항목명 불일치 시 실제 데이터가 있어도 "항목 없음"으로 보일 수 있음.
+- `pricingAdapter`에서 종료일/0원 필터가 적용되어 병원별 `items`가 비어질 수 있으며, 이 경우 공통 항목이 급격히 감소함.
+- 원인 분석의 신뢰도를 높이기 위해 인프라 복구 후 "검색 실패"와 "표시 실패"를 분리한 재현 시나리오가 필요함.
+
 ### New Issue – 시군구 목록 누락 & 로딩 지연 (2025-11-13)
 - 일부 시도 선택 시 시군구 드롭다운이 비거나 Mock 데이터만 노출되는 현상 보고
 - 행안부 행정표준코드 API가 500을 반환하며 Mock 데이터로 폴백하는 로그 확인 → 실데이터 확보가 선결 과제
@@ -381,6 +392,13 @@
   - [x] prod-4: 문서화 완성 (사용자 가이드, 개발자 가이드)
   - [x] prod-5: 보안 및 접근성 검증 (npm audit, 환경변수 검증)
   - [ ] prod-6: 프로덕션 최종 검증 준비 (다음 단계)
+- [x] incident-1: 백엔드 가용성 복구 및 주소 검색 재검증
+- [x] incident-2: 비급여 미노출 재현 케이스 수집 (공통 항목/필터링 분리)
+- [x] incident-3: 원인별 대응안 확정 및 우선순위 합의
+- [ ] ui-1: 레이아웃 비율(컨테이너 폭/여백/그리드) 조정안 확정
+- [x] ui-1: 레이아웃 비율(컨테이너 폭/여백/그리드) 조정안 확정
+- [x] ui-2: 메인 검색 섹션 시각 계층 개선 (타이포/색/카드 스타일)
+- [x] ui-3: 결과 섹션/하단 영역 정리 및 반응형 미세 조정
 
 ## Current Status / Progress Tracking
 
@@ -528,6 +546,78 @@
     - ✅ `HospitalCard`에 `data-testid="hospital-card"` 및 `article` 태그 추가
     - ⏳ Vercel 배포 후 Playwright E2E 재실행 필요
 
+### 🧭 Planner 업데이트 (2026-02-01) — 다음 단계 실행 계획
+- 목표: "주소 검색 자체 실패"와 "비급여 항목 표시 실패"를 분리하여 원인을 확정하고, 재발 방지 액션까지 정의
+- 범위: 인프라(가용성), 데이터(응답 유효성), UI(기본 필터/표시 조건)
+- 성공 기준:
+  1) 주소 기반 병원 검색 API(`hospitals`)가 200으로 복구되고 응답 데이터 확인
+  2) 비교 API(`pricing`)에서 병원별 `items.length`와 UI 표시 결과가 일치함을 증명
+  3) "비급여가 안 보임" 사례를 최소 1건 이상 재현하고 직접 원인(공통항목/필터링/빈데이터) 태깅 완료
+  4) 수정 우선순위(즉시/단기/중기)와 검증 기준 합의
+
+#### High-level Task Breakdown (Planner → Executor)
+1. **가용성 복구 확인 (incident-1)**
+   - `health`, `regions`, `hospitals`, `pricing` 엔드포인트 순차 점검
+   - 성공 기준: 4개 엔드포인트 모두 timeout 없이 응답
+2. **주소 검색 정상성 검증 (incident-1)**
+   - 시도/시군구 조합 3개(서울/부산/경기)로 병원 검색 검증
+   - 성공 기준: 각 조합에서 병원 목록 1개 이상 반환 + 응답시간 기록
+3. **비급여 미노출 재현 실험 (incident-2)**
+   - 같은 병원 조합으로 비교 페이지에서 `공통 항목` ↔ `전체 항목` 전환 비교
+   - 성공 기준: 미노출 사례를 재현하고, 해당 시점의 API 응답과 UI 상태를 함께 캡처
+4. **원인 분류 및 대응안 도출 (incident-3)**
+   - 원인 분류: `서버불가용`, `공통항목교집합0`, `pricing 필터링 소거`, `병원ID/ykiho 문제`
+   - 성공 기준: 케이스별 재현 조건/로그/개선안 1:1 매핑
+5. **수정 우선순위 제안 (incident-3)**
+   - 즉시: 서버 복구, 비교 기본 탭 정책 검토
+   - 단기: 공통항목 0건 안내 UX 개선, 디버그 로그 강화
+   - 중기: 항목명 표준화/매핑 테이블 개선
+   - 성공 기준: 실행 가능한 변경 목록과 검증 시나리오 확정
+
+### ✅ Executor 진행 기록 (2026-02-01) — incident-1 완료
+- 가용성 점검 결과:
+  - `http://54.180.251.93:3000/health` → timeout (HTTP 000)
+  - `https://noncorverd-backend.onrender.com/health` → timeout (HTTP 000)
+  - `https://noncorverd.vercel.app/api/opendata/regions` → 정상 (HTTP 200, 시도 17건 반환)
+- 주소 기반 검색 재검증:
+  - `GET /api/opendata/hospitals?sido=11&sigungu=111100&type=종합병원` → HTTP 200, 4개 병원 반환
+  - 결론: 사용자 경로 기준(Vercel 프론트) 주소 검색은 현재 정상 동작
+- 비교 API 기본 검증:
+  - 상기 병원 중 2개로 `POST /api/opendata/pricing` 실행
+  - HTTP 200, 병원 2개 모두 `items=100` 확인
+- 비급여 미노출 재현 후보 탐색(사전):
+  - `sido=11, sigungu=116800, type=의원` 조합에서 병원 3개 비교 시 `items=0/0/0`, `common=0` 재현됨
+  - 해당 케이스는 incident-2에서 원인 분리 분석(데이터 부재 vs 필터 소거 vs UI 기본 탭 영향) 예정
+
+### ✅ Executor 진행 기록 (2026-02-01) — incident-2 완료
+- 재현 케이스 1 (동일 종별: 의원):
+  - `sido=11, sigungu=116800, type=의원` → 병원 검색은 정상(200건 반환)이나 비교 응답에서 각 병원 `items=0`
+  - 서울/부산 의원 조합 모두 `items=0/0` 패턴 확인
+- 재현 케이스 2 (혼합 조합: 종합병원 + 의원):
+  - 예시: `강북삼성병원(100건)` + `(의)미래의료재단리드림의원(0건)`
+  - 계산 결과: `common=0`, `allUnique=73`
+  - UI 기본 탭이 `공통 항목`인 상태에서는 "항목 없음"처럼 보일 수 있으나, 전체 기준 데이터는 존재함
+- 보조 비교:
+  - 종합병원은 `items=100/100`으로 정상
+  - 치과는 `items=27/29`로 부분 정상
+  - 한의원은 테스트 샘플에서 `items=0` 확인
+- 중간 결론:
+  1) "검색 후 비교 시 안 보임"은 일부 종별(특히 의원/한의원)에서 API 결과가 0건인 데이터 이슈가 존재
+  2) 병원 간 항목 수 불균형(100 vs 0)일 때 기본 `공통 항목` 탭으로 인해 표시 이슈로 체감될 수 있음
+
+### ✅ Executor 진행 기록 (2026-02-01) — 필터 옵션 변경 반영
+- 사용자 요청 반영:
+  - 검색 옵션에서 `의원`, `한의원` 제거
+  - 검색 옵션에 `성형외과` 추가
+- 반영 파일:
+  - `types/index.ts` (`MedicalInstitutionType` 갱신)
+  - `components/InstitutionFilter/InstitutionFilter.tsx` (체크박스 목록 갱신)
+  - `app/api/opendata/hospitals/route.ts` (종별 매핑/후처리: `성형외과`)
+- 검증:
+  - `npm run lint` 통과 (오류/경고 없음)
+- 주의:
+  - `성형외과`는 기관 종별 코드만으로 완전 분리되지 않아 `yadmNm=성형외과` 키워드 검색을 병행
+
 ## Executor's Feedback or Assistance Requests
 - ✅ **prod-6 Day 1 – CORS 수정 및 시군구 코드 변환 완료**:
   - CORS 설정 개선 및 EC2 배포 완료
@@ -536,4 +626,280 @@
   - 프론트엔드 시군구 선택 반영 및 캐시 문제 수정 완료
   - 비교 페이지 병원명 표시 및 의료기관 종별 필터링 개선 완료
   - 다음 단계: Vercel 배포 후 E2E 테스트 재실행 필요
+
+- ⚠️ **블로커 보고 (2026-02-01) — 성형외과 API 필터 로컬 검증 불가**
+  - 수행 내용: 로컬 `next dev` 실행 후 `/api/opendata/hospitals?sido=11&sigungu=116800&type=성형외과` 호출 테스트
+  - 결과: HTTP 502, 서버 로그 `알 수 없는 응답 형식: Unauthorized`
+  - 원인: 로컬 환경에서 공공데이터 API 인증 정보(`api_key`) 미설정으로 상위 API 호출 실패
+  - 요청 사항: 로컬 `.env.local`(또는 Vercel Preview 환경)에 유효한 `api_key` 제공 후 재검증 필요
+  - 비고: 현재 배포 서버(Vercel 운영)는 응답하지만, 이번 `성형외과` 코드 변경분은 로컬/미배포 상태라 운영 API로는 검증 불가
+
+- ✅ **후속 검증 완료 (2026-02-01) — 성형외과 API 필터 동작 확인**
+  - 원인 정정: 본 코드베이스 API 키 환경변수는 `api_key`가 아니라 `OPENDATA_API_KEY`를 사용함 (`lib/opendata/client.ts`)
+  - 테스트 조건:
+    - `OPENDATA_API_KEY=<decoded service key>`
+    - `CLIENT_OPENDATA_TOKEN=dev-client-token-12345`
+    - 로컬 서버 `http://localhost:3005`
+  - 테스트 결과:
+    - `GET /api/opendata/hospitals?sido=11&sigungu=116800` → 200, 200건
+    - `GET /api/opendata/hospitals?sido=11&sigungu=116800&type=성형외과` → 200, 200건
+    - `GET /api/opendata/hospitals?sido=11&sigungu=116800&type=치과` → 200, 212건
+    - `성형외과` 결과 200건 중 병원명 `성형외과` 포함 비율 200/200 (미포함 0건)
+  - 결론: 성형외과 필터는 API 레벨에서 정상 동작함
+
+### ✅ Executor 진행 기록 (2026-02-01) — incident-3 완료
+
+#### 원인 분류 (확정)
+1. **서버 가용성 이슈**
+   - 증상: 주소 검색/비교 API timeout, 프론트 전체 로딩 실패
+   - 근거: EC2/Render health timeout, 프록시 경유 요청 실패 이력
+2. **데이터 공백 이슈 (종별별 편차)**
+   - 증상: 특정 종별(특히 의원/한의원)에서 pricing `items=0`
+   - 근거: 재현 테스트에서 `items=0/0/0`, `common=0` 확인
+3. **표시 정책 이슈 (기본 탭 = 공통 항목)**
+   - 증상: 일부 병원 데이터가 0건이면 전체 비교가 비어 보임
+   - 근거: 혼합 케이스(100 vs 0)에서 `allUnique>0`인데 `common=0`
+4. **키 설정/운영 혼선 이슈**
+   - 증상: 로컬 검증 시 Unauthorized/502
+   - 근거: 실제 키 변수명 `OPENDATA_API_KEY`와 운영/문서 인식 불일치
+
+#### 대응안 우선순위
+
+**즉시 (P0)**
+- 비교 페이지 기본 탭을 `공통 항목` → `전체 항목`으로 변경
+- 공통 항목이 0건일 때 안내 문구를 명확화:
+  - "공통 항목은 없지만 병원별 개별 항목은 전체 항목 탭에서 확인 가능"
+- 운영 환경변수 점검 체크리스트에 `OPENDATA_API_KEY`를 단일 표준 키로 명시
+
+**단기 (P1)**
+- 비교 API 응답에 병원별 `items.length` 상태 메타 포함 (디버깅 가시성 강화)
+- UI에 병원별 항목 수 배지 표시 (`A병원 100개 / B병원 0개`)로 오해 방지
+- 0건 병원이 포함된 경우 자동으로 전체 탭 안내 토스트/배너 노출
+
+**중기 (P2)**
+- 항목명 표준화 레이어 도입(동의어/표기 변형 매핑)으로 공통 교집합 증가
+- 종별별 데이터 커버리지 리포트 자동화(일 배치) 및 임계치 알람
+- 가격 데이터 없는 종별의 UX 분리(안내형 모드 + 대체 탐색 경로)
+
+#### 검증 기준 (완료 정의)
+- [x] 케이스 A: 종합병원+종합병원 → 기본 진입 시 항목 즉시 표시 (기본 탭 `전체 항목`으로 변경 완료)
+- [x] 케이스 B: 종합병원+0건 병원 → 기본 진입 시 비어 보이지 않고 전체 항목 확인 가능 (기본 탭 변경으로 충족)
+- [x] 케이스 C: 공통 항목 0건 → 안내 문구/배너가 정확히 노출 (`commonItemCount===0` 안내 추가)
+- [ ] 운영 배포 후 health/hospitals/pricing smoke 테스트 통과
+- [ ] QA 체크리스트에 "공통 0건 UX" 항목 추가 완료
+
+### ✅ Executor 진행 기록 (2026-02-01) — P0 UX 1차 반영
+- 변경 파일: `components/ComparisonTable/ComparisonTable.tsx`
+  - 기본 탭을 `공통 항목` → `전체 항목`으로 변경
+  - `공통 항목` 탭에서 `commonItemCount===0 && totalUniqueItems>0`일 때 안내 배너 노출
+- 검증: `npm run lint` 통과
+- 사용자 확인 요청:
+  - 비교 페이지 기본 진입 시 항목이 즉시 보이는지
+  - `공통 항목` 탭 전환 시 0건 안내 문구가 자연스럽게 표시되는지
+
+### ✅ Executor 진행 기록 (2026-02-01) — P1 UX 보강 1차
+- 변경 파일:
+  - `app/comparison/page.tsx`
+  - `components/ComparisonTable/ComparisonTable.tsx`
+- 반영 내용:
+  - 비급여 항목 0건 병원 존재 시 상단 경고 배너 노출 (병원명 포함)
+  - 병원별 헤더에 `항목 수` 표시 추가
+- 목적:
+  - "비교 결과가 비어 보이는" 상황에서 데이터 부재 병원을 즉시 식별 가능하도록 개선
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `e8c9db0`
+
+### 🧭 Planner 업데이트 (2026-02-01) — 화면 비율/디자인 개선 계획
+
+#### 목표
+- “넓고 밋밋해 보이는” 현재 화면을 정돈된 정보 밀도와 시각적 집중이 있는 형태로 개선
+- 기능 변경 없이 UI 비율/스타일만 개선하여 사용성 향상
+
+#### High-level Task Breakdown (Planner → Executor)
+1. **레이아웃 비율 정리 (ui-1)**
+   - `Container` 최대 폭 재조정(예: `max-w-5xl`~`max-w-6xl` 범위 비교)
+   - 섹션 간 vertical spacing(상단/중간/하단)을 8pt 스케일로 통일
+   - 검색 조건/결과 카드 패딩과 라운드 값 통일
+   - 성공 기준: 데스크톱에서 좌우 여백이 안정적이고 콘텐츠가 중앙 집중형으로 보임
+
+2. **검색 섹션 시각 계층 강화 (ui-2)**
+   - 제목/라벨/보조 텍스트 타이포 계층 명확화 (`text-xl`, `text-sm`, `text-xs`)
+   - 입력창/버튼 높이, 보더, 포커스 링을 일관된 토큰으로 통일
+   - `의료기관 종별` 체크박스 카드 대비(hover/selected 상태) 강화
+   - 성공 기준: 처음 진입 시 검색 섹션의 주요 액션(입력→지역→종별)이 한눈에 식별됨
+
+3. **결과/푸터 비율 및 반응형 다듬기 (ui-3)**
+   - 결과 카드 최소 높이/빈 상태 문구 위치 조정으로 “텅 빈 느낌” 완화
+   - 푸터 상단 분리선/여백 조정으로 본문과 시각적 분리
+   - 모바일에서 요소 간 간격 및 버튼 터치 영역 재검토
+   - 성공 기준: 빈 결과/많은 결과 모두 균형 있게 보이고 모바일에서 답답하지 않음
+
+#### 구현 원칙
+- 기능 로직은 변경하지 않고 스타일/레이아웃만 수정
+- Tailwind 유틸 클래스 중심으로 최소 변경
+- 단계별 커밋/푸시 후 실제 화면 확인
+
+### ✅ Executor 진행 기록 (2026-02-01) — A-1 완료 (비용 시뮬레이터 준비)
+- 변경 파일:
+  - `components/ComparisonTable/types.ts`
+  - `lib/utils/costEstimator.ts` (신규)
+- 반영 내용:
+  - 항목 수량 맵 타입(`QuantityByItemName`) 및 병원별 예상 총비용 타입(`EstimatedTotalByHospitalId`) 추가
+  - 수량 정규화, 병원 단위 합산, 전체 병원 합산 유틸 함수 구현
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `b605899`
+
+### ✅ Executor 진행 기록 (2026-02-01) — A-2 완료 (시뮬레이터 UI 1차)
+- 변경 파일:
+  - `components/ComparisonTable/ComparisonTable.tsx`
+  - `components/ComparisonTable/MobileComparisonView.tsx`
+- 반영 내용:
+  - 항목별 `횟수` 숫자 입력 추가 (0~99, 기본 1회 계산)
+  - 병원 헤더에 `예상 총비용` 표시
+  - 모바일 비교 뷰에도 현재 병원 `예상 총비용` 표시
+  - 횟수 변경 시 총비용 실시간 반영
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `aa05f73`
+
+### ✅ Executor 진행 기록 (2026-02-01) — A-3 완료 (입력값 저장/복원)
+- 변경 파일:
+  - `components/ComparisonTable/ComparisonTable.tsx`
+- 반영 내용:
+  - 횟수 입력값 상태를 localStorage(`comparison-item-quantities-v1`)에 저장
+  - 비교 페이지 재진입/새로고침 시 자동 복원
+  - 손상된 저장값/저장 실패 케이스는 안전하게 무시
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `e6d0a2c`
+
+### ✅ Executor 진행 기록 (2026-02-01) — B-1 완료 (이상치 계산 엔진)
+- 변경 파일:
+  - `components/ComparisonTable/types.ts`
+  - `lib/utils/anomalyDetector.ts` (신규)
+  - `components/ComparisonTable/ComparisonTable.tsx`
+- 반영 내용:
+  - 평균 대비 30% 이상 고가 항목을 이상치로 판정하는 엔진 구현
+  - 병원별 Top3 이상치 집계 함수 구현
+  - 비교 테이블 상단에 이상치 건수/집계 상태 요약 연결
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `48674f4`
+
+### ✅ Executor 진행 기록 (2026-02-01) — B-2 완료 (이상치 시각화)
+- 변경 파일:
+  - `components/ComparisonTable/ComparisonTable.tsx`
+- 반영 내용:
+  - 임계치 초과 셀에 `주의` 배지 표시
+  - 상단에 이상치 기준 안내 배지/툴팁 추가 (`평균 대비 +30%`)
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `a76679e`
+
+### ✅ Executor 진행 기록 (2026-02-01) — C-1 완료 (추천 점수식 v1)
+- 변경 파일:
+  - `lib/utils/recommendation.ts` (신규)
+- 반영 내용:
+  - 병원 추천 점수식 구현:
+    - 데이터 완전성 40
+    - 항목 수 30
+    - 평균가 안정성 30
+  - 상위 추천 결과와 세부 점수(하위 스코어) 반환
+  - 동점 시 병원명 기준 정렬로 결과 일관성 보장
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `42ce815`
+
+### ✅ Executor 진행 기록 (2026-02-01) — C-2 완료 (추천 자동 선택)
+- 변경 파일:
+  - `app/page.tsx`
+- 반영 내용:
+  - 검색 화면에 `추천 병원 불러오기` 버튼 추가
+  - 후보 병원(상위 8개) 비급여 데이터 조회 후 추천 점수식으로 최대 3개 자동 선택
+  - 최대 선택 개수/후보 없음/오류 상황 메시지 처리
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `4d0d313`
+
+### ✅ Executor 진행 기록 (2026-02-01) — Q-1 완료 (회귀 E2E 확장)
+- 변경 파일:
+  - `e2e/hospital-comparison.spec.ts`
+- 반영 내용:
+  - 공통 준비 헬퍼(`prepareComparisonPage`) 추가
+  - 비용 시뮬레이터: 횟수 변경 시 총비용 갱신 시나리오 추가
+  - 추천 병원 불러오기 버튼 동작 시나리오 추가
+  - 이상치 기준 안내/주의 항목 노출 시나리오 추가
+  - 기존 필터/정렬/모바일 시나리오 선택자 안정화
+- 검증:
+  - `npm run lint` 통과
+  - `npm run test:e2e -- --list`로 30개 테스트 목록 확인
+  - 커밋/푸시 완료: `42f87ab`
+
+### ✅ Executor 진행 기록 (2026-02-01) — Q-2 완료 (문서 업데이트)
+- 변경 파일:
+  - `doc/USER_GUIDE.md`
+  - `doc/DEVELOPER_GUIDE.md`
+- 반영 내용:
+  - 사용자 가이드에 비용 시뮬레이터/추천 병원/이상치 안내 사용법 추가
+  - 0건 병원 자동 제외 옵션 안내 추가
+  - 개발자 가이드에 신규 모듈(추천/이상치/비용시뮬레이터) 구조 및 데이터 흐름 반영
+  - 환경변수 안내에 `OPENDATA_API_KEY` 추가
+  - 신규 회귀 시나리오(Q-1) 문서화
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `693f825`
+
+### ✅ Executor 진행 기록 (2026-02-01) — ui-1 완료
+- 변경 파일:
+  - `components/Layout/Container.tsx`
+  - `app/page.tsx`
+- 반영 내용:
+  - 컨테이너를 `max-w-6xl` 고정형으로 변경해 좌우 여백 안정화
+  - 메인 섹션 간격 `space-y-8`, 상하 패딩 `py-10/12`로 조정
+  - 검색/결과/선택 카드에 `rounded-2xl`, 통일된 패딩(`p-6 md:p-8`) 및 경계선 적용
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `abd5b58`
+
+### ✅ Executor 진행 기록 (2026-02-01) — ui-2 완료
+- 변경 파일:
+  - `app/page.tsx`
+  - `components/RegionSelector/RegionSelector.tsx`
+  - `components/InstitutionFilter/InstitutionFilter.tsx`
+- 반영 내용:
+  - 검색 조건 섹션에 보조 설명 문구 추가로 맥락 강화
+  - 입력/셀렉트 높이·모서리·보더·포커스 스타일 통일 (`rounded-xl`, `py-3.5`)
+  - 검색 버튼 강조(간격/폰트/그림자) 조정
+  - 의료기관 종별 필터 선택 상태 대비 강화(선택 시 primary 배경/테두리/텍스트)
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `41e717a`
+
+### ✅ Executor 진행 기록 (2026-02-01) — ui-3 완료
+- 변경 파일:
+  - `components/HospitalCard/HospitalCardList.tsx`
+  - `components/Layout/Footer.tsx`
+  - `app/page.tsx`
+- 반영 내용:
+  - 검색 결과 0건 상태를 안내형 빈 상태 카드로 개선
+  - 결과 카드 grid gap 조정(`gap-4 md:gap-5`)으로 모바일/데스크톱 균형 확보
+  - 푸터 컨테이너 폭/여백을 본문 레이아웃과 통일(`max-w-6xl`, `py-8`)
+  - 메인 하단 여백과 결과 섹션 최소 높이 조정으로 화면 비율 안정화
+- 검증:
+  - `npm run lint` 통과
+  - 커밋/푸시 완료: `9d80585`
+
+### ✅ Executor 진행 기록 (2026-04-11) — 고도화 잔여(에러·공유·스모크·신뢰도/핀/밀도·추천분해)
+- 변경 요약:
+  - `lib/utils/errorHandler.ts`: API 코드 메타(`attachQueryErrorMeta`)·심각도·카테고리·힌트·재시도 판별
+  - `usePricing` / `useHospitals`: 실패 시 메타 부착
+  - `ErrorMessage.tsx`: 심각도별 스타일·힌트·`refetch` 기반 재시도(홈/비교)
+  - `lib/utils/shareLink.ts`, `app/comparison/page.tsx` (`?s=` 복원 + 수량 localStorage), `comparisonStore.setSelectedHospitals`, `CompareBar` 링크 공유
+  - `scripts/smoke-http.mjs`, `package.json` `smoke:http`, `.github/workflows/test.yml` 빌드 후 프로덕션 서버 스모크
+  - `lib/utils/trustScore.ts`, `ComparisonTable`/`MobileComparisonView`: 신뢰도·핀·밀집 모드
+  - `app/page.tsx`: 추천 점수 `<details>` 분해, 병원 목록 오류 시 `refetchHospitals`
+- 검증: `npm run build` 성공
+- Planner 확인 후 커밋·푸시 및 수동 QA 요청
 

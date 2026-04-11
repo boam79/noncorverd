@@ -16,7 +16,10 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useRegions } from '@/lib/hooks/useRegions';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
 import { apiClient } from '@/lib/api';
-import { recommendHospitals } from '@/lib/utils/recommendation';
+import {
+  recommendHospitals,
+  type HospitalRecommendation,
+} from '@/lib/utils/recommendation';
 import type { HospitalPricing, MedicalInstitutionType } from '@/types';
 
 export default function Home() {
@@ -28,6 +31,9 @@ export default function Home() {
   const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendMessage, setRecommendMessage] = useState<string>('');
+  const [recommendBreakdown, setRecommendBreakdown] = useState<
+    HospitalRecommendation[] | null
+  >(null);
   
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
 
@@ -44,7 +50,12 @@ export default function Home() {
   // 시군구 목록 가져오기 (필터링용)
   const { data: sigunguList = [] } = useRegions(sido);
   
-  const { data: allHospitals = [], isLoading, error } = useHospitals({
+  const {
+    data: allHospitals = [],
+    isLoading,
+    error,
+    refetch: refetchHospitals,
+  } = useHospitals({
     sido,
     sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
     types: selectedTypes,
@@ -135,6 +146,7 @@ export default function Home() {
 
     setIsRecommending(true);
     setRecommendMessage('');
+    setRecommendBreakdown(null);
     try {
       const response = await apiClient.getNonCoveredPricing(
         candidates.map((hospital) => hospital.id),
@@ -146,11 +158,16 @@ export default function Home() {
       }
 
       const pricingData = response.data as HospitalPricing[];
-      const recommendations = recommendHospitals(pricingData, Math.min(3, remainingSlots));
+      const recommendations = recommendHospitals(
+        pricingData,
+        Math.min(3, remainingSlots)
+      );
       if (recommendations.length === 0) {
         setRecommendMessage('추천 점수를 계산할 데이터가 부족합니다.');
         return;
       }
+
+      setRecommendBreakdown(recommendations);
 
       const recommendedHospitals = recommendations
         .map((recommendation) =>
@@ -253,6 +270,31 @@ export default function Home() {
               {recommendMessage && (
                 <p className="text-sm text-gray-600">{recommendMessage}</p>
               )}
+              {recommendBreakdown && recommendBreakdown.length > 0 && (
+                <details className="w-full max-w-2xl text-sm text-gray-700 border border-violet-100 rounded-lg bg-violet-50/40 px-3 py-2">
+                  <summary className="cursor-pointer font-medium text-violet-900">
+                    추천 점수 상세 (완전성·항목수·가격 안정성)
+                  </summary>
+                  <ul className="mt-2 space-y-2 list-none p-0">
+                    {recommendBreakdown.map((row) => (
+                      <li
+                        key={row.hospitalId}
+                        className="rounded-md bg-white/80 border border-violet-100 px-3 py-2"
+                      >
+                        <div className="font-semibold text-gray-900">
+                          {row.hospitalName}{' '}
+                          <span className="text-violet-700">종합 {row.score}점</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1 grid gap-1 sm:grid-cols-3">
+                          <span>완전성 {row.completenessScore}점</span>
+                          <span>상대 항목수 {row.itemCountScore}점</span>
+                          <span>가격 안정성 {row.stabilityScore}점</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </div>
           </div>
 
@@ -300,7 +342,9 @@ export default function Home() {
               <ErrorMessage
                 message="병원 정보를 불러오는데 실패했습니다."
                 error={error}
-                onRetry={() => window.location.reload()}
+                onRetry={() => {
+                  void refetchHospitals();
+                }}
               />
             ) : (
               <HospitalCardList

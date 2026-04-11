@@ -41,4 +41,7 @@ export interface OutlierEntry {
   ratioPercent: number;
 }
 
+/** 비용 시뮬레이터 횟수 localStorage 키 (공유 링크 복원과 동일 값 유지) */
+export const COMPARISON_QUANTITIES_STORAGE_KEY = 'comparison-item-quantities-v1';
+
 

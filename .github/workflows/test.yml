@@ -28,6 +28,23 @@ jobs:
           node-version: '20'
       - run: npm ci
       - run: npm run build
+      - name: Production server smoke (/, /comparison)
+        run: |
+          npm run start -- --port 3000 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:3000/" > /dev/null; then
+              break
+            fi
+            sleep 1
+            if [ "$i" -eq 60 ]; then
+              echo "Server did not become ready"
+              kill $SERVER_PID || true
+              exit 1
+            fi
+          done
+          SMOKE_BASE_URL=http://127.0.0.1:3000 npm run smoke:http
+          kill $SERVER_PID || true
 
   e2e:
     runs-on: ubuntu-latest

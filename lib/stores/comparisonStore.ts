@@ -8,6 +8,8 @@ interface ComparisonState {
   addHospital: (hospital: Hospital) => void;
   removeHospital: (hospitalId: string) => void;
   clearHospitals: () => void;
+  /** 공유 링크 등에서 선택 목록을 한 번에 교체 */
+  setSelectedHospitals: (hospitals: Hospital[]) => void;
   toggleHospital: (hospital: Hospital) => void;
   isSelected: (hospitalId: string) => boolean;
   canAddMore: () => boolean;
@@ -41,6 +43,13 @@ export const useComparisonStore = create<ComparisonState>()(
 
       clearHospitals: () => {
         set({ selectedHospitals: [] });
+      },
+
+      setSelectedHospitals: (hospitals) => {
+        const { maxSelection } = get();
+        set({
+          selectedHospitals: hospitals.slice(0, maxSelection),
+        });
       },
 
       toggleHospital: (hospital) => {
