@@ -906,6 +906,7 @@
 ### ✅ Executor 진행 기록 (2026-04-12) — 기관 성격 필터 dept-bucket 전 구간
 - 구현: `lib/constants/clinicalFocusBuckets.ts`(버킷·`parseDgsbjtCdToDepartments`·`hospitalMatchesClinicalFocus`), `components/ClinicalFocusFilter/ClinicalFocusSelector.tsx`, `app/page.tsx` 필터·홈 초기화, `app/api/opendata/hospitals/route.ts`의 `dgsbjtCd`/`deptCd` 매핑, `types`에 `dgsbjtCdRaw`, `doc/USER_GUIDE.md`, E2E 1건
 - 검증: `npm run build`, Playwright `관심 분야 라디오 그룹 노출`(chromium) 통과
+- 로컬 커밋: `bad290e` — **원격 푸시는 SSH(github.com:22) 타임아웃으로 실패**; 네트워크 복구 후 `git push origin main` 필요
 - Planner: 수동으로 지역·종별 조합별 오탐/미탐 스팟체크 후 v1 규칙 조정 가능
 
 ### 🧭 Planner 업데이트 (2026-04-12) — 기관 성격(전문 분야) 필터
