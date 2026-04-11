@@ -87,7 +87,7 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
     id: 'obstetrics',
     label: '산부인과',
     description:
-      '이름에 산부인·산부전문·분만 등, 진료과명, 또는 진료과목 코드 05',
+      '이름에 산부인·산부전문·분만·산전·임신·출산·부인과 등, 진료과명, 또는 코드 05',
   },
   {
     id: 'pediatrics',
@@ -97,7 +97,8 @@ export const CLINICAL_FOCUS_OPTIONS: ClinicalFocusOption[] = [
   {
     id: 'spine_joint',
     label: '척추·관절',
-    description: '이름에 척추·관절·척추관절 등 키워드',
+    description:
+      '척추·디스크·요통 등 키워드, 또는 정형외과명과 척추·디스크·요통·허리·경추·요추 등 조합',
   },
   {
     id: 'plastic_surgery',
@@ -213,7 +214,11 @@ export function hospitalMatchesClinicalFocus(
   const hasObInName =
     name.includes('산부인') ||
     name.includes('산부전문') ||
-    name.includes('분만');
+    name.includes('분만') ||
+    name.includes('산전') ||
+    name.includes('임신') ||
+    name.includes('출산') ||
+    name.includes('부인과');
   const hasObInDept = depts.some((d) => d.includes('산부인'));
   const hasObCode = deptCodes.includes('05');
 
@@ -253,7 +258,28 @@ export function hospitalMatchesClinicalFocus(
         name.includes('척추관절') ||
         name.includes('관절병원') ||
         name.includes('척추병원') ||
-        (name.includes('관절') && name.includes('척추'))
+        (name.includes('관절') && name.includes('척추')) ||
+        name.includes('디스크') ||
+        name.includes('요통') ||
+        name.includes('협착') ||
+        name.includes('척추내시경') ||
+        name.includes('척추신경') ||
+        name.includes('요추') ||
+        name.includes('경추') ||
+        (hasOrthoInName &&
+          (name.includes('척추') ||
+            name.includes('디스크') ||
+            name.includes('요통') ||
+            name.includes('허리') ||
+            name.includes('요추') ||
+            name.includes('경추'))) ||
+        (hasOrthoInDept &&
+          (name.includes('척추') ||
+            name.includes('디스크') ||
+            name.includes('요통') ||
+            name.includes('허리') ||
+            name.includes('요추') ||
+            name.includes('경추')))
       );
     case 'plastic_surgery':
       return name.includes('성형외과') || name.includes('성형');

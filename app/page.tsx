@@ -27,6 +27,7 @@ import {
   hospitalMatchesClinicalFocus,
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
+import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
 
 export default function Home() {
   const router = useRouter();
@@ -97,10 +98,13 @@ export default function Home() {
         .trim();
 
       if (cleanSigunguName) {
-        // 주소에 시군구명이 포함된 병원만 필터링
-        filtered = filtered.filter((hospital) => {
-          return hospital.address?.includes(cleanSigunguName) || false;
-        });
+        filtered = filtered.filter((hospital) =>
+          hospitalAddressMatchesSigungu(
+            hospital.address,
+            sigunguName,
+            cleanSigunguName
+          )
+        );
       }
     }
 

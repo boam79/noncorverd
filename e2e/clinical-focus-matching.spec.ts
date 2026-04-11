@@ -4,6 +4,7 @@ import {
   parseAllDeptCodesFromRaw,
   type ClinicalFocusId,
 } from '../lib/constants/clinicalFocusBuckets';
+import { hospitalAddressMatchesSigungu } from '../lib/utils/addressSigunguMatch';
 import type { Hospital } from '../types';
 
 function h(p: Partial<Hospital> & Pick<Hospital, 'id' | 'name'>): Hospital {
@@ -215,6 +216,76 @@ test.describe('관심 분야 매칭(단위)', () => {
       hospitalMatchesClinicalFocus(
         h({ id: 'o1', name: '○○정형외과의원', clCdNm: '의원' }),
         'orthopedics'
+      )
+    ).toBe(true);
+  });
+});
+
+test.describe('시군구 주소 매칭', () => {
+  test('전체 행정명 우선: 양주시 O, 남양주시 X', () => {
+    expect(
+      hospitalAddressMatchesSigungu(
+        '경기도 양주시 덕정동 1',
+        '경기도 양주시',
+        '양주시'
+      )
+    ).toBe(true);
+    expect(
+      hospitalAddressMatchesSigungu(
+        '경기도 남양주시 진접읍 1',
+        '경기도 양주시',
+        '양주시'
+      )
+    ).toBe(false);
+  });
+
+  test('행정명 없을 때 공백 경계: 남양주시는 양주시 미포함', () => {
+    expect(
+      hospitalAddressMatchesSigungu(
+        '경기도 남양주시 진접읍',
+        '',
+        '양주시'
+      )
+    ).toBe(false);
+    expect(
+      hospitalAddressMatchesSigungu('경기도 양주시 평동', '', '양주시')
+    ).toBe(true);
+  });
+});
+
+test.describe('관심 분야 보강 키워드', () => {
+  test('산부인과: 산전·부인과', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ob', name: '○○산전진단센터', clCdNm: '의원' }),
+        'obstetrics'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'ob2', name: '○○부인과의원', clCdNm: '의원' }),
+        'obstetrics'
+      )
+    ).toBe(true);
+  });
+
+  test('척추·관절: 디스크·정형외과+요통', () => {
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'sj', name: '○○디스크병원', clCdNm: '병원' }),
+        'spine_joint'
+      )
+    ).toBe(true);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'sj2', name: '○○정형외과', clCdNm: '의원' }),
+        'spine_joint'
+      )
+    ).toBe(false);
+    expect(
+      hospitalMatchesClinicalFocus(
+        h({ id: 'sj3', name: '○○정형외과요통클리닉', clCdNm: '의원' }),
+        'spine_joint'
       )
     ).toBe(true);
   });
