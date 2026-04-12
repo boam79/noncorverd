@@ -26,12 +26,18 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
     }
   }, [parentSigungu]);
 
-  const { data: sidoList, isLoading: isLoadingSido, error: sidoError } = useRegions();
-  const { data: sigunguList, isLoading: isLoadingSigungu, error: sigunguError } = useRegions(selectedSido);
-  
-  // 배열이 아닌 경우 빈 배열로 처리 (useMemo로 최적화)
-  const safeSidoList = useMemo(() => (Array.isArray(sidoList) ? sidoList : []), [sidoList]);
-  const safeSigunguList = useMemo(() => (Array.isArray(sigunguList) ? sigunguList : []), [sigunguList]);
+  const { data: sidoBundle, isLoading: isLoadingSido, error: sidoError } = useRegions();
+  const { data: sigunguBundle, isLoading: isLoadingSigungu, error: sigunguError } =
+    useRegions(selectedSido);
+
+  const safeSidoList = useMemo(
+    () => sidoBundle?.regions ?? [],
+    [sidoBundle]
+  );
+  const safeSigunguList = useMemo(
+    () => sigunguBundle?.regions ?? [],
+    [sigunguBundle]
+  );
 
   // 시도 변경 시 시군구 초기화
   useEffect(() => {

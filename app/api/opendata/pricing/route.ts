@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
+import { pricingBodySchema } from '@/lib/validation/opendataSchemas';
+import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
+import { logRouteError } from '@/lib/observability/safeServerLog';
+import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 
 const PRICING_ENDPOINT = '/B551182/nonPaymentDamtInfoService/getNonPaymentItemHospDtlList';
 
@@ -33,29 +37,63 @@ function mapPricingItem(raw: PricingItem) {
 export async function POST(request: NextRequest) {
   if (!validateToken(request)) return unauthorizedResponse();
 
-  const body = await request.json();
-  const hospitalIds: string[] = body.hospitalIds ?? [];
-  const hospitals: { id: string; name: string }[] = body.hospitals ?? [];
+  const rateLimited = await enforceOpendataRateLimit(request, 'pricing');
+  if (rateLimited) return rateLimited;
 
-  if (!Array.isArray(hospitalIds) || hospitalIds.length === 0) {
-    return NextResponse.json({ ok: false, error: { code: 'INVALID_REQUEST', message: 'hospitalIds가 필요합니다.' } }, { status: 400 });
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch {
+    recordOpendataRequest('pricing', 400);
+    return NextResponse.json(
+      { ok: false, error: { code: 'INVALID_REQUEST', message: 'JSON 본문이 필요합니다.' } },
+      { status: 400 }
+    );
   }
 
-  const hospitalMap = new Map(hospitals.map(h => [h.id, h.name]));
+  const parsed = pricingBodySchema.safeParse(json);
+  if (!parsed.success) {
+    recordOpendataRequest('pricing', 400);
+    const msg = parsed.error.issues.map((i) => i.message).join('; ');
+    return NextResponse.json(
+      { ok: false, error: { code: 'INVALID_REQUEST', message: msg || '요청 본문이 올바르지 않습니다.' } },
+      { status: 400 }
+    );
+  }
 
-  const results = await Promise.allSettled(
-    hospitalIds.map(id => fetchHospitalPricing(id, hospitalMap.get(id) ?? ''))
-  );
+  const { hospitalIds, hospitals = [] } = parsed.data;
+  const hospitalMap = new Map(hospitals.map((h) => [h.id, h.name]));
 
-  const data = results
-    .map((r, i) => ({
+  try {
+    const results = await Promise.allSettled(
+      hospitalIds.map((id) => fetchHospitalPricing(id, hospitalMap.get(id) ?? ''))
+    );
+
+    const data = results.map((r, i) => ({
       hospitalId: hospitalIds[i],
       hospitalName: hospitalMap.get(hospitalIds[i]) ?? '',
       items: r.status === 'fulfilled' ? r.value : [],
       ok: r.status === 'fulfilled',
     }));
 
-  return NextResponse.json({ ok: true, data });
+    recordOpendataRequest('pricing', 200);
+    return NextResponse.json({
+      ok: true,
+      data,
+      meta: {
+        fetchedAt: new Date().toISOString(),
+        source: '공공데이터포털·건강보험심사평가원 비급여 진료비',
+      },
+    });
+  } catch (err) {
+    logRouteError('opendata/pricing', err);
+    recordOpendataRequest('pricing', 502);
+    const message = err instanceof Error ? err.message : '가격 정보 조회 실패';
+    return NextResponse.json(
+      { ok: false, error: { code: 'API_ERROR', message } },
+      { status: 502 }
+    );
+  }
 }
 
 async function fetchHospitalPricing(ykiho: string, _hospitalName: string) {
@@ -63,6 +101,7 @@ async function fetchHospitalPricing(ykiho: string, _hospitalName: string) {
     ykiho,
     numOfRows: 100,
     pageNo: 1,
+    _cache: 600,
   });
   return (items as PricingItem[]).map(mapPricingItem);
 }

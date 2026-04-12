@@ -10,6 +10,7 @@
     "vercel-build": "next build",
     "analyze": "ANALYZE=true next build",
     "smoke:http": "node scripts/smoke-http.mjs",
+    "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -18,9 +19,12 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.8",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "next": "15.5.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "zod": "^4.3.6",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -28,12 +32,14 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "15.5.0",
     "playwright": "^1.56.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.4"
   }
 }

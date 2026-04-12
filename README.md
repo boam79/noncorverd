@@ -32,12 +32,13 @@
 - **Region**: 인천(icn1) — 한국 공공데이터 API 직접 호출
 - **API Gateway**: `app/api/opendata/` (Next.js Route Handlers)
 - **Authentication**: X-Client-Token
-- **Render** (보조): 백엔드 서버 (Express.js, 현재 미사용)
+- **Render** (보조·선택): Express 게이트웨이. 운영 기본 경로는 Vercel `app/api/opendata` 직접 호출입니다.
 
 ### Infrastructure
+- **권장 운영 경로**: Vercel Next.js(인천 icn1)가 `OPENDATA_API_KEY`로 공공데이터를 직접 조회합니다.
 - **Frontend + API**: Vercel (인천 icn1 리전)
-- **Backend**: Render (Free Plan, Singapore — 현재 대기 상태)
-- **공공데이터 API**: Vercel 인천 노드에서 직접 호출
+- **Backend (선택)**: Render 등 별도 Express — `NEXT_PUBLIC_API_BASE_URL`로만 사용할 때 로컬·스테이징용
+- **선택 기능**: Upstash Redis(`UPSTASH_*`) 설정 시 API Route에서 IP 기준 분당 요청 제한, `METRICS_SECRET` 설정 시 `GET /api/health/metrics`로 인메모리 호출 집계 조회
 
 ## 🚀 시작하기
 
@@ -115,7 +116,7 @@ CLIENT_OPENDATA_TOKEN=dev-client-token-12345
 
 ### Vercel API Routes (`app/api/opendata/`)
 
-모든 요청은 `X-Client-Token` 헤더를 포함해야 합니다.
+모든 요청은 `X-Client-Token` 헤더를 포함해야 합니다. 브라우저 번들에 클라이언트 토큰이 포함되므로, 운영에서는 Upstash 기반 요청 제한 등으로 남용을 줄이는 것을 권장합니다.
 
 - `GET /api/opendata/regions?sido={sido}` — 지역 정보 조회 (시도/시군구)
 - `GET /api/opendata/hospitals?sido={sido}&sigungu={sigungu}&type={type}&hospitalName={name}` — 병원 목록 조회
@@ -140,6 +141,9 @@ npm run lint
 # 빌드 테스트
 npm run build
 
+# 단위 테스트 (Vitest)
+npm run test:unit
+
 # E2E 테스트
 npm run test:e2e
 
@@ -158,7 +162,8 @@ npm run test:e2e:headed
 2. 필수 환경변수 설정 (Vercel Dashboard):
    - `OPENDATA_API_KEY`: 공공데이터포털 서비스키
    - `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`: 클라이언트 인증 토큰
-3. `vercel.json`에 `"regions": ["icn1"]` 설정으로 인천 리전 사용
+3. 선택: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`(분당 요청 제한), `METRICS_SECRET` + 조회 시 헤더 `x-metrics-secret`
+4. `vercel.json`에 `"regions": ["icn1"]` 설정으로 인천 리전 사용
 
 ### Render 배포 (백엔드 보조 서버)
 

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
 import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
+import { hospitalsQuerySchema } from '@/lib/validation/opendataSchemas';
+import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
+import { logRouteError } from '@/lib/observability/safeServerLog';
+import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 import {
   parseDgsbjtCdToDepartments,
   splitDgsbjtCdNm,
@@ -109,16 +113,35 @@ async function fetchHospitalsForType(
 export async function GET(request: NextRequest) {
   if (!validateToken(request)) return unauthorizedResponse();
 
-  const sp = request.nextUrl.searchParams;
-  const sido = sp.get('sido') ?? '';
-  const sigungu = sp.get('sigungu') ?? '';
-  const type = sp.get('type') ?? '';
-  const hospitalName = sp.get('hospitalName') ?? '';
+  const rateLimited = await enforceOpendataRateLimit(request, 'hospitals');
+  if (rateLimited) return rateLimited;
+
+  const parsed = hospitalsQuerySchema.safeParse({
+    sido: request.nextUrl.searchParams.get('sido') ?? '',
+    sigungu: request.nextUrl.searchParams.get('sigungu') ?? '',
+    type: request.nextUrl.searchParams.get('type') ?? '',
+    hospitalName: request.nextUrl.searchParams.get('hospitalName') ?? '',
+  });
+  if (!parsed.success) {
+    recordOpendataRequest('hospitals', 400);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: {
+          code: 'INVALID_QUERY',
+          message: '검색 조건 형식이 올바르지 않습니다.',
+        },
+      },
+      { status: 400 }
+    );
+  }
+  const { sido, sigungu, type, hospitalName } = parsed.data;
 
   try {
     const baseParams: Record<string, string | number> = {
       _type: 'json',
       numOfRows: 100,
+      _cache: 300,
     };
 
     if (hospitalName) baseParams.yadmNm = hospitalName;
@@ -163,10 +186,20 @@ export async function GET(request: NextRequest) {
       filtered = results;
     }
 
-    return NextResponse.json({ ok: true, data: filtered, meta: { total: filtered.length } });
+    recordOpendataRequest('hospitals', 200);
+    return NextResponse.json({
+      ok: true,
+      data: filtered,
+      meta: {
+        total: filtered.length,
+        fetchedAt: new Date().toISOString(),
+        source: '공공데이터포털·건강보험심사평가원 병원 기본정보',
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : '병원 정보 조회 실패';
-    console.error('[hospitals] 오류:', message);
+    logRouteError('opendata/hospitals', err);
+    recordOpendataRequest('hospitals', 502);
     return NextResponse.json({ ok: false, error: { code: 'API_ERROR', message } }, { status: 502 });
   }
 }

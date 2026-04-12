@@ -6,6 +6,10 @@ export interface ApiResponse<T = unknown> {
     total?: number;
     page?: number;
     limit?: number;
+    /** 서버에서 공공 API 응답을 조합·반환한 시각(ISO 8601) */
+    fetchedAt?: string;
+    /** 사용자 안내용 출처 요약 */
+    source?: string;
   };
   error?: {
     code: string;

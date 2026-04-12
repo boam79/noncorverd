@@ -9,7 +9,7 @@ import { ComparisonTable } from '@/components/ComparisonTable/ComparisonTable';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/Error/ErrorMessage';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
-import { usePricing } from '@/lib/hooks/usePricing';
+import { usePricingProgressive } from '@/lib/hooks/usePricingProgressive';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { decodeSharePayload, SHARE_PARAM } from '@/lib/utils/shareLink';
@@ -34,17 +34,23 @@ function ComparisonPageInner() {
   const searchParams = useSearchParams();
   const { selectedHospitals, clearHospitals, setSelectedHospitals } =
     useComparisonStore();
-  const hospitalIds = selectedHospitals.map((h) => h.id);
-  const {
-    data: pricingData,
-    isLoading,
-    error,
-    refetch,
-  } = usePricing(hospitalIds, selectedHospitals);
   const [excludeZeroItemHospitals, setExcludeZeroItemHospitals] = useState(true);
   const [shareError, setShareError] = useState<string | null>(null);
   /** 공유 링크(s) 처리 완료 여부 — 유효한 s가 있을 때만 fetch 후 true */
   const [shareDone, setShareDone] = useState(false);
+
+  const {
+    data: pricingData,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+    fetchedAt,
+    progress,
+  } = usePricingProgressive(
+    selectedHospitals,
+    shareDone && selectedHospitals.length > 0
+  );
 
   const rawShare = searchParams.get(SHARE_PARAM);
   const decodedPreview = useMemo(
@@ -237,6 +243,18 @@ function ComparisonPageInner() {
               </Link>
             </div>
           </div>
+
+          {fetchedAt && (
+            <p className="text-xs text-gray-500 mb-3" role="status">
+              공공데이터 조회 시각:{' '}
+              {new Date(fetchedAt).toLocaleString('ko-KR')} · 건강보험심사평가원 비급여 항목
+            </p>
+          )}
+          {isFetching && progress.total > 0 && progress.done < progress.total && (
+            <p className="text-sm text-gray-600 mb-3" role="status">
+              병원별 가격을 받는 중입니다 ({progress.done}/{progress.total})…
+            </p>
+          )}
 
           {!isLoading && !error && hospitalsWithNoItems.length > 0 && (
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

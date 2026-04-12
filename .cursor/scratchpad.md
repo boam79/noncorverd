@@ -399,6 +399,8 @@
 - [x] ui-1: 레이아웃 비율(컨테이너 폭/여백/그리드) 조정안 확정
 - [x] ui-2: 메인 검색 섹션 시각 계층 개선 (타이포/색/카드 스타일)
 - [x] ui-3: 결과 섹션/하단 영역 정리 및 반응형 미세 조정
+- [x] ux-search-empty: 메인 검색 활성 상태에서 결과 0건일 때 원인별 안내 배너 (API 무결과·관심 분야 전부 탈락·시군구·병원명 필터로만 전부 탈락)
+- [x] hardening-2026-04: 검증·관측·캐시·접근성·비교 점진 로딩·단위테스트·문서 (고도화 제안 일괄 반영)
 
 ## Current Status / Progress Tracking
 
@@ -619,6 +621,10 @@
   - `성형외과`는 기관 종별 코드만으로 완전 분리되지 않아 `yadmNm=성형외과` 키워드 검색을 병행
 
 ## Executor's Feedback or Assistance Requests
+- ✅ **고도화 패키지 (2026-04-11)**: Zod 검증(opendata 라우트), 응답 `meta.fetchedAt`·출처, 인메모리 `recordOpendataRequest` + `GET /api/health/metrics`(METRICS_SECRET), Upstash 선택 시 App Route에서 IP 레이트리밋(`lib/opendata/serverRateLimit.ts`), 안전 로그(`safeServerLog`), 병원/가격 fetch `revalidate` 캐시, 메인(시도 선택 시 병원명 400ms 디바운스·최근 검색·접근성 search/본문 건너뛰기·조회 시각), 비교(`usePricingProgressive` 병원별 쿼리+진행 문구+조회 시각), Vitest 16건 + CI `unit` 잡, README/env.example 정리. `npm run build`, `npm run test:unit`, `playwright e2e/hospital-comparison` 통과. Planner·휴먼: Upstash·METRICS_SECRET 운영값 설정 여부만 결정하면 됨.
+
+- ✅ **ux-search-empty (2026-04-11)**: `app/page.tsx`에 검색 활성 + 결과 0건 시 안내 배너 추가(공공 API 목록 없음·관심 분야만 전부 제외·주소·병원명 필터로만 전부 제외). `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium` → 7 passed, 1 skipped. 변경 파일 `app/page.tsx`는 아직 커밋 전 — Planner·휴먼 확인 후 커밋·배포 진행 요청.
+
 - ✅ **prod-6 Day 1 – CORS 수정 및 시군구 코드 변환 완료**:
   - CORS 설정 개선 및 EC2 배포 완료
   - 시군구 코드 변환 로직 추가로 실제 API 데이터 반환 확인

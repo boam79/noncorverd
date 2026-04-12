@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -27,6 +27,8 @@ import {
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
 import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
+import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
+import { pushRecentSearch, loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches';
 
 export default function Home() {
   const router = useRouter();
@@ -40,6 +42,8 @@ export default function Home() {
     HospitalRecommendation[] | null
   >(null);
   const [clinicalFocus, setClinicalFocus] = useState<ClinicalFocusId>('none');
+  const [recentList, setRecentList] = useState<RecentSearchEntry[]>([]);
+  const lastRecordedSearchKey = useRef<string>('');
 
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
 
@@ -53,20 +57,39 @@ export default function Home() {
     clearHospitals();
   }, [clearHospitals]);
   
+  const debouncedHospitalInput = useDebouncedValue(hospitalNameInput, 400);
+  /** 시도가 있으면 입력을 잠시 디바운스해 API 부하를 줄입니다. 시도 없이 이름만 쓸 때는 엔터 확정값을 씁니다. */
+  const apiHospitalName = sido ? debouncedHospitalInput.trim() : hospitalName.trim();
+  const nameForClientFilter = apiHospitalName;
+
   // 시군구 목록 가져오기 (필터링용)
-  const { data: sigunguList = [] } = useRegions(sido);
-  
+  const { data: sigunguBundle } = useRegions(sido);
+  const sigunguList = useMemo(
+    () => sigunguBundle?.regions ?? [],
+    [sigunguBundle]
+  );
+
   const {
-    data: allHospitals = [],
+    data: hospitalsBundle,
     isLoading,
     error,
     refetch: refetchHospitals,
   } = useHospitals({
     sido,
     sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
-    hospitalName: hospitalName.trim() || undefined,
-    enabled: !!sido || !!hospitalName.trim(), // sido 또는 병원명이 있을 때 쿼리 실행
+    hospitalName: apiHospitalName || undefined,
+    enabled: !!sido || !!hospitalName.trim(), // 시도 없을 때는 엔터로 확정된 이름만 조회
   });
+
+  const allHospitals = useMemo(
+    () => hospitalsBundle?.hospitals ?? [],
+    [hospitalsBundle]
+  );
+  const hospitalsMeta = hospitalsBundle?.meta;
+
+  useEffect(() => {
+    setRecentList(loadRecentSearches());
+  }, []);
 
   // 시군구 및 병원명 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)
   // 백엔드에서 이미 필터링된 경우에도 프론트엔드에서 한 번 더 확인하여 정확도 향상
@@ -74,8 +97,8 @@ export default function Home() {
     let filtered = allHospitals;
 
     // 병원명 필터링 (프론트엔드에서 추가 필터링으로 정확도 향상)
-    if (hospitalName && hospitalName.trim()) {
-      const searchTerm = hospitalName.trim().toLowerCase();
+    if (nameForClientFilter) {
+      const searchTerm = nameForClientFilter.toLowerCase();
       filtered = filtered.filter((hospital) => {
         const hospitalNameLower = hospital.name?.toLowerCase() || '';
         return hospitalNameLower.includes(searchTerm);
@@ -111,7 +134,40 @@ export default function Home() {
     }
 
     return filtered;
-  }, [allHospitals, sigungu, sigunguList, hospitalName, clinicalFocus]);
+  }, [allHospitals, sigungu, sigunguList, nameForClientFilter, clinicalFocus]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isLoading || error) return;
+    if (!sido && !hospitalName.trim()) return;
+    if (hospitals.length === 0) return;
+
+    const sigunguName =
+      sigunguList.find((s) => s.code === sigungu)?.name?.trim() ?? '';
+    const label = [sigunguName || undefined, apiHospitalName || hospitalName.trim() || undefined]
+      .filter(Boolean)
+      .join(' · ');
+    const key = `${sido ?? ''}|${sigungu ?? ''}|${apiHospitalName}|${hospitalName}|${hospitals.length}`;
+    if (lastRecordedSearchKey.current === key) return;
+    lastRecordedSearchKey.current = key;
+
+    pushRecentSearch({
+      label: label || '지역 검색',
+      sido,
+      sigungu,
+      hospitalName: apiHospitalName || hospitalName.trim() || undefined,
+    });
+    setRecentList(loadRecentSearches());
+  }, [
+    apiHospitalName,
+    error,
+    hospitalName,
+    hospitals.length,
+    isLoading,
+    sigungu,
+    sigunguList,
+    sido,
+  ]);
 
   const clinicalFocusExcludedAll =
     clinicalFocus !== 'none' &&
@@ -119,6 +175,22 @@ export default function Home() {
     !error &&
     allHospitals.length > 0 &&
     hospitals.length === 0;
+
+  /** 시도·병원명 등으로 쿼리가 돌아간 상태 */
+  const searchActive = Boolean(sido) || Boolean(hospitalName.trim());
+
+  /** 로딩/에러가 아니고, 검색은 했는데 화면 결과가 0건 */
+  const showEmptySearchGuidance =
+    searchActive && !isLoading && !error && hospitals.length === 0;
+
+  /** 공공 API가 0건 (지역·이름 조건에 맞는 목록 자체가 없음) */
+  const noApiHospitalRows = showEmptySearchGuidance && allHospitals.length === 0;
+
+  /** API에는 건이 있는데 시군구 주소·병원명 문자 필터로만 전부 탈락 */
+  const noResultsAfterRegionOrNameFilter =
+    showEmptySearchGuidance &&
+    allHospitals.length > 0 &&
+    !clinicalFocusExcludedAll;
 
   const clinicalFocusLabel =
     CLINICAL_FOCUS_OPTIONS.find((o) => o.id === clinicalFocus)?.label ?? '';
@@ -131,6 +203,14 @@ export default function Home() {
       setHospitalName('');
     }
   }, [hospitalNameInput]);
+
+  const applyRecentSearch = useCallback((entry: RecentSearchEntry) => {
+    setSido(entry.sido);
+    setSigungu(entry.sigungu);
+    const n = entry.hospitalName?.trim() ?? '';
+    setHospitalNameInput(n);
+    setHospitalName(n);
+  }, []);
 
   // 지역 변경 핸들러 (useCallback으로 메모이제이션하여 무한 루프 방지)
   const handleRegionChange = useCallback((newSido?: string, newSigungu?: string) => {
@@ -223,13 +303,42 @@ export default function Home() {
       <Container className="py-8 md:py-12">
         <div className="space-y-8">
           {/* 검색 필터 섹션 */}
-          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100">
+          <div
+            className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100"
+            role="search"
+            aria-labelledby="search-heading"
+          >
             <div className="space-y-1">
-              <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">검색 조건</h2>
+              <h2 id="search-heading" className="text-2xl font-semibold text-gray-900 tracking-tight">
+                검색 조건
+              </h2>
               <p className="text-sm text-gray-500">
                 지역·관심 분야(선택)·의료기관명으로 비교할 병원을 찾아보세요.
               </p>
+              <p className="text-xs text-gray-500">
+                많이 찾는 예: 서울 종합병원, 경기 의원 등. 등록된 의료기관에 따라 목록이 달라질 수
+                있어요.
+              </p>
             </div>
+
+            {recentList.length > 0 && (
+              <div className="text-sm text-gray-600">
+                <p className="font-medium text-gray-800 mb-2">최근 검색</p>
+                <ul className="flex flex-wrap gap-2" aria-label="최근 검색 조건">
+                  {recentList.map((r, i) => (
+                    <li key={`${r.at}-${i}`}>
+                      <button
+                        type="button"
+                        onClick={() => applyRecentSearch(r)}
+                        className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        {r.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
             {/* 의료기관명 검색란 */}
             <div>
@@ -263,10 +372,17 @@ export default function Home() {
                   <span>검색</span>
                 </button>
               </div>
-              {hospitalNameInput !== hospitalName && hospitalNameInput.trim() && (
-                <p className="mt-2 text-sm text-blue-600">
-                  엔터키를 누르거나 검색 버튼을 클릭하세요
+              {sido ? (
+                <p className="mt-2 text-sm text-gray-500">
+                  시도를 고르신 뒤에는 이름을 입력하고 잠시만 기다리면 목록이 자동으로 갱신돼요.
                 </p>
+              ) : (
+                hospitalNameInput !== hospitalName &&
+                hospitalNameInput.trim() && (
+                  <p className="mt-2 text-sm text-blue-600">
+                    엔터키를 누르거나 검색 버튼을 클릭하세요
+                  </p>
+                )
               )}
               {!sido && hospitalNameInput.trim() && (
                 <p className="mt-2 text-sm text-amber-600">
@@ -325,8 +441,9 @@ export default function Home() {
             </div>
             {clinicalFocusExcludedAll && (
               <p className="text-sm text-amber-800">
-                「{clinicalFocusLabel}」 조건에 맞는 병원이 없어 추천을 실행할 수 없습니다.
-                관심 분야를 ‘선택 안 함’으로 바꾸거나 지역·병원명을 조정해 보세요.
+                지금 선택하신 「{clinicalFocusLabel}」에 맞는 병원이 목록에 없어 추천을 준비하지
+                못했어요. 관심 분야를 잠시 내려두거나, 지역·병원 이름을 바꿔 다시 찾아보시면
+                어떨까요.
               </p>
             )}
             </div>
@@ -362,7 +479,7 @@ export default function Home() {
 
           {/* 검색 결과 섹션 */}
           <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100 min-h-[260px]">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
               검색 결과 ({hospitals.length}개)
               {selectedHospitals.length > 0 && (
                 <span className="ml-2 text-sm font-normal text-gray-500">
@@ -370,6 +487,13 @@ export default function Home() {
                 </span>
               )}
             </h2>
+            {hospitalsMeta?.fetchedAt && (
+              <p className="text-xs text-gray-500 mb-4" role="status">
+                공공데이터 조회 시각:{' '}
+                {new Date(hospitalsMeta.fetchedAt).toLocaleString('ko-KR')}
+                {hospitalsMeta.source ? ` · ${hospitalsMeta.source}` : ''}
+              </p>
+            )}
             {isLoading ? (
               <LoadingSpinner />
             ) : error ? (
@@ -382,25 +506,54 @@ export default function Home() {
               />
             ) : (
               <>
+                {noApiHospitalRows && (
+                  <div
+                    className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950"
+                    role="status"
+                  >
+                    <p className="font-medium">
+                      이 조건으로는 아직 보여드릴 병원이 없어요.
+                    </p>
+                    <p className="mt-1 text-sky-900/90">
+                      시·군·구나 병원 이름을 조금만 바꿔 보시거나, 잠시 뒤에 다시 눌러 주세요.
+                      등록된 병원이 적은 지역이거나, 한 번에 가져오는 수에 제한이 있을 수 있어요.
+                    </p>
+                  </div>
+                )}
                 {clinicalFocusExcludedAll && (
                   <div
                     className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                     role="status"
                   >
                     <p className="font-medium">
-                      관심 분야 「{clinicalFocusLabel}」에 맞는 병원이 없습니다.
+                      「{clinicalFocusLabel}」에 잘 맞는 병원을 목록에서 찾지 못했어요.
                     </p>
                     <p className="mt-1 text-amber-800">
-                      검색 결과 {allHospitals.length}곳 중 조건을 만족하는 기관이 없습니다.
-                      이름·진료과 코드 기반 추정이라 실제와 다를 수 있습니다.
+                      가져온 병원 {allHospitals.length}곳 가운데 조건에 딱 맞는 곳이 없었어요.
+                      이름·진료 정보로 추정한 부분이라 실제와 다를 수 있으니 가볍게 참고만 해 주세요.
                     </p>
                     <button
                       type="button"
                       onClick={() => setClinicalFocus('none')}
                       className="mt-3 text-sm font-semibold text-amber-950 underline decoration-amber-600 hover:text-amber-700"
                     >
-                      관심 분야 선택 해제
+                      관심 분야 접기
                     </button>
+                  </div>
+                )}
+                {noResultsAfterRegionOrNameFilter && (
+                  <div
+                    className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    role="status"
+                  >
+                    <p className="font-medium">
+                      찾아온 병원 {allHospitals.length}곳 모두, 선택하신 지역·이름 조건과는 맞지
+                      않았어요.
+                    </p>
+                    <p className="mt-1 text-amber-800">
+                      시·군·구를 넓혀 보시거나, 병원 이름 검색을 짧게(또는 비우고) 다시 엔터를 눌러
+                      보시면 목록이 나올 수 있어요.
+                    </p>
                   </div>
                 )}
                 <HospitalCardList

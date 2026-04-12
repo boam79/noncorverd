@@ -1,26 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
 import { FALLBACK_SIDO } from '@/lib/opendata/codeMap';
+import { regionsQuerySchema } from '@/lib/validation/opendataSchemas';
+import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
+import { logRouteError } from '@/lib/observability/safeServerLog';
+import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 
 const REGIONS_ENDPOINT = '/1741000/StanReginCd/getStanReginCdList';
 
 export async function GET(request: NextRequest) {
   if (!validateToken(request)) return unauthorizedResponse();
 
-  const sido = request.nextUrl.searchParams.get('sido');
+  const rateLimited = await enforceOpendataRateLimit(request, 'regions');
+  if (rateLimited) return rateLimited;
+
+  const rawSido = request.nextUrl.searchParams.get('sido');
+  const parsed = regionsQuerySchema.safeParse({
+    sido: rawSido === null || rawSido === '' ? undefined : rawSido,
+  });
+  if (!parsed.success) {
+    recordOpendataRequest('regions', 400);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: { code: 'INVALID_QUERY', message: '지역 코드 형식이 올바르지 않습니다.' },
+      },
+      { status: 400 }
+    );
+  }
+  const sido = parsed.data.sido;
+
+  const metaBase = {
+    fetchedAt: new Date().toISOString(),
+    source: '행정안전부 법정동코드·내부 시도 목록',
+  };
 
   try {
     if (!sido) {
-      return NextResponse.json({ ok: true, data: await getSidoList(), meta: {} });
+      recordOpendataRequest('regions', 200);
+      return NextResponse.json({
+        ok: true,
+        data: await getSidoList(),
+        meta: { ...metaBase },
+      });
     }
-    return NextResponse.json({ ok: true, data: await getSigunguList(sido), meta: {} });
+    recordOpendataRequest('regions', 200);
+    return NextResponse.json({
+      ok: true,
+      data: await getSigunguList(sido),
+      meta: { ...metaBase },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : '지역 정보 조회 실패';
-    console.error('[regions] 오류:', message);
+    logRouteError('opendata/regions', err);
     // fallback: 시도 목록은 하드코딩 데이터 반환
     if (!sido) {
-      return NextResponse.json({ ok: true, data: FALLBACK_SIDO, meta: {} });
+      recordOpendataRequest('regions', 200);
+      return NextResponse.json({ ok: true, data: FALLBACK_SIDO, meta: { ...metaBase } });
     }
+    recordOpendataRequest('regions', 502);
     return NextResponse.json({ ok: false, error: { code: 'API_ERROR', message } }, { status: 502 });
   }
 }

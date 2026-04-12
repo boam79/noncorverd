@@ -1,21 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import type { Region } from '@/types';
+import type { ApiResponse, Region } from '@/types';
+
+export interface RegionsQueryResult {
+  regions: Region[];
+  meta?: ApiResponse['meta'];
+}
 
 export function useRegions(sido?: string) {
   return useQuery({
     queryKey: ['regions', sido],
-    queryFn: async () => {
+    queryFn: async (): Promise<RegionsQueryResult> => {
       const response = await apiClient.getRegions(sido);
       if (response.ok && response.data) {
-        // response.data가 배열인지 확인
         const data = response.data;
         if (Array.isArray(data)) {
-          return data as Region[];
+          return { regions: data as Region[], meta: response.meta };
         }
-        // 백엔드가 { ok: true, data: [...] } 형태로 반환한 경우
-        if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
-          return (data as { data: Region[] }).data;
+        if (
+          data &&
+          typeof data === 'object' &&
+          'data' in data &&
+          Array.isArray((data as { data: unknown }).data)
+        ) {
+          return {
+            regions: (data as { data: Region[] }).data,
+            meta: response.meta,
+          };
         }
         throw new Error('지역 정보 형식이 올바르지 않습니다.');
       }
@@ -24,9 +35,7 @@ export function useRegions(sido?: string) {
     enabled: true,
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 48 * 60 * 60 * 1000,
-    // Vercel 인천 직접 호출 → CDN 캐싱으로 빠름, 재시도 1회
     retry: 1,
     retryDelay: 3000,
   });
 }
-
