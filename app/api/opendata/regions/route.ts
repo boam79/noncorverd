@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchPublicData } from '@/lib/opendata/client';
 import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
+import { getAdminSigunguList } from '@/lib/opendata/adminSigunguList';
 import { FALLBACK_SIDO } from '@/lib/opendata/codeMap';
 import { regionsQuerySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
-
-const REGIONS_ENDPOINT = '/1741000/StanReginCd/getStanReginCdList';
 
 export async function GET(request: NextRequest) {
   const blocked = await opendataRoutePrelude(request, 'regions');
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     recordOpendataRequest('regions', 200);
     return NextResponse.json({
       ok: true,
-      data: await getSigunguList(sido),
+      data: await getAdminSigunguList(sido),
       meta: { ...metaBase },
     });
   } catch (err) {
@@ -67,35 +65,3 @@ async function getSidoList() {
   return FALLBACK_SIDO;
 }
 
-async function getSigunguList(sido: string) {
-  const targetSido = String(sido).padStart(2, '0');
-  const allRows: Record<string, string>[] = [];
-  let pageNo = 1;
-  let total = Infinity;
-
-  while (allRows.length < total) {
-    const { items, total: t } = await fetchPublicData(REGIONS_ENDPOINT, {
-      type: 'json', numOfRows: 1000, pageNo,
-      _cache: 86400, // Vercel CDN 24시간 캐싱
-    });
-    const rows = items as Record<string, string>[];
-    allRows.push(...rows);
-    total = t;
-    if (rows.length < 1000) break;
-    pageNo++;
-  }
-
-  const sigunguMap = new Map<string, { code: string; name: string }>();
-  for (const row of allRows) {
-    const sidoCd = String(row.sido_cd ?? '').padStart(2, '0');
-    if (sidoCd !== targetSido) continue;
-    const isSigungu = row.sgg_cd !== '000' && row.umd_cd === '000' && row.ri_cd === '00';
-    if (!isSigungu) continue;
-    const code = `${sidoCd}${String(row.sgg_cd).padStart(3, '0')}`.padEnd(6, '0');
-    if (!sigunguMap.has(code)) {
-      sigunguMap.set(code, { code, name: row.locatadd_nm || row.locallow_nm || '' });
-    }
-  }
-
-  return [...sigunguMap.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-}

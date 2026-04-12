@@ -1048,10 +1048,13 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 #### Executor's Feedback or Assistance Requests (Planner → 휴먼)
 - Executor는 **dept-bucket-1부터 순서대로** 진행하고, 각 단계 완료 시 본 보드 체크와 스크래치패드에 검증 결과를 남길 것.
 - 버킷 명칭·키워드는 비기술 이해관계자 검토가 있으면 오탐률이 내려간다. 가능하면 시판 용어 기준으로 1회 리뷰 요청.
+- **2026-04-12**: 시군구 HIRA 코드 미매핑 시에도 병원 API가 **시도 전체를 페이지 단위로 수집 후 주소 필터**하도록 수정함. Planner·휴먼: 배포 후 `meta.addressFallbackTruncated===true`가 나오는 시도가 있는지(병원 수·상한) 운영에서 한 번 확인해 주면 좋음.
+- **2026-04-12 (메인 UI/UX)**: 단계 안내(`HomeSearchJourneySteps`)·맥락 칩 스크롤 이동·검색 폼/결과 구역 시각 분리·선택 요약 스트립·모바일에서 최근/관심/추천 기본 접음·병원명 미적용 안내·단일 면책 문구·`compare-bar` 앵커. E2E: 모바일은 테이블·수량 입력이 숨겨진 테스트는 `test.skip`, 메인은 `expandHomeClinicalIfCollapsed` / `expandHomeRecommendIfCollapsed` 보강.
 
 #### Lessons (시군구·병원 목록 2026-04-12)
 - **양주 등 2건만 보임**: `SIGUNGU_CODE_MAP`에 행정 코드(예: `416300`)가 없으면 HIRA `sgguCd`가 빠져 API가 **경기도 전체를 최대 200건**만 반환하고, 클라이언트 `filterHospitalsForHome`이 주소로 **양주시만** 거르면 소수(2곳)만 남을 수 있음. 대응: `lib/opendata/codeMap.ts`(및 `backend/.../hospitalsAdapter.js`)에 HIRA 코드 실측 매핑 추가. 감사: `AUDIT_SIDO=41 npm run audit:sigungu`.
 - 경기도는 매핑 누락 시 `NO_HIRA_MAP_HIGH_COUNT`가 다수 나오는 것이 정상(점진적 `SIGUNGU_CODE_MAP` 확장 필요).
+- **서버 폴백 (2026-04-12 이후)**: `toHiraSigungu`가 없어도 시도(HIRA `sidoCd`)는 넣은 채로 HIRA 목록을 **totalCount까지 페이지 순회**(상한 `HOSPITALS_SIGUNGU_FALLBACK_MAX_PAGES`, 기본 200·최대 500)한 뒤, 행정안전부 시군구명 + `hospitalAddressMatchesSigungu`로 서버에서 필터한다(`app/api/opendata/hospitals/route.ts`). `meta.addressFallbackTruncated`가 true면 시도 내 병원이 상한을 넘겨 일부만 조회된 것이므로 매핑 추가 또는 상한 상향을 검토한다.
 
 #### Lessons (GitHub 푸시)
 - `github.com:22` SSH가 타임아웃일 때: `GIT_SSH_COMMAND='ssh -o Hostname=ssh.github.com -p 443 -o StrictHostKeyChecking=accept-new' git push origin main` (최초 1회 호스트 키 등록 안내 가능)

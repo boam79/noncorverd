@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchPublicData } from '@/lib/opendata/client';
 import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
 import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
+import {
+  cleanSigunguLabelForAddress,
+  getAdminSigunguList,
+} from '@/lib/opendata/adminSigunguList';
 import { hospitalsQuerySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
+import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
 import {
   parseDgsbjtCdToDepartments,
   splitDgsbjtCdNm,
@@ -12,6 +17,13 @@ import {
 import type { Hospital } from '@/types';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
+
+/** HIRA `sgguCd` 미매핑 시 시도 전체를 페이지 단위로 받을 때 상한(환경변수로 조절) */
+function maxPagesForSigunguAddressFallback(): number {
+  const raw = Number(process.env.HOSPITALS_SIGUNGU_FALLBACK_MAX_PAGES ?? 200);
+  if (!Number.isFinite(raw) || raw < 10) return 10;
+  return Math.min(Math.floor(raw), 500);
+}
 
 /**
  * 실제 HIRA API clCd 매핑 (API 응답 실측값 기반)
@@ -80,34 +92,69 @@ function mapHospital(raw: RawHospital): Hospital {
   };
 }
 
+/**
+ * HIRA 병원 목록 페이지 누적 (totalCount까지 또는 maxPages까지)
+ */
+async function fetchHiraHospitalPages(
+  baseParams: Record<string, string | number>,
+  maxPages: number
+): Promise<{ hospitals: Hospital[]; totalCount: number; truncated: boolean }> {
+  const hospitals: Hospital[] = [];
+  const seen = new Set<string>();
+  let totalCount = 0;
+
+  for (let page = 1; page <= maxPages; page++) {
+    const { items, total } = await fetchPublicData(HOSPITAL_ENDPOINT, {
+      ...baseParams,
+      pageNo: page,
+    });
+    if (page === 1) totalCount = Number(total) || 0;
+
+    if (items.length === 0) break;
+
+    for (const raw of items as RawHospital[]) {
+      const hospital = mapHospital(raw);
+      if (hospital.id && !seen.has(hospital.id)) {
+        seen.add(hospital.id);
+        hospitals.push(hospital);
+      }
+    }
+
+    if (items.length < 100) break;
+    if (totalCount > 0 && page * 100 >= totalCount) break;
+  }
+
+  const truncated = totalCount > 0 && hospitals.length < totalCount;
+  return { hospitals, totalCount, truncated };
+}
+
 async function fetchHospitalsForType(
   baseParams: Record<string, string | number>,
-  typeName: string
-): Promise<Hospital[]> {
+  typeName: string,
+  maxPages: number
+): Promise<{ hospitals: Hospital[]; truncated: boolean }> {
   const clCds = TYPE_CLCDS[typeName] ?? [];
   const extraParams = TYPE_EXTRA_PARAMS[typeName] ?? {};
   const results: Hospital[] = [];
   const seen = new Set<string>();
+  let truncated = false;
 
   for (const clCd of clCds) {
     const params: Record<string, string | number> = { ...baseParams, ...extraParams, clCd };
-
-    for (let page = 1; page <= 2; page++) {
-      params.pageNo = page;
-      const { items } = await fetchPublicData(HOSPITAL_ENDPOINT, params);
-      if (items.length === 0) break;
-      for (const raw of items as RawHospital[]) {
-        const hospital = mapHospital(raw);
-        if (hospital.id && !seen.has(hospital.id)) {
-          seen.add(hospital.id);
-          results.push(hospital);
-        }
+    const { hospitals, truncated: t } = await fetchHiraHospitalPages(params, maxPages);
+    if (t) truncated = true;
+    for (const h of hospitals) {
+      if (!seen.has(h.id)) {
+        seen.add(h.id);
+        results.push(h);
       }
-      if (items.length < 100) break;
     }
   }
 
-  return results.filter(h => matchesType(h.type, h.name, typeName));
+  return {
+    hospitals: results.filter(h => matchesType(h.type, h.name, typeName)),
+    truncated,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -144,36 +191,62 @@ export async function GET(request: NextRequest) {
 
     if (hospitalName) baseParams.yadmNm = hospitalName;
 
-    if (sido) {
-      const hiraSido = toHiraSido(sido);
-      if (hiraSido) baseParams.sidoCd = hiraSido;
+    const adminSidoKey = sido ? String(sido).padStart(2, '0').substring(0, 2) : '';
+    const hiraSido = adminSidoKey ? toHiraSido(adminSidoKey) : null;
+    if (hiraSido) baseParams.sidoCd = hiraSido;
+
+    const hiraSigungu = sigungu ? toHiraSigungu(sigungu) : null;
+    const useAddressSigunguFallback =
+      Boolean(sigungu) && !hiraSigungu && Boolean(hiraSido);
+
+    if (sigungu && hiraSigungu) {
+      baseParams.sgguCd = hiraSigungu;
     }
 
-    if (sigungu) {
-      const hiraSigungu = toHiraSigungu(sigungu);
-      if (hiraSigungu) baseParams.sgguCd = hiraSigungu;
-    }
+    const maxPages = useAddressSigunguFallback
+      ? maxPagesForSigunguAddressFallback()
+      : 2;
 
     const typeNames = type ? type.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-    let filtered: Hospital[];
+    let officialSigunguName = '';
+    let cleanSigunguName = '';
+    if (useAddressSigunguFallback) {
+      const list = await getAdminSigunguList(adminSidoKey);
+      const normalizedSigungu = String(sigungu).padEnd(6, '0');
+      const row = list.find((r) => r.code === normalizedSigungu);
+      officialSigunguName = row?.name ?? '';
+      cleanSigunguName = cleanSigunguLabelForAddress(officialSigunguName);
+    }
 
-    if (typeNames.length === 0) {
-      // 종별 없이 전체 조회 (최대 2페이지)
-      const allHospitals: Hospital[] = [];
-      for (let page = 1; page <= 2; page++) {
-        const { items } = await fetchPublicData(HOSPITAL_ENDPOINT, { ...baseParams, pageNo: page });
-        if (items.length === 0) break;
-        allHospitals.push(...(items as RawHospital[]).map(mapHospital));
-        if (items.length < 100) break;
-      }
-      filtered = allHospitals;
+    let filtered: Hospital[];
+    let hiraTotalCount = 0;
+    let addressFallbackTruncated = false;
+
+    if (useAddressSigunguFallback && !cleanSigunguName) {
+      filtered = [];
+    } else if (typeNames.length === 0) {
+      const { hospitals, totalCount, truncated } = await fetchHiraHospitalPages(
+        baseParams,
+        maxPages
+      );
+      hiraTotalCount = totalCount;
+      addressFallbackTruncated = truncated;
+      filtered = useAddressSigunguFallback
+        ? hospitals.filter((h) =>
+            hospitalAddressMatchesSigungu(h.address, officialSigunguName, cleanSigunguName)
+          )
+        : hospitals;
     } else {
-      // 종별별로 각각 API 호출 후 합산 (중복 제거)
       const seen = new Set<string>();
       const results: Hospital[] = [];
       for (const typeName of typeNames) {
-        const hospitals = await fetchHospitalsForType(baseParams, typeName);
+        const { hospitals, truncated } = await fetchHospitalsForType(
+          baseParams,
+          typeName,
+          maxPages
+        );
+        if (truncated) addressFallbackTruncated = true;
         for (const h of hospitals) {
           if (!seen.has(h.id)) {
             seen.add(h.id);
@@ -181,7 +254,11 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-      filtered = results;
+      filtered = useAddressSigunguFallback
+        ? results.filter((h) =>
+            hospitalAddressMatchesSigungu(h.address, officialSigunguName, cleanSigunguName)
+          )
+        : results;
     }
 
     recordOpendataRequest('hospitals', 200);
@@ -192,6 +269,13 @@ export async function GET(request: NextRequest) {
         total: filtered.length,
         fetchedAt: new Date().toISOString(),
         source: '공공데이터포털·건강보험심사평가원 병원 기본정보',
+        appliedSigunguAddressFallback: useAddressSigunguFallback,
+        ...(useAddressSigunguFallback && {
+          addressFallbackTruncated,
+          ...(typeNames.length === 0 && hiraTotalCount > 0
+            ? { hiraSidoTotalCount: hiraTotalCount }
+            : {}),
+        }),
       },
     });
   } catch (err) {

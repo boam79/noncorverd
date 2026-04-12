@@ -20,6 +20,12 @@ import { loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches
 import { HomeSearchPanel } from '@/components/HomeSearch/HomeSearchPanel';
 import { HomeSearchContextBar } from '@/components/HomeSearch/HomeSearchContextBar';
 import { HomeSearchResultsSection } from '@/components/HomeSearch/HomeSearchResultsSection';
+import { HomeSearchJourneySteps } from '@/components/HomeSearch/HomeSearchJourneySteps';
+import { SelectedHospitalsStrip } from '@/components/HomeSearch/SelectedHospitalsStrip';
+import {
+  scrollToHomeSection,
+  type HomeSearchScrollTarget,
+} from '@/lib/home/homeSearchSectionIds';
 import { computeHomeSearchDerived } from '@/lib/home/homeSearchDerived';
 import {
   parseHomeSearchParams,
@@ -176,6 +182,34 @@ export function HomePageContent() {
   const clinicalFocusLabel =
     CLINICAL_FOCUS_OPTIONS.find((o) => o.id === clinicalFocus)?.label ?? '';
 
+  const sidoName = useMemo(
+    () => (sido ? sidoList.find((r) => r.code === sido)?.name : undefined),
+    [sido, sidoList]
+  );
+  const sigunguName = useMemo(
+    () => (sigungu ? sigunguList.find((r) => r.code === sigungu)?.name : undefined),
+    [sigungu, sigunguList]
+  );
+
+  const filterSummary = useMemo(() => {
+    const region =
+      sidoName != null
+        ? sigunguName != null
+          ? `${sidoName} ${sigunguName}`
+          : sidoName
+        : '지역 미선택';
+    const parts: string[] = [region];
+    if (hospitalName.trim()) parts.push(`이름 「${hospitalName.trim()}」`);
+    if (clinicalFocus !== 'none' && clinicalFocusLabel) {
+      parts.push(`관심: ${clinicalFocusLabel}`);
+    }
+    return parts.join(' · ');
+  }, [sidoName, sigunguName, hospitalName, clinicalFocus, clinicalFocusLabel]);
+
+  const handleScrollToHomeSection = useCallback((target: HomeSearchScrollTarget) => {
+    scrollToHomeSection(target);
+  }, []);
+
   const handleSearch = useCallback(() => {
     if (hospitalNameInput.trim()) {
       setHospitalName(hospitalNameInput.trim());
@@ -219,12 +253,17 @@ export function HomePageContent() {
           className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900"
           role="status"
         >
-          UI v2 베타 — 피드백 환영합니다. (`NEXT_PUBLIC_UI_V2_BETA=1`)
+          UI v2 베타 — 단계 안내·맥락 칩 이동·검색·결과 구역 분리·모바일 접기가 포함됩니다.
+          피드백 환영합니다. (`NEXT_PUBLIC_UI_V2_BETA=1`)
         </div>
       )}
       <ServerStatusBanner />
 
       <Container className="py-section md:py-section-lg">
+        <HomeSearchJourneySteps
+          hasSido={Boolean(sido)}
+          selectedCount={selectedHospitals.length}
+        />
         <HomeSearchContextBar
           sido={sido}
           sigungu={sigungu}
@@ -234,6 +273,7 @@ export function HomePageContent() {
           hospitalNameCommitted={hospitalName}
           selectedCount={selectedHospitals.length}
           maxSelection={maxSelection}
+          onScrollToSection={handleScrollToHomeSection}
         />
         <div className="mt-section space-y-section">
           <HomeSearchPanel
@@ -257,32 +297,16 @@ export function HomePageContent() {
             clinicalFocusLabel={clinicalFocusLabel}
           />
 
-          {selectedHospitals.length > 0 && (
-            <div className="rounded-card border border-line-strong bg-surface-muted p-6 shadow-sm md:p-7">
-              <h2 className="mb-4 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
-                선택된 의료기관 ({selectedHospitals.length}개 / 최대 {maxSelection}개)
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {selectedHospitals.map((hospital) => (
-                  <div
-                    key={hospital.id}
-                    className="flex items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 shadow-sm"
-                  >
-                    <span className="text-sm font-medium text-gray-900">{hospital.name}</span>
-                    <button
-                      onClick={() => toggleHospital(hospital)}
-                      className="text-lg font-bold text-red-500 hover:text-red-700"
-                      aria-label={`${hospital.name} 선택 해제`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <SelectedHospitalsStrip
+            hospitals={selectedHospitals}
+            maxSelection={maxSelection}
+            onRemove={(hospital) => {
+              toggleHospital(hospital);
+            }}
+          />
 
           <HomeSearchResultsSection
+            filterSummary={filterSummary}
             filteredCount={hospitals.length}
             selectedCount={selectedHospitals.length}
             maxSelection={maxSelection}
