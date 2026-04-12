@@ -684,6 +684,8 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
   - `성형외과`는 기관 종별 코드만으로 완전 분리되지 않아 `yadmNm=성형외과` 키워드 검색을 병행
 
 ## Executor's Feedback or Assistance Requests
+- ✅ **Executor (2026-04-11): 디자인 개편 1차** — 맥락 바·surface/line 토큰·검색/결과 톤 분리·모바일 관심 분야 접기(단일 라디오)·병원 카드 계층·표 `tabular-nums`/헤더·CompareBar·Header. `npm run test:unit`·lint·build·`hospital-comparison` chromium 통과.
+
 - ✅ **Executor (2026-04-11): 전면 개편 v2 1차 구현** — URL 동기화(`sido`/`sigungu`/`q`/`focus`), `features/home`·`features/comparison`, Tailwind 토큰, `doc/REDESIGN_V2.md`, `env.example`, USER/DEVELOPER 가이드, E2E URL 복원. **redesign-6**(RSC 분리)는 미착수. Planner·휴먼: 스테이징에서 URL 공유·뒤로가기 스팟 확인.
 
 - ✅ **리팩터 3차 + Next 패치 (2026-04-11)**: `lib/home/homeSearchDerived.ts`·테스트로 메인 검색 파생 상태(`searchActive`, 빈 결과 안내 조건 등) 순수 계산 분리. `HomeSearchPanel`·`HomeSearchResultsSection`·`ComparisonPricingPanel`로 `app/page.tsx`·`app/comparison/page.tsx` 얇게 유지. `next`·`eslint-config-next` **15.5.15** 패치 업그레이드 후 `npm audit` **0 vulnerabilities**. 검증: `npm run test:unit`(24 passed), `npm run lint`, `npm run build`, `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium`(7 passed, 1 skipped). Planner·휴먼: 변경분 커밋·배포 승인 후 `main` 반영 확인.

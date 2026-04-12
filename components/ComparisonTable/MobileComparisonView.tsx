@@ -47,7 +47,7 @@ export function MobileComparisonView({
   };
 
   return (
-    <div className="md:hidden">
+    <div className="tabular-nums md:hidden">
       {/* 병원 선택 인디케이터 */}
       <div className="flex items-center justify-between mb-4 px-4">
         <button

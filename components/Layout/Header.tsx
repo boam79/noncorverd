@@ -21,7 +21,7 @@ export function Header({ onHomeClick }: HeaderProps = {}) {
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-4 md:py-5">
         <h1 
           onClick={handleHomeClick}
-          className="text-2xl md:text-[1.7rem] font-bold tracking-tight text-gray-900 cursor-pointer hover:text-primary-600 transition-colors"
+          className="cursor-pointer text-2xl font-bold tracking-tight text-gray-900 transition-colors hover:text-primary-600 md:text-3xl"
         >
           🏥 의료기관 비급여 비교 서비스
         </h1>

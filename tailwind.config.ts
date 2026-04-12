@@ -11,6 +11,14 @@ const config: Config = {
     extend: {
       colors: {
         page: "#f9fafb",
+        surface: {
+          DEFAULT: "#ffffff",
+          muted: "#f3f4f6",
+        },
+        line: {
+          DEFAULT: "#e5e7eb",
+          strong: "#d1d5db",
+        },
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {

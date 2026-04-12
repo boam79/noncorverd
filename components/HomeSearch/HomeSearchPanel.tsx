@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { RegionSelector } from '@/components/RegionSelector/RegionSelector';
 import { ClinicalFocusSelector } from '@/components/ClinicalFocusFilter/ClinicalFocusSelector';
 import type { ClinicalFocusId } from '@/lib/constants/clinicalFocusBuckets';
@@ -47,16 +48,19 @@ export function HomeSearchPanel({
   clinicalFocusExcludedAll,
   clinicalFocusLabel,
 }: HomeSearchPanelProps) {
+  /** 모바일: 기본 펼침(접근성·E2E), 사용자가 접어 높이 절약 가능 */
+  const [clinicalMobileOpen, setClinicalMobileOpen] = useState(true);
+
   return (
     <div
-      className="bg-white rounded-2xl shadow-sm p-6 md:p-8 space-y-6 border border-gray-100"
+      className="space-y-6 rounded-card border border-line bg-surface p-6 shadow-sm md:p-8"
       role="search"
       aria-labelledby="search-heading"
     >
       <div className="space-y-1">
         <h2
           id="search-heading"
-          className="text-2xl font-semibold text-gray-900 tracking-tight"
+          className="text-xl font-semibold tracking-tight text-gray-900 md:text-2xl"
         >
           검색 조건
         </h2>
@@ -108,7 +112,7 @@ export function HomeSearchPanel({
               }
             }}
             placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
-            className="w-full px-4 py-3.5 pr-36 text-base text-gray-900 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400 bg-white"
+            className="w-full rounded-control border border-gray-300 bg-surface px-4 py-3.5 pr-36 text-base text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
           />
           <button
             type="button"
@@ -142,14 +146,32 @@ export function HomeSearchPanel({
       </div>
 
       <RegionSelector onRegionChange={onRegionChange} sido={sido} sigungu={sigungu} />
-      <ClinicalFocusSelector value={clinicalFocus} onChange={onClinicalFocusChange} />
+
+      <button
+        type="button"
+        onClick={() => setClinicalMobileOpen((o) => !o)}
+        className="mb-2 flex w-full items-center justify-between gap-2 rounded-control border border-line bg-surface-muted px-4 py-3 text-left text-sm font-medium text-gray-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 md:hidden"
+        aria-expanded={clinicalMobileOpen}
+      >
+        <span>
+          관심 분야: <span className="font-semibold text-primary-800">{clinicalFocusLabel}</span>
+        </span>
+        <span className="shrink-0 text-xs text-gray-500">{clinicalMobileOpen ? '접기' : '펼치기'}</span>
+      </button>
+      <div
+        className={
+          clinicalMobileOpen ? 'block' : 'max-md:hidden md:block'
+        }
+      >
+        <ClinicalFocusSelector value={clinicalFocus} onChange={onClinicalFocusChange} />
+      </div>
       <div className="flex flex-col gap-2 pt-1">
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={onAutoRecommend}
             disabled={isRecommending || filteredHospitalCount === 0}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="rounded-control px-4 py-2 text-sm font-semibold text-white transition-colors bg-violet-600 hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             {isRecommending ? '추천 계산 중...' : '추천 병원 불러오기'}
           </button>

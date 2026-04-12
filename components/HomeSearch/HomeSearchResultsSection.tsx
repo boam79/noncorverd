@@ -1,6 +1,5 @@
 'use client';
 
-import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/Error/ErrorMessage';
 import { HospitalCardList } from '@/components/HospitalCard/HospitalCardList';
 import { HomeEmptyResultBanners } from '@/components/HomeSearch/HomeEmptyResultBanners';
@@ -45,8 +44,8 @@ export function HomeSearchResultsSection({
   onToggleHospital,
 }: HomeSearchResultsSectionProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100 min-h-[260px]">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+    <div className="min-h-[260px] rounded-card border border-line bg-surface-muted p-6 shadow-sm md:p-8">
+      <h2 className="mb-2 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
         검색 결과 ({filteredCount}개)
         {selectedCount > 0 && (
           <span className="ml-2 text-sm font-normal text-gray-500">
@@ -62,7 +61,11 @@ export function HomeSearchResultsSection({
         </p>
       )}
       {isLoading ? (
-        <LoadingSpinner />
+        <div className="space-y-3 py-4" aria-busy="true" aria-label="검색 결과 로딩 중">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-24 animate-pulse rounded-card bg-gray-200/70" />
+          ))}
+        </div>
       ) : error ? (
         <ErrorMessage
           message="병원 정보를 불러오는데 실패했습니다."

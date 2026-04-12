@@ -45,7 +45,7 @@ export function ClinicalFocusSelector({
               value={opt.id}
               checked={value === opt.id}
               onChange={() => onChange(opt.id)}
-              className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 border-gray-300 focus:ring-primary-500"
+              className="mt-0.5 h-4 w-4 shrink-0 border-gray-300 text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
               aria-label={opt.label}
             />
             <span>

@@ -75,7 +75,7 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
           <select
             value={selectedSido}
             onChange={(e) => setSelectedSido(e.target.value)}
-            className="w-full px-4 py-3.5 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 touch-target transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full touch-target rounded-control border border-gray-300 bg-surface px-4 py-3.5 transition-all focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-gray-100"
             disabled={isLoadingSido}
             aria-label="시도 선택"
           >
@@ -102,7 +102,7 @@ export function RegionSelector({ onRegionChange, sido: parentSido, sigungu: pare
           <select
             value={selectedSigungu}
             onChange={(e) => setSelectedSigungu(e.target.value)}
-            className="w-full px-4 py-3.5 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-target transition-all"
+            className="w-full touch-target rounded-control border border-gray-300 bg-surface px-4 py-3.5 transition-all focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-gray-100"
             disabled={!selectedSido || isLoadingSigungu}
             aria-label="시군구 선택"
           >

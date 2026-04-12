@@ -34,6 +34,15 @@
 
 - `tailwind.config.ts`: `colors.page`, `spacing.section` / `section-lg`, `borderRadius.card` / `control`.
 - 메인·비교 루트에 `bg-page`, `py-section`, `rounded-card` 등 적용(점진 확대 가능).
+- **추가(2026-04-11)**: `surface` / `surface-muted`, `line` / `line-strong` — 검색 카드(`surface`) vs 결과 영역(`surface-muted`) 대비, `focus-visible:ring` 통일.
+
+## UI 디테일 (2026-04-11)
+
+- 메인 **맥락 바**(`HomeSearchContextBar`): 지역·관심 분야·병원명 검색·선택 수 칩, 스크롤 시 상단 고정.
+- **모바일 관심 분야**: 단일 라디오 그룹 유지 + 접기 버튼(`max-md`에서 높이 절약, `md+`에서는 토글 숨김).
+- **병원 카드**: 제목 우선 + 종별·주소 한 블록, 선택 시 `ring` 중심(스케일 제거).
+- **비교 표**: `tabular-nums`, 헤더 `sticky` + 얇은 그림자·배경 블러.
+- **CompareBar / Header**: 글자 크기·반투명 배경 정리.
 
 ## 코드 구조 (redesign-4)
 

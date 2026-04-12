@@ -8,6 +8,7 @@ import { Container } from '@/components/Layout/Container';
 import { CompareBar } from '@/components/CompareBar/CompareBar';
 import { ServerStatusBanner } from '@/components/ServerStatusBanner/ServerStatusBanner';
 import { useHomeHospitalSearch } from '@/lib/hooks/useHomeHospitalSearch';
+import { useRegions } from '@/lib/hooks/useRegions';
 import { useRecordRecentSearchOnHome } from '@/lib/hooks/useRecordRecentSearchOnHome';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
 import { useHomeAutoRecommend } from '@/lib/hooks/useHomeAutoRecommend';
@@ -17,6 +18,7 @@ import {
 } from '@/lib/constants/clinicalFocusBuckets';
 import { loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches';
 import { HomeSearchPanel } from '@/components/HomeSearch/HomeSearchPanel';
+import { HomeSearchContextBar } from '@/components/HomeSearch/HomeSearchContextBar';
 import { HomeSearchResultsSection } from '@/components/HomeSearch/HomeSearchResultsSection';
 import { computeHomeSearchDerived } from '@/lib/home/homeSearchDerived';
 import {
@@ -94,6 +96,9 @@ export function HomePageContent() {
     clearHospitals();
     router.replace('/', { scroll: false });
   }, [clearHospitals, router]);
+
+  const { data: sidoBundle } = useRegions();
+  const sidoList = useMemo(() => sidoBundle?.regions ?? [], [sidoBundle]);
 
   const {
     apiHospitalName,
@@ -220,7 +225,17 @@ export function HomePageContent() {
       <ServerStatusBanner />
 
       <Container className="py-section md:py-section-lg">
-        <div className="space-y-section">
+        <HomeSearchContextBar
+          sido={sido}
+          sigungu={sigungu}
+          sidoList={sidoList}
+          sigunguList={sigunguList}
+          clinicalFocusLabel={clinicalFocusLabel}
+          hospitalNameCommitted={hospitalName}
+          selectedCount={selectedHospitals.length}
+          maxSelection={maxSelection}
+        />
+        <div className="mt-section space-y-section">
           <HomeSearchPanel
             recentList={recentList}
             onApplyRecent={applyRecentSearch}
@@ -243,15 +258,15 @@ export function HomePageContent() {
           />
 
           {selectedHospitals.length > 0 && (
-            <div className="rounded-card border border-blue-200 bg-blue-50 p-6 shadow-sm md:p-7">
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">
+            <div className="rounded-card border border-line-strong bg-surface-muted p-6 shadow-sm md:p-7">
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
                 선택된 의료기관 ({selectedHospitals.length}개 / 최대 {maxSelection}개)
               </h2>
               <div className="flex flex-wrap gap-2">
                 {selectedHospitals.map((hospital) => (
                   <div
                     key={hospital.id}
-                    className="flex items-center gap-2 rounded-control border border-blue-300 bg-white px-4 py-2 shadow-sm"
+                    className="flex items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 shadow-sm"
                   >
                     <span className="text-sm font-medium text-gray-900">{hospital.name}</span>
                     <button

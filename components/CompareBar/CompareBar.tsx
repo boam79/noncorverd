@@ -72,7 +72,7 @@ export function CompareBar({
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 animate-slide-up">
+    <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up border-t border-line bg-surface/95 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-surface/90">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
