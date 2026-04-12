@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
+import { fetchPublicData } from '@/lib/opendata/client';
+import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
 import { toHiraSido, toHiraSigungu } from '@/lib/opendata/codeMap';
 import { hospitalsQuerySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
-import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 import {
   parseDgsbjtCdToDepartments,
   splitDgsbjtCdNm,
@@ -111,10 +111,8 @@ async function fetchHospitalsForType(
 }
 
 export async function GET(request: NextRequest) {
-  if (!validateToken(request)) return unauthorizedResponse();
-
-  const rateLimited = await enforceOpendataRateLimit(request, 'hospitals');
-  if (rateLimited) return rateLimited;
+  const blocked = await opendataRoutePrelude(request, 'hospitals');
+  if (blocked) return blocked;
 
   const parsed = hospitalsQuerySchema.safeParse({
     sido: request.nextUrl.searchParams.get('sido') ?? '',

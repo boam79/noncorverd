@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Layout/Header';
 import { Footer } from '@/components/Layout/Footer';
@@ -12,8 +12,8 @@ import { CompareBar } from '@/components/CompareBar/CompareBar';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/Error/ErrorMessage';
 import { ServerStatusBanner } from '@/components/ServerStatusBanner/ServerStatusBanner';
-import { useHospitals } from '@/lib/hooks/useHospitals';
-import { useRegions } from '@/lib/hooks/useRegions';
+import { useHomeHospitalSearch } from '@/lib/hooks/useHomeHospitalSearch';
+import { useRecordRecentSearchOnHome } from '@/lib/hooks/useRecordRecentSearchOnHome';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
 import { apiClient } from '@/lib/api';
 import {
@@ -23,12 +23,9 @@ import {
 import type { HospitalPricing } from '@/types';
 import {
   CLINICAL_FOCUS_OPTIONS,
-  hospitalMatchesClinicalFocus,
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
-import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
-import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
-import { pushRecentSearch, loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches';
+import { loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches';
 
 export default function Home() {
   const router = useRouter();
@@ -43,7 +40,6 @@ export default function Home() {
   >(null);
   const [clinicalFocus, setClinicalFocus] = useState<ClinicalFocusId>('none');
   const [recentList, setRecentList] = useState<RecentSearchEntry[]>([]);
-  const lastRecordedSearchKey = useRef<string>('');
 
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
 
@@ -57,117 +53,38 @@ export default function Home() {
     clearHospitals();
   }, [clearHospitals]);
   
-  const debouncedHospitalInput = useDebouncedValue(hospitalNameInput, 400);
-  /** 시도가 있으면 입력을 잠시 디바운스해 API 부하를 줄입니다. 시도 없이 이름만 쓸 때는 엔터 확정값을 씁니다. */
-  const apiHospitalName = sido ? debouncedHospitalInput.trim() : hospitalName.trim();
-  const nameForClientFilter = apiHospitalName;
-
-  // 시군구 목록 가져오기 (필터링용)
-  const { data: sigunguBundle } = useRegions(sido);
-  const sigunguList = useMemo(
-    () => sigunguBundle?.regions ?? [],
-    [sigunguBundle]
-  );
-
   const {
-    data: hospitalsBundle,
+    apiHospitalName,
+    sigunguList,
+    allHospitals,
+    hospitals,
+    hospitalsMeta,
     isLoading,
     error,
-    refetch: refetchHospitals,
-  } = useHospitals({
+    refetchHospitals,
+  } = useHomeHospitalSearch({
     sido,
-    sigungu, // 백엔드 매핑이 있으면 백엔드에서 필터링, 없으면 프론트엔드에서 필터링
-    hospitalName: apiHospitalName || undefined,
-    enabled: !!sido || !!hospitalName.trim(), // 시도 없을 때는 엔터로 확정된 이름만 조회
+    sigungu,
+    hospitalNameInput,
+    hospitalNameCommitted: hospitalName,
+    clinicalFocus,
   });
-
-  const allHospitals = useMemo(
-    () => hospitalsBundle?.hospitals ?? [],
-    [hospitalsBundle]
-  );
-  const hospitalsMeta = hospitalsBundle?.meta;
 
   useEffect(() => {
     setRecentList(loadRecentSearches());
   }, []);
 
-  // 시군구 및 병원명 필터링 (백엔드 매핑이 없는 경우 프론트엔드에서 추가 필터링)
-  // 백엔드에서 이미 필터링된 경우에도 프론트엔드에서 한 번 더 확인하여 정확도 향상
-  const hospitals = useMemo(() => {
-    let filtered = allHospitals;
-
-    // 병원명 필터링 (프론트엔드에서 추가 필터링으로 정확도 향상)
-    if (nameForClientFilter) {
-      const searchTerm = nameForClientFilter.toLowerCase();
-      filtered = filtered.filter((hospital) => {
-        const hospitalNameLower = hospital.name?.toLowerCase() || '';
-        return hospitalNameLower.includes(searchTerm);
-      });
-    }
-
-    // 시군구 필터링
-    if (sigungu && filtered.length > 0) {
-      // 시군구명 추출 (예: "경기도 구리시" -> "구리시")
-      const sigunguData = Array.isArray(sigunguList) ? sigunguList.find(s => s.code === sigungu) : null;
-      const sigunguName = sigunguData?.name || '';
-      const cleanSigunguName = sigunguName
-        .replace(/.*?특별시\s*/, '')
-        .replace(/.*?광역시\s*/, '')
-        .replace(/.*?도\s*/, '')
-        .trim();
-
-      if (cleanSigunguName) {
-        filtered = filtered.filter((hospital) =>
-          hospitalAddressMatchesSigungu(
-            hospital.address,
-            sigunguName,
-            cleanSigunguName
-          )
-        );
-      }
-    }
-
-    if (clinicalFocus !== 'none') {
-      filtered = filtered.filter((h) =>
-        hospitalMatchesClinicalFocus(h, clinicalFocus)
-      );
-    }
-
-    return filtered;
-  }, [allHospitals, sigungu, sigunguList, nameForClientFilter, clinicalFocus]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (isLoading || error) return;
-    if (!sido && !hospitalName.trim()) return;
-    if (hospitals.length === 0) return;
-
-    const sigunguName =
-      sigunguList.find((s) => s.code === sigungu)?.name?.trim() ?? '';
-    const label = [sigunguName || undefined, apiHospitalName || hospitalName.trim() || undefined]
-      .filter(Boolean)
-      .join(' · ');
-    const key = `${sido ?? ''}|${sigungu ?? ''}|${apiHospitalName}|${hospitalName}|${hospitals.length}`;
-    if (lastRecordedSearchKey.current === key) return;
-    lastRecordedSearchKey.current = key;
-
-    pushRecentSearch({
-      label: label || '지역 검색',
-      sido,
-      sigungu,
-      hospitalName: apiHospitalName || hospitalName.trim() || undefined,
-    });
-    setRecentList(loadRecentSearches());
-  }, [
-    apiHospitalName,
-    error,
-    hospitalName,
-    hospitals.length,
-    isLoading,
-    sigungu,
-    sigunguList,
+  useRecordRecentSearchOnHome({
     sido,
-  ]);
+    sigungu,
+    hospitalNameCommitted: hospitalName,
+    apiHospitalName,
+    sigunguList,
+    hospitalsResultCount: hospitals.length,
+    isLoading,
+    error,
+    setRecentList,
+  });
 
   const clinicalFocusExcludedAll =
     clinicalFocus !== 'none' &&

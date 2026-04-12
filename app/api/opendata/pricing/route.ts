@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
+import { fetchPublicData } from '@/lib/opendata/client';
+import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
 import { pricingBodySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
-import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 
 const PRICING_ENDPOINT = '/B551182/nonPaymentDamtInfoService/getNonPaymentItemHospDtlList';
 
@@ -35,10 +35,8 @@ function mapPricingItem(raw: PricingItem) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!validateToken(request)) return unauthorizedResponse();
-
-  const rateLimited = await enforceOpendataRateLimit(request, 'pricing');
-  if (rateLimited) return rateLimited;
+  const blocked = await opendataRoutePrelude(request, 'pricing');
+  if (blocked) return blocked;
 
   let json: unknown;
   try {

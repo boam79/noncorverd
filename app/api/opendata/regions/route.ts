@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchPublicData, validateToken, unauthorizedResponse } from '@/lib/opendata/client';
+import { fetchPublicData } from '@/lib/opendata/client';
+import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
 import { FALLBACK_SIDO } from '@/lib/opendata/codeMap';
 import { regionsQuerySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
-import { enforceOpendataRateLimit } from '@/lib/opendata/serverRateLimit';
 
 const REGIONS_ENDPOINT = '/1741000/StanReginCd/getStanReginCdList';
 
 export async function GET(request: NextRequest) {
-  if (!validateToken(request)) return unauthorizedResponse();
-
-  const rateLimited = await enforceOpendataRateLimit(request, 'regions');
-  if (rateLimited) return rateLimited;
+  const blocked = await opendataRoutePrelude(request, 'regions');
+  if (blocked) return blocked;
 
   const rawSido = request.nextUrl.searchParams.get('sido');
   const parsed = regionsQuerySchema.safeParse({
