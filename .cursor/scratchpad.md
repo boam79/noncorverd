@@ -623,6 +623,8 @@
 ## Executor's Feedback or Assistance Requests
 - ✅ **고도화 패키지 (2026-04-11)**: Zod 검증(opendata 라우트), 응답 `meta.fetchedAt`·출처, 인메모리 `recordOpendataRequest` + `GET /api/health/metrics`(METRICS_SECRET), Upstash 선택 시 App Route에서 IP 레이트리밋(`lib/opendata/serverRateLimit.ts`), 안전 로그(`safeServerLog`), 병원/가격 fetch `revalidate` 캐시, 메인(시도 선택 시 병원명 400ms 디바운스·최근 검색·접근성 search/본문 건너뛰기·조회 시각), 비교(`usePricingProgressive` 병원별 쿼리+진행 문구+조회 시각), Vitest 16건 + CI `unit` 잡, README/env.example 정리. `npm run build`, `npm run test:unit`, `playwright e2e/hospital-comparison` 통과. Planner·휴먼: Upstash·METRICS_SECRET 운영값 설정 여부만 결정하면 됨.
 
+- ✅ **리팩터 1차 (2026-04-11, main 푸시)**: `filterHospitalsForHome` + `useHomeHospitalSearch` + `useRecordRecentSearchOnHome`로 `app/page.tsx` 축소, `opendataRoutePrelude`로 세 라우트 전처리 통합. Vitest 19건·빌드·hospital-comparison E2E 통과 후 별도 커밋 푸시.
+
 - ✅ **ux-search-empty (2026-04-11)**: `app/page.tsx`에 검색 활성 + 결과 0건 시 안내 배너 추가(공공 API 목록 없음·관심 분야만 전부 제외·주소·병원명 필터로만 전부 제외). `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium` → 7 passed, 1 skipped. 변경 파일 `app/page.tsx`는 아직 커밋 전 — Planner·휴먼 확인 후 커밋·배포 진행 요청.
 
 - ✅ **prod-6 Day 1 – CORS 수정 및 시군구 코드 변환 완료**:
