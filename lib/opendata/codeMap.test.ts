@@ -20,6 +20,10 @@ describe('toHiraSigungu', () => {
     expect(toHiraSigungu('413100')).toBe('311000');
   });
 
+  it('maps Yangju (Gyeonggi) sigungu', () => {
+    expect(toHiraSigungu('416300')).toBe('312700');
+  });
+
   it('returns null for unknown six-digit code', () => {
     expect(toHiraSigungu('999999')).toBeNull();
   });

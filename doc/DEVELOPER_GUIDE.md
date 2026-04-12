@@ -310,6 +310,23 @@ interface ComparisonStore {
 
 ## 테스트
 
+### 시군구·병원 API 감사 (`audit:sigungu`)
+
+행정안전부 시군구 코드가 `lib/opendata/codeMap.ts`의 `SIGUNGU_CODE_MAP`에 없으면, HIRA `sgguCd`가 요청에 붙지 않아 **시도 전체를 최대 200건**만 받은 뒤 클라이언트에서 주소로 거르면(예: 경기 양주시) **소수만** 남는 현상이 납니다.
+
+```bash
+# 전 시도 (시간·호출량 큼)
+npm run audit:sigungu
+
+# 경기도만
+AUDIT_SIDO=41 npm run audit:sigungu
+
+# 다른 베이스 URL·토큰
+AUDIT_BASE_URL=https://… AUDIT_CLIENT_TOKEN=… npm run audit:sigungu
+```
+
+TSV 헤더의 `hiraMapped`는 **스크립트가 로드한 로컬 `codeMap`** 기준입니다. 배포본과 맞추려면 같은 커밋을 배포한 뒤 다시 실행하세요. `NO_HIRA_MAP_HIGH_COUNT`는 매핑 없이 건수가 190 이상인 경우(경기 전체 샘플에 가까움)입니다.
+
 ### E2E 테스트 (Playwright)
 
 로컬에서 Next만 실행할 때 OpenData 백엔드(3001)가 없으면 지역·병원 API가 비어 실패합니다. 비교 플로우는 `e2e/fixtures/opendata-routes.ts`의 `installComparisonFlowMocks` 등으로 네트워크 응답을 고정합니다.

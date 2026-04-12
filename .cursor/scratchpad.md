@@ -1049,6 +1049,10 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 - Executor는 **dept-bucket-1부터 순서대로** 진행하고, 각 단계 완료 시 본 보드 체크와 스크래치패드에 검증 결과를 남길 것.
 - 버킷 명칭·키워드는 비기술 이해관계자 검토가 있으면 오탐률이 내려간다. 가능하면 시판 용어 기준으로 1회 리뷰 요청.
 
+#### Lessons (시군구·병원 목록 2026-04-12)
+- **양주 등 2건만 보임**: `SIGUNGU_CODE_MAP`에 행정 코드(예: `416300`)가 없으면 HIRA `sgguCd`가 빠져 API가 **경기도 전체를 최대 200건**만 반환하고, 클라이언트 `filterHospitalsForHome`이 주소로 **양주시만** 거르면 소수(2곳)만 남을 수 있음. 대응: `lib/opendata/codeMap.ts`(및 `backend/.../hospitalsAdapter.js`)에 HIRA 코드 실측 매핑 추가. 감사: `AUDIT_SIDO=41 npm run audit:sigungu`.
+- 경기도는 매핑 누락 시 `NO_HIRA_MAP_HIGH_COUNT`가 다수 나오는 것이 정상(점진적 `SIGUNGU_CODE_MAP` 확장 필요).
+
 #### Lessons (GitHub 푸시)
 - `github.com:22` SSH가 타임아웃일 때: `GIT_SSH_COMMAND='ssh -o Hostname=ssh.github.com -p 443 -o StrictHostKeyChecking=accept-new' git push origin main` (최초 1회 호스트 키 등록 안내 가능)
 

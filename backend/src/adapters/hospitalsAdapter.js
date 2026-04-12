@@ -209,6 +209,7 @@ class HospitalsAdapter extends BaseAdapter {
       '501300': '390100', // 서귀포시 (HIRA sgguCd=390100)
       // 경기도 주요 시군구 (sido=41, 행정안전부 코드)
       '413100': '311000', // 구리시
+      '416300': '312700', // 양주시 (HIRA sgguCd 실측)
       // 추가 경기도 시군구는 실제 API 응답에서 확인 후 추가 필요
     };
 
