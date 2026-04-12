@@ -625,6 +625,8 @@
 
 - ✅ **리팩터 1차 (2026-04-11, main 푸시)**: `filterHospitalsForHome` + `useHomeHospitalSearch` + `useRecordRecentSearchOnHome`로 `app/page.tsx` 축소, `opendataRoutePrelude`로 세 라우트 전처리 통합. Vitest 19건·빌드·hospital-comparison E2E 통과 후 별도 커밋 푸시.
 
+- ✅ **리팩터 2차 (2026-04-11, main 푸시)**: `useComparisonShareHydration`·`useComparisonPricingView`/`computeComparisonPricingView`·`useHomeAutoRecommend`·`HomeEmptyResultBanners`·`ShareHydrationFallback`. Vitest 21건·lint·빌드·E2E 통과 후 푸시.
+
 - ✅ **ux-search-empty (2026-04-11)**: `app/page.tsx`에 검색 활성 + 결과 0건 시 안내 배너 추가(공공 API 목록 없음·관심 분야만 전부 제외·주소·병원명 필터로만 전부 제외). `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium` → 7 passed, 1 skipped. 변경 파일 `app/page.tsx`는 아직 커밋 전 — Planner·휴먼 확인 후 커밋·배포 진행 요청.
 
 - ✅ **prod-6 Day 1 – CORS 수정 및 시군구 코드 변환 완료**:
