@@ -5,10 +5,12 @@ const config: Config = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
+        page: "#f9fafb",
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
@@ -61,8 +63,14 @@ const config: Config = {
         },
       },
       spacing: {
+        section: "2rem",
+        "section-lg": "3rem",
         "touch-target": "48px", // WCAG Touch-Friendly UI
         "touch-gap": "8px",
+      },
+      borderRadius: {
+        card: "1rem",
+        control: "0.75rem",
       },
       screens: {
         xs: "475px",

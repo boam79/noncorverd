@@ -195,5 +195,14 @@ test.describe('병원 비교 핵심 플로우', () => {
       page.getByText(/추천 병원 \d+곳을 자동 선택했습니다/)
     ).toBeVisible({ timeout: 15000 });
   });
+
+  test('메인 URL 쿼리로 시도·관심 분야 복원', async ({ page }) => {
+    await installComparisonFlowMocks(page);
+    await page.goto('/?sido=11&focus=orthopedics');
+    await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+    const sidoSelect = page.getByLabel('시도 선택');
+    await expect(sidoSelect).toHaveValue('11', { timeout: 30000 });
+    await expect(page.getByRole('radio', { name: '정형외과', exact: true })).toBeChecked();
+  });
 });
 

@@ -5,10 +5,13 @@
 ```
 nonvovered/
 ├── app/                      # Next.js App Router
-│   ├── page.tsx             # 메인 페이지
-│   ├── comparison/          # 비교 페이지
+│   ├── page.tsx             # 메인 (Suspense + 얇은 래퍼)
+│   ├── comparison/          # 비교 (Suspense + 얇은 래퍼)
 │   ├── api/                 # API Routes (프록시)
 │   └── layout.tsx           # 루트 레이아웃
+├── features/                # 화면 단위 진입점 (클라이언트 오케스트레이션)
+│   ├── home/HomePageContent.tsx
+│   └── comparison/ComparisonPageClient.tsx
 ├── components/              # React 컴포넌트
 │   ├── Layout/              # Header, Footer, Container
 │   ├── RegionSelector/      # 지역 선택 컴포넌트
@@ -233,12 +236,17 @@ Content-Type: application/json
 
 ```
 사용자 → 추천 병원 불러오기 버튼
-  → app/page.tsx (후보 병원 8개 선별)
+  → features/home/HomePageContent.tsx (후보 병원 8개 선별)
     → lib/api.ts (getNonCoveredPricing)
       → /opendata/pricing
         → 추천 점수 계산 (lib/utils/recommendation.ts)
           → comparisonStore 선택 반영
 ```
+
+### 메인 URL 쿼리 (`lib/url/homeSearchParams.ts`)
+
+- `sido`, `sigungu`, `q`(확정 병원명), `focus`(관심 분야 ID)를 직렬화·파싱한다.
+- UI 상태는 `features/home/HomePageContent.tsx`에서 첫 로드 시 `window.location.search`로 복원한 뒤 `router.replace`로 주소줄과 맞춘다.
 
 ## 상태 관리
 

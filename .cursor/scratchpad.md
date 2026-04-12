@@ -4,12 +4,66 @@
 - 추가 요청 2: 공공데이터포털 API 활용 승인 목록을 문서에 반영.
 - **신규 요청: MVP 개발 시작** - 모든 MCP 도구를 활용하여 실제 웹서비스 구현.
 - 목적: 관련 문서에 배포/테스트 전략과 사용 중인 공공데이터 API 정보를 명확히 기록해 후속 개발·운영 참고자료로 활용. 이제 실제 MVP 개발을 시작하여 핵심 기능을 구현.
+- **신규 요청 (2026-04-11): 서비스 전면 개편** — 사용자 여정·정보 구조·UI 시스템·코드 구조를 한 번에 재정렬하되, 공공 API·비교 핵심 가치는 유지. Planner가 범위·단계·성공 기준을 문서화하고, Executor는 단계별로 한 스텝씩 구현·검증한다.
 
 ## Key Challenges and Analysis
 - 문서가 PDR 형태로 UI/UX, 기술 스택, 인프라 구성을 모두 포함하므로 섹션별 핵심 요약이 필요.
 - 비급여 비교 서비스의 사용자 흐름과 데이터 연동 전략을 정확히 파악해야 후속 설계가 가능.
 - 분석 결과는 Executor가 참조할 수 있도록 구조화된 요약과 검증 포인트를 제공해야 함.
 - 신규 요구사항(Vercel 배포 + AWS 연동 테스트)을 기존 인프라 설계와 모순 없이 문서에 녹여야 함.
+
+### Initiative: 전면 개편 v2 (Planner, 2026-04-11)
+
+#### 배경·목표
+- MVP 이후 기능이 누적되며 메인 검색·비교·상태(Zustand·React Query·localStorage)가 분산되어, **신규 사용자가 “한 화면에서 무엇을 해야 하는지”** 파악하기 어려울 수 있음.
+- 목표: **기능 삭제가 아닌 재배치**로 “찾기 → 고르기 → 비교·의사결정” 흐름을 명확히 하고, **URL·문서·테스트**가 같은 스펙을 가리키게 정렬한다.
+
+#### Key Challenges (전면 개편)
+1. **범위 폭주**: 디자인만 바꾸다가 데이터 계약까지 동시에 바꾸면 회귀 비용이 폭증 → **IA/URL → UI 토큰 → 폴더 구조 → API/BFF** 순으로 층을 나눈다.
+2. **공공 API 제약**: 레이트리밋·지연·종별 데이터 공백은 UI로만 해결 불가 → 개편안에 **빈 상태·재시도·진행률**을 제품 스펙으로 포함한다.
+3. **출시 리스크**: 한 번에 교체 시 장애 가능 → **`/beta` 또는 기능 플래그**로 병행 기간을 둔다(최소 1스프린트 권장).
+
+#### High-level Task Breakdown (Planner → Executor)
+Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충족 후 Planner·휴먼 확인을 받고 다음 단계로 진행한다.
+
+1. **redesign-0 — 범위·비범위 확정 (문서만)**
+   - 산출물: “반드시 유지할 사용자 가치” 3줄, “이번에 하지 않을 것(Post-v2)” 목록.
+   - 성공 기준: 휴먼이 텍스트로 승인(또는 수정) 완료.
+
+2. **redesign-1 — IA·와이어 (저충실도)**
+   - 산출물: 메인/비교(필요 시 단일 플로우) **화면별 블록 다이어그램** 또는 불릿 와이어; 상단 맥락 바(지역·관심 분야·선택 N개) 유무 결정.
+   - 성공 기준: “첫 방문 사용자 30초 시나리오”가 와이어상으로 통과 가능함을 Planner가 검토.
+
+3. **redesign-2 — URL·상태 단일 출처 설계**
+   - 산출물: 검색 조건(시도·시군구·병원명·관심 분야 등)과 비교 선택의 **쿼리 파라미터 스펙 초안**; Zustand/localStorage와의 역할 분담 표.
+   - 성공 기준: 스펙이 `doc/DEVELOPER_GUIDE.md`에 반영 가능한 수준의 필드 목록·예시 URL 2~3개.
+
+4. **redesign-3 — 디자인 토큰·레이아웃 그리드**
+   - 산출물: Tailwind/CSS 변수로 **색·간격·타이포·라운드** 최소 토큰 세트; Container·카드·폼 3패턴.
+   - 성공 기준: 기존 페이지 1개(예: 메인)에만 토큰 적용 시 시각적 일관성 체크리스트 통과(Planner 또는 휴먼).
+
+5. **redesign-4 — 폴더 구조 `features/` (기능 이동만, 동작 동일)**
+   - 산출물: `features/home`, `features/comparison`(또는 동등 명칭)로 컴포넌트·훅 이동, import 경로 정리.
+   - 성공 기준: `npm run lint`, `npm run build`, `npm run test:unit`, 핵심 Playwright 1세트 통과(변경 범위에 맞게 최소).
+
+6. **redesign-5 — 비교·가격 UI 2차 정보 설계**
+   - 산출물: 폴드 위 **요약(0건 병원·공통 0건·조회 시각)** 배치 확정; 모바일 “요약 vs 전체표” 역할 분담.
+   - 성공 기준: 기존 회귀 이슈(공통 항목 0건 오해 등)에 대한 안내 문구가 와이어/목업에 반영됨.
+
+7. **redesign-6 — RSC/캐시 경계(선택·점진)**
+   - 산출물: 정적/반복 가능한 데이터(예: 지역 목록 설명)만 RSC 또는 캐시 강화 대상으로 명시; 나머지는 클라이언트 유지 이유 문서화.
+   - 성공 기준: 성능 측정 포인트(첫 콘텐츠 페인트 등) 전후 수치 1회 기록.
+
+8. **redesign-7 — 베타 출시·전환**
+   - 산출물: `/beta` 또는 env 플래그로 신구 UI 전환, 기본은 구 UI 유지 후 단계적 전환 계획.
+   - 성공 기준: 운영(또는 스테이징)에서 플래그 ON/OFF 스모크 통과; 롤백 절차 1페이지.
+
+9. **redesign-8 — 문서·E2E 동기화**
+   - 산출물: `USER_GUIDE` 스크린샷/절차 갱신, E2E에 URL 복원·0건 배너·비교 핵심 경로 추가.
+   - 성공 기준: CI `unit` + 지정 E2E 그린; Planner가 “전면 개편 v2 완료” 선언 가능한 체크리스트 충족.
+
+#### Initiative 성공 기준 (한 줄)
+- 비기술 사용자가 **별도 설명 없이** 지역·관심 분야를 정하고 병원을 고른 뒤 비교까지 도달할 수 있으며, **공유 링크로 동일 상태 복원**이 가능하다.
 
 ### New Request – 메인 화면 비율/디자인 개선 (2026-02-01)
 - 현재 메인 화면은 콘텐츠 영역이 넓게 퍼져 보이고, 컴포넌트 밀도와 시각적 계층(타이틀/입력/결과)의 구분이 약함.
@@ -401,6 +455,15 @@
 - [x] ui-3: 결과 섹션/하단 영역 정리 및 반응형 미세 조정
 - [x] ux-search-empty: 메인 검색 활성 상태에서 결과 0건일 때 원인별 안내 배너 (API 무결과·관심 분야 전부 탈락·시군구·병원명 필터로만 전부 탈락)
 - [x] hardening-2026-04: 검증·관측·캐시·접근성·비교 점진 로딩·단위테스트·문서 (고도화 제안 일괄 반영)
+- [x] redesign-0: 전면 개편 v2 — 범위·비범위 (`doc/REDESIGN_V2.md`)
+- [x] redesign-1: IA·와이어(저충실도, 동일 문서)
+- [x] redesign-2: URL·상태 — `lib/url/homeSearchParams.ts` + 가이드
+- [x] redesign-3: 디자인 토큰·레이아웃 그리드(`tailwind.config.ts` `page`/`section`/`card`/`control`)
+- [x] redesign-4: `features/home`·`features/comparison` + 얇은 `app/*/page.tsx`
+- [x] redesign-5: 비교 루트 `bg-page`·`py-section` 등 토큰 정렬(패널 로직 유지)
+- [ ] redesign-6: RSC/캐시 경계(선택·점진) — 후속(메인 지역 정적화 등)
+- [x] redesign-7: `NEXT_PUBLIC_UI_V2_BETA` + 메인 리본
+- [x] redesign-8: USER_GUIDE·DEVELOPER_GUIDE·E2E URL 복원 1건·unit+lint+build+Playwright 통과
 
 ## Current Status / Progress Tracking
 
@@ -621,6 +684,8 @@
   - `성형외과`는 기관 종별 코드만으로 완전 분리되지 않아 `yadmNm=성형외과` 키워드 검색을 병행
 
 ## Executor's Feedback or Assistance Requests
+- ✅ **Executor (2026-04-11): 전면 개편 v2 1차 구현** — URL 동기화(`sido`/`sigungu`/`q`/`focus`), `features/home`·`features/comparison`, Tailwind 토큰, `doc/REDESIGN_V2.md`, `env.example`, USER/DEVELOPER 가이드, E2E URL 복원. **redesign-6**(RSC 분리)는 미착수. Planner·휴먼: 스테이징에서 URL 공유·뒤로가기 스팟 확인.
+
 - ✅ **리팩터 3차 + Next 패치 (2026-04-11)**: `lib/home/homeSearchDerived.ts`·테스트로 메인 검색 파생 상태(`searchActive`, 빈 결과 안내 조건 등) 순수 계산 분리. `HomeSearchPanel`·`HomeSearchResultsSection`·`ComparisonPricingPanel`로 `app/page.tsx`·`app/comparison/page.tsx` 얇게 유지. `next`·`eslint-config-next` **15.5.15** 패치 업그레이드 후 `npm audit` **0 vulnerabilities**. 검증: `npm run test:unit`(24 passed), `npm run lint`, `npm run build`, `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium`(7 passed, 1 skipped). Planner·휴먼: 변경분 커밋·배포 승인 후 `main` 반영 확인.
 
 - ✅ **고도화 패키지 (2026-04-11)**: Zod 검증(opendata 라우트), 응답 `meta.fetchedAt`·출처, 인메모리 `recordOpendataRequest` + `GET /api/health/metrics`(METRICS_SECRET), Upstash 선택 시 App Route에서 IP 레이트리밋(`lib/opendata/serverRateLimit.ts`), 안전 로그(`safeServerLog`), 병원/가격 fetch `revalidate` 캐시, 메인(시도 선택 시 병원명 400ms 디바운스·최근 검색·접근성 search/본문 건너뛰기·조회 시각), 비교(`usePricingProgressive` 병원별 쿼리+진행 문구+조회 시각), Vitest 16건 + CI `unit` 잡, README/env.example 정리. `npm run build`, `npm run test:unit`, `playwright e2e/hospital-comparison` 통과. Planner·휴먼: Upstash·METRICS_SECRET 운영값 설정 여부만 결정하면 됨.
