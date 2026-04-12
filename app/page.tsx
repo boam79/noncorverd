@@ -15,17 +15,13 @@ import { ServerStatusBanner } from '@/components/ServerStatusBanner/ServerStatus
 import { useHomeHospitalSearch } from '@/lib/hooks/useHomeHospitalSearch';
 import { useRecordRecentSearchOnHome } from '@/lib/hooks/useRecordRecentSearchOnHome';
 import { useComparisonStore } from '@/lib/stores/comparisonStore';
-import { apiClient } from '@/lib/api';
-import {
-  recommendHospitals,
-  type HospitalRecommendation,
-} from '@/lib/utils/recommendation';
-import type { HospitalPricing } from '@/types';
+import { useHomeAutoRecommend } from '@/lib/hooks/useHomeAutoRecommend';
 import {
   CLINICAL_FOCUS_OPTIONS,
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
 import { loadRecentSearches, type RecentSearchEntry } from '@/lib/recentSearches';
+import { HomeEmptyResultBanners } from '@/components/HomeSearch/HomeEmptyResultBanners';
 
 export default function Home() {
   const router = useRouter();
@@ -33,11 +29,6 @@ export default function Home() {
   const [sigungu, setSigungu] = useState<string>();
   const [hospitalNameInput, setHospitalNameInput] = useState<string>(''); // 입력값
   const [hospitalName, setHospitalName] = useState<string>(''); // 실제 검색에 사용되는 값
-  const [isRecommending, setIsRecommending] = useState(false);
-  const [recommendMessage, setRecommendMessage] = useState<string>('');
-  const [recommendBreakdown, setRecommendBreakdown] = useState<
-    HospitalRecommendation[] | null
-  >(null);
   const [clinicalFocus, setClinicalFocus] = useState<ClinicalFocusId>('none');
   const [recentList, setRecentList] = useState<RecentSearchEntry[]>([]);
 
@@ -84,6 +75,18 @@ export default function Home() {
     isLoading,
     error,
     setRecentList,
+  });
+
+  const {
+    isRecommending,
+    recommendMessage,
+    recommendBreakdown,
+    handleAutoRecommend,
+  } = useHomeAutoRecommend({
+    hospitals,
+    selectedHospitals,
+    maxSelection,
+    toggleHospital,
   });
 
   const clinicalFocusExcludedAll =
@@ -147,70 +150,6 @@ export default function Home() {
       router.push('/comparison');
     }
   };
-
-  // 추천 병원 자동 선택
-  const handleAutoRecommend = useCallback(async () => {
-    const remainingSlots = Math.max(0, maxSelection - selectedHospitals.length);
-    if (remainingSlots <= 0) {
-      setRecommendMessage(`최대 ${maxSelection}개까지 선택 가능합니다.`);
-      return;
-    }
-
-    const candidates = hospitals
-      .filter((hospital) => !selectedHospitals.some((selected) => selected.id === hospital.id))
-      .slice(0, 8); // API 호출 비용 절약을 위해 상위 8개만 분석
-
-    if (candidates.length === 0) {
-      setRecommendMessage('추천할 병원 후보가 없습니다.');
-      return;
-    }
-
-    setIsRecommending(true);
-    setRecommendMessage('');
-    setRecommendBreakdown(null);
-    try {
-      const response = await apiClient.getNonCoveredPricing(
-        candidates.map((hospital) => hospital.id),
-        candidates.map((hospital) => ({ id: hospital.id, name: hospital.name }))
-      );
-
-      if (!response.ok || !Array.isArray(response.data)) {
-        throw new Error(response.error?.message || '추천 데이터를 가져오지 못했습니다.');
-      }
-
-      const pricingData = response.data as HospitalPricing[];
-      const recommendations = recommendHospitals(
-        pricingData,
-        Math.min(3, remainingSlots)
-      );
-      if (recommendations.length === 0) {
-        setRecommendMessage('추천 점수를 계산할 데이터가 부족합니다.');
-        return;
-      }
-
-      setRecommendBreakdown(recommendations);
-
-      const recommendedHospitals = recommendations
-        .map((recommendation) =>
-          candidates.find((hospital) => hospital.id === recommendation.hospitalId)
-        )
-        .filter((hospital): hospital is NonNullable<typeof hospital> => Boolean(hospital));
-
-      recommendedHospitals.forEach((hospital) => {
-        if (!selectedHospitals.some((selected) => selected.id === hospital.id)) {
-          toggleHospital(hospital);
-        }
-      });
-
-      setRecommendMessage(`추천 병원 ${recommendedHospitals.length}곳을 자동 선택했습니다.`);
-    } catch (error) {
-      setRecommendMessage(
-        error instanceof Error ? error.message : '추천 병원 선택 중 오류가 발생했습니다.'
-      );
-    } finally {
-      setIsRecommending(false);
-    }
-  }, [hospitals, maxSelection, selectedHospitals, toggleHospital]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-24">
@@ -423,56 +362,14 @@ export default function Home() {
               />
             ) : (
               <>
-                {noApiHospitalRows && (
-                  <div
-                    className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950"
-                    role="status"
-                  >
-                    <p className="font-medium">
-                      이 조건으로는 아직 보여드릴 병원이 없어요.
-                    </p>
-                    <p className="mt-1 text-sky-900/90">
-                      시·군·구나 병원 이름을 조금만 바꿔 보시거나, 잠시 뒤에 다시 눌러 주세요.
-                      등록된 병원이 적은 지역이거나, 한 번에 가져오는 수에 제한이 있을 수 있어요.
-                    </p>
-                  </div>
-                )}
-                {clinicalFocusExcludedAll && (
-                  <div
-                    className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-                    role="status"
-                  >
-                    <p className="font-medium">
-                      「{clinicalFocusLabel}」에 잘 맞는 병원을 목록에서 찾지 못했어요.
-                    </p>
-                    <p className="mt-1 text-amber-800">
-                      가져온 병원 {allHospitals.length}곳 가운데 조건에 딱 맞는 곳이 없었어요.
-                      이름·진료 정보로 추정한 부분이라 실제와 다를 수 있으니 가볍게 참고만 해 주세요.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setClinicalFocus('none')}
-                      className="mt-3 text-sm font-semibold text-amber-950 underline decoration-amber-600 hover:text-amber-700"
-                    >
-                      관심 분야 접기
-                    </button>
-                  </div>
-                )}
-                {noResultsAfterRegionOrNameFilter && (
-                  <div
-                    className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-                    role="status"
-                  >
-                    <p className="font-medium">
-                      찾아온 병원 {allHospitals.length}곳 모두, 선택하신 지역·이름 조건과는 맞지
-                      않았어요.
-                    </p>
-                    <p className="mt-1 text-amber-800">
-                      시·군·구를 넓혀 보시거나, 병원 이름 검색을 짧게(또는 비우고) 다시 엔터를 눌러
-                      보시면 목록이 나올 수 있어요.
-                    </p>
-                  </div>
-                )}
+                <HomeEmptyResultBanners
+                  noApiHospitalRows={noApiHospitalRows}
+                  clinicalFocusExcludedAll={clinicalFocusExcludedAll}
+                  noResultsAfterRegionOrNameFilter={noResultsAfterRegionOrNameFilter}
+                  clinicalFocusLabel={clinicalFocusLabel}
+                  allHospitalCount={allHospitals.length}
+                  onClearClinicalFocus={() => setClinicalFocus('none')}
+                />
                 <HospitalCardList
                   hospitals={hospitals}
                   selectedHospitals={selectedHospitals}
