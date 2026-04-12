@@ -621,6 +621,8 @@
   - `성형외과`는 기관 종별 코드만으로 완전 분리되지 않아 `yadmNm=성형외과` 키워드 검색을 병행
 
 ## Executor's Feedback or Assistance Requests
+- ✅ **리팩터 3차 + Next 패치 (2026-04-11)**: `lib/home/homeSearchDerived.ts`·테스트로 메인 검색 파생 상태(`searchActive`, 빈 결과 안내 조건 등) 순수 계산 분리. `HomeSearchPanel`·`HomeSearchResultsSection`·`ComparisonPricingPanel`로 `app/page.tsx`·`app/comparison/page.tsx` 얇게 유지. `next`·`eslint-config-next` **15.5.15** 패치 업그레이드 후 `npm audit` **0 vulnerabilities**. 검증: `npm run test:unit`(24 passed), `npm run lint`, `npm run build`, `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium`(7 passed, 1 skipped). Planner·휴먼: 변경분 커밋·배포 승인 후 `main` 반영 확인.
+
 - ✅ **고도화 패키지 (2026-04-11)**: Zod 검증(opendata 라우트), 응답 `meta.fetchedAt`·출처, 인메모리 `recordOpendataRequest` + `GET /api/health/metrics`(METRICS_SECRET), Upstash 선택 시 App Route에서 IP 레이트리밋(`lib/opendata/serverRateLimit.ts`), 안전 로그(`safeServerLog`), 병원/가격 fetch `revalidate` 캐시, 메인(시도 선택 시 병원명 400ms 디바운스·최근 검색·접근성 search/본문 건너뛰기·조회 시각), 비교(`usePricingProgressive` 병원별 쿼리+진행 문구+조회 시각), Vitest 16건 + CI `unit` 잡, README/env.example 정리. `npm run build`, `npm run test:unit`, `playwright e2e/hospital-comparison` 통과. Planner·휴먼: Upstash·METRICS_SECRET 운영값 설정 여부만 결정하면 됨.
 
 - ✅ **리팩터 1차 (2026-04-11, main 푸시)**: `filterHospitalsForHome` + `useHomeHospitalSearch` + `useRecordRecentSearchOnHome`로 `app/page.tsx` 축소, `opendataRoutePrelude`로 세 라우트 전처리 통합. Vitest 19건·빌드·hospital-comparison E2E 통과 후 별도 커밋 푸시.
