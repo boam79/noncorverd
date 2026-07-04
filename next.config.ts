@@ -32,13 +32,27 @@ const nextConfig: NextConfig = {
   // 이후 nonce 기반 CSP로 강화하는 것을 권장합니다(redesign-6와 함께 검토).
   async headers() {
     const isProd = process.env.NODE_ENV === 'production';
+
+    // Vercel 배포에서는 항상 동일 출처 프록시(/api/opendata)를 쓰지만(lib/api.ts),
+    // 로컬 개발이나 backend/(Express, 기본 localhost:3001 또는 Render)를 직접 호출하는
+    // 배포에서는 다른 출처로 fetch하므로 connect-src에 그 출처를 함께 허용해야 합니다.
+    let apiOrigin = '';
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+      try {
+        apiOrigin = new URL(process.env.NEXT_PUBLIC_API_BASE_URL).origin;
+      } catch {
+        // 잘못된 URL이면 무시(빌드를 막지 않음)
+      }
+    }
+    const devLocalBackend = isProd ? '' : ' http://localhost:3001';
+
     const csp = [
       "default-src 'self'",
       `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://apis.data.go.kr",
+      `connect-src 'self' https://apis.data.go.kr${apiOrigin ? ` ${apiOrigin}` : ''}${devLocalBackend}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
