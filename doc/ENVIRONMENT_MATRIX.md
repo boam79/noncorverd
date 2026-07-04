@@ -8,8 +8,8 @@
 | 공통 | `CLIENT_OPENDATA_TOKEN` | ✅ | ✅ (`NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`) | ✅ (Dashboard 직접 입력) | 프론트/백 동일 값 |
 | 프론트 | `NEXT_PUBLIC_API_BASE_URL` | ✅ (`http://localhost:3001/opendata`) | ✅ (`https://noncorverd-backend.onrender.com/opendata`) | - | Vercel 배포 시 Render URL로 설정 |
 | 프론트 | `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN` | ⛔ | ✅ | - | 프론트에서 토큰 사용 시 필수 |
-| 프론트 | `SENTRY_DSN` | ⛔ | ❓ (선택) | - | Sentry 연동 시 설정 |
-| 프론트 | `NEXT_PUBLIC_ANALYTICS_ID` | ⛔ | ❓ (선택) | - | Analytics 연동 시 설정 |
+| 프론트 | `SENTRY_DSN` | ⛔ | ⛔ | - | **미구현**(코드에서 읽지 않음). 실제 관측성은 `GET /api/health`·`GET /api/health/metrics`, `lib/observability/*` 참고 |
+| 프론트 | `NEXT_PUBLIC_ANALYTICS_ID` | ⛔ | ⛔ | - | **미구현**(코드에서 읽지 않음) |
 | 백엔드 | `PORT` | ✅ (3001) | - | ✅ (10000, render.yaml) | Render는 10000 포트 사용 |
 | 백엔드 | `CORS_ORIGINS` | ✅ | - | ✅ (render.yaml 기본값) | `https://noncorverd.vercel.app` 포함 |
 | 백엔드 | `ADMINISTRATIVE_CODE_SERVICE_KEY` | ✅ | - | ✅ | `api_key` fallback 존재 |
