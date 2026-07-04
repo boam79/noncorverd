@@ -5,9 +5,9 @@
 ## 1. 환경 및 설정
 
 - [ ] `doc/ENVIRONMENT_MATRIX.md` 검토, 누락된 환경변수 없음
-- [ ] Vercel 환경변수 최신화 완료 (`NEXT_PUBLIC_API_BASE_URL` → Render URL)
-- [ ] Render Dashboard 환경변수 입력 완료 (`api_key`, `CLIENT_OPENDATA_TOKEN`)
-- [ ] GitHub Secrets 검증 완료 (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`)
+- [ ] Vercel 환경변수 최신화 완료 (`OPENDATA_API_KEY`, `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`)
+- [ ] (Render 백엔드 사용 시) Render Dashboard 환경변수 입력 완료 (`api_key`, `CLIENT_OPENDATA_TOKEN`)
+- [ ] Vercel/Render 배포는 각 서비스의 네이티브 Git 연동으로 자동 배포됨(별도 GitHub Actions Deploy 워크플로우 없음) — Vercel/Render Dashboard에서 최신 커밋이 배포됐는지 확인
 
 ## 2. 테스트 및 검증
 

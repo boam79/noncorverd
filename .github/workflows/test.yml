@@ -65,7 +65,7 @@ jobs:
           node-version: '20'
       - run: npm ci
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
       - name: Run E2E tests
         run: npm run test:e2e
         env:

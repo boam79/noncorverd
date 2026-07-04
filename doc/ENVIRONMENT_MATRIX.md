@@ -15,10 +15,9 @@
 | 백엔드 | `ADMINISTRATIVE_CODE_SERVICE_KEY` | ✅ | - | ✅ | `api_key` fallback 존재 |
 | 백엔드 | `HIRA_SERVICE_KEY` | ✅ | - | ✅ | `api_key` fallback 존재 |
 | 백엔드 | `HIRA_PRICING_SERVICE_KEY` | ✅ | - | ✅ | `api_key` fallback 존재 |
-| 배포 | `VERCEL_TOKEN` | - | ✅ (GitHub Secret) | - | GitHub Actions용 |
-| 배포 | `VERCEL_ORG_ID` | - | ✅ (GitHub Secret) | - | |
-| 배포 | `VERCEL_PROJECT_ID` | - | ✅ (GitHub Secret) | - | |
 | 테스트 | `PLAYWRIGHT_BASE_URL` | ⛔ | ❓ | ❓ | CI E2E 실행 시 설정 |
+
+> **배포 방식**: Vercel/Render 모두 각 플랫폼의 네이티브 Git 연동으로 `main` 푸시 시 자동 배포됩니다. 별도의 GitHub Actions Deploy 워크플로우와 `VERCEL_TOKEN` 등 GitHub Secrets는 사용하지 않습니다(과거 `deploy.yml`은 시크릿 미설정 및 폐기된 EC2 배포 경로로 항상 실패하고 있어 제거했습니다).
 
 ✅ 값 존재 | ❓ 확인/미설정 | ⛔ 해당 없음
 
