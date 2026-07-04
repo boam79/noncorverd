@@ -1178,6 +1178,20 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 - Sentry는 번들 비용 문제로 보류했습니다. 도입하려면 동적 import(사용자 인터랙션 이후 지연 로딩)나 `@sentry/nextjs`의 경량 옵션(`replaysOnErrorSampleRate: 0` 등)을 조합해 번들 비용을 먼저 억제하는 사전 작업이 필요합니다.
 - P3(14~16번) 중 GitHub Actions 버전 업그레이드(15번)만 test-1에서 함께 처리했고, Playwright 브라우저 매트릭스 분리(14번)는 손대지 않았습니다(현재는 매 PR마다 5개 브라우저 전부 실행 — CI 시간 최적화 여지가 남아 있음).
 
+**중요 — 구현 중 발견한 회귀와 수정**: sec-2에서 추가한 CSP `connect-src 'self'`가 Vercel이 아닌
+환경(로컬 `npm run dev`, 또는 `NEXT_PUBLIC_API_BASE_URL`로 Render 백엔드를 직접 호출하는 배포)에서
+`lib/api.ts`의 크로스오리진 fetch를 전부 차단해 지역 목록도 못 불러오는 회귀를 만들었습니다.
+Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변경 전 커밋을 별도 worktree로
+체크아웃해 원래는 통과했음을 확인한 뒤 `connect-src`에 `NEXT_PUBLIC_API_BASE_URL`의 origin과
+개발 모드 기본값(`http://localhost:3001`)을 추가해 수정했습니다. **교훈**: 보안 헤더처럼 "당연히
+안전할 것 같은" 변경도 실제로 E2E를 돌려보지 않으면 이런 회귀를 놓칠 수 있음 — 이번처럼 코드
+변경 후에는 최소 1회 chromium E2E 풀 스위트 실행을 습관화할 것.
+
+**참고(이번 세션과 무관한 기존 결함, 회귀 아님)**: `e2e/hospital-comparison.spec.ts`의
+"메인 URL 쿼리로 시도·관심 분야 복원" 테스트가 변경 전 원본 커밋(9081af3)에서도 동일하게
+실패함을 확인했습니다(URL 쿼리로 진입 시 `시도 선택` select가 계속 disabled 상태로 남아
+`toHaveValue('11')`가 타임아웃). 이번 작업 범위 밖이라 손대지 않았으나, 향후 과제로 남깁니다.
+
 ### Executor's Feedback or Assistance Requests
 - 위 8개 항목 모두 구현하여 `main`에 직접 커밋·푸시했습니다(사용자가 "main으로 커밋하고 푸쉬"를 명시적으로 요청).
 - `backend/` 완전 폐기 여부는 되돌리기 어려운 결정이라 임의로 삭제하지 않고 "유지하되 보조 경로로 격하"로 처리했습니다. 완전 폐기를 원하시면 알려주시면 후속 커밋으로 정리하겠습니다.
