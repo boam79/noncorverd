@@ -212,12 +212,13 @@ npm run test:e2e:headed
 
 ### 배포/인프라 문서
 - [배포 가이드](./doc/DEPLOYMENT.md) - Vercel + Render 배포 절차
+- [Render 배포 가이드(선택)](./doc/RENDER_DEPLOYMENT.md) - `backend/`를 Render에 배포할 때 참고
 - [배포 체크리스트](./doc/DEPLOY_CHECKLIST.md) - Render 배포 전 체크리스트
 - [CORS 가이드](./doc/DEPLOY_CORS_FIX.md) - CORS 설정
 - [환경변수 매트릭스](./doc/ENVIRONMENT_MATRIX.md) - 환경변수 비교표
 - [릴리즈 체크리스트](./doc/RELEASE_CHECKLIST.md) - Go/No-Go 체크리스트
-- [Render 서버 정보](./doc/EC2_INFO.md) - Render 서비스 정보
-- [트러블슈팅](./doc/TROUBLESHOOTING.md) - 문제 해결 가이드
+- [Render 서버 정보](./doc/RENDER_INFO.md) - Render 서비스 정보
+- [트러블슈팅](./doc/TROUBLESHOOTING.md) - 문제 해결 가이드(일부 항목은 과거 EC2 기준 — 헤더 참고)
 
 ### 테스트 문서
 - [프론트엔드/백엔드 테스트](./doc/FRONTEND_BACKEND_TEST.md) - 통합 테스트 가이드

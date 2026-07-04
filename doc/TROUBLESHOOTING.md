@@ -1,3 +1,7 @@
+> ⚠️ 이 문서는 과거 AWS EC2+PM2로 `backend/`를 운영하던 시절에 작성되었습니다.
+> 현재 운영 기본 경로는 `app/api/opendata/*`(Vercel)이며, 아래 EC2/PM2 관련 절차는
+> `backend/`를 Render가 아닌 EC2 등에 직접 배포해 사용하는 경우에만 해당합니다.
+
 # 🔧 502 Bad Gateway 에러 해결 가이드
 
 ## 문제 증상

@@ -14,25 +14,24 @@
 3. 운영계정 서비스 키 확인 및 복사
 
 ### 2. 현재 사용 중인 서비스 키 확인
-- 로컬: `backend/.env` 파일의 `api_key` 값
-- EC2 서버: `/var/www/nonvovered/backend/.env` 파일의 `api_key` 값
+- Vercel(운영 기본 경로): Vercel Dashboard → Environment Variables → `OPENDATA_API_KEY`
+- 로컬(`backend/` 사용 시): `backend/.env` 파일의 `api_key` 값
+- Render(`backend/` 배포 시): Render Dashboard → Environment → `api_key`
+- (과거 EC2 자체 호스팅 시): `/var/www/nonvovered/backend/.env` 파일의 `api_key` 값
 
 ### 3. 서비스 키 업데이트 방법
 
-#### 로컬 환경
+#### Vercel (운영 기본 경로)
+Vercel Dashboard → Project Settings → Environment Variables에서 `OPENDATA_API_KEY` 값을 교체 후 재배포.
+
+#### 로컬 환경(`backend/` 사용 시)
 ```bash
 # backend/.env 파일 수정
 api_key=운영계정_서비스_키
 ```
 
-#### EC2 서버 환경
-```bash
-# SSH 접속 후
-cd /var/www/nonvovered/backend
-nano .env  # 또는 vi .env
-# api_key 값을 운영계정 서비스 키로 변경
-pm2 restart ecosystem.config.cjs
-```
+#### Render 환경(`backend/` 배포 시)
+Render Dashboard → 서비스 선택 → Environment → `api_key` 값을 교체하면 자동 재시작됩니다.
 
 ### 4. 업데이트 후 확인
 ```bash

@@ -1,4 +1,9 @@
-# AWS EC2 배포 가이드 (간단 버전)
+> ⚠️ **아카이브(2026-07)**: 백엔드 인프라가 AWS EC2 → Render로 전환되며 폐기된 문서입니다.
+> 여기서 참조하는 `backend/quick-deploy.sh`, `aws-test.sh`는 저장소에 더 이상 존재하지 않습니다.
+> 현재 배포 절차는 [`doc/DEPLOYMENT.md`](../DEPLOYMENT.md), Render 관련 정보는
+> [`doc/RENDER_INFO.md`](../RENDER_INFO.md) · [`doc/RENDER_DEPLOYMENT.md`](../RENDER_DEPLOYMENT.md)를 참고하세요.
+
+# AWS EC2 배포 가이드 (간단 버전, 아카이브됨)
 
 ## 🚀 빠른 시작
 

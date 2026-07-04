@@ -1148,9 +1148,38 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 - [x] diag-2: 최근 CI 실행 로그 확인 및 실패 원인 확정
 - [x] diag-3: npm audit 기반 보안 취약점 확인
 - [x] diag-4: 인증/보안 헤더/관측성 공백 코드 리딩으로 확인
-- [ ] fix-ci-1 / fix-ci-2 / sec-1 / sec-2 / arch-1 / obs-1 / test-1 / docs-1 — 휴먼 우선순위 승인 대기
+- [x] fix-ci-1: E2E 전체 브라우저 설치로 수정
+- [x] fix-ci-2: `deploy.yml` 삭제(항상 실패하던 죽은 워크플로우)
+- [x] sec-1: next/eslint-config-next 15.5.20 업그레이드 + ESLint CLI(flat config) 마이그레이션
+- [x] sec-2: `validateToken` fail-closed 전환 + 보안 헤더(CSP 등) 추가
+- [x] arch-1: `backend/` 유지 결정(완전 폐기 아님) + README 운영 방침 명문화
+- [x] obs-1: `GET /api/health` 추가, Sentry는 번들 비용(+80KB) 확인 후 보류·문서 정정
+- [x] test-1: 핵심 도메인 로직 단위 테스트 61건 추가(30→91) + `test:coverage` 도입
+- [x] docs-1: 폐기 인프라 문서 3건 `doc/archive/`로 이동, 2건 이름 정정(EC2_INFO→RENDER_INFO 등)
+
+### ✅ Executor 완료 보고 (2026-07-04) — 전체 고도화 항목 구현 및 `main` 반영
+
+**사용자 지시**: "전부 진행하고 main으로 커밋하고 푸쉬해" — 8개 항목 전부를 Executor가 판단하여 진행하고 `main`에 직접 커밋했습니다(사람 승인을 기다리지 않고 진행하라는 명시적 지시로 해석).
+
+**구현 요약 (커밋 순서대로, `main`에 각각 개별 커밋)**:
+1. `fix(ci)`: E2E 브라우저 전체 설치 + 죽은 `deploy.yml` 제거
+2. `chore(deps)`: `next`/`eslint-config-next` 15.5.20 업그레이드, `npm audit fix`(잔여 postcss 취약점은 next 내부 번들이라 업스트림 대기)
+3. `chore(lint)`: `next lint` → ESLint CLI(flat config, FlatCompat) 마이그레이션. 규칙 세트 동일함을 `--print-config`로 검증
+4. `fix(security)`: 프론트(`lib/opendata/client.ts`)·백엔드(`backend/src/middleware/auth.js`) 양쪽 인증 fail-closed 전환(백엔드 쪽이 더 심각 — 토큰 미설정 시 완전 우회되던 버그), 보안 헤더(CSP 등) 추가
+5. `docs(arch)`: `backend/`(Express) **완전 폐기하지 않고 선택적 보조 경로로 유지** 결정. 이유: 로컬 개발 편의·자체 호스팅 옵션의 실사용 가치가 있고, 삭제는 되돌리기 어려운 결정이라 사람 확인 없이 코드 삭제까지 가는 건 과도하다고 판단. 대신 운영 기본 경로(Vercel 단일)를 README에 명문화하고 CI에서 완전히 분리(fix-ci-2)
+6. `feat(obs)`: `GET /api/health` 무인증 liveness 추가. **Sentry(`@sentry/nextjs`) 도입은 시도했으나 롤백** — `instrumentation-client.ts`에 정적 import만 추가해도 공유 First Load JS가 102KB→182KB(+80KB)로 증가하는 것을 빌드로 실측. DSN 미설정 시에도 상시 발생하는 비용이라 이 프로젝트의 성능 목표와 안 맞다고 판단해 보류하고, 대신 `SENTRY_DSN` 등이 "미구현" 상태임을 문서에 정직하게 표기
+7. `test(unit)`: `clinicalFocusBuckets`/`recommendation`/`anomalyDetector`/`costEstimator`/`trustScore`/`errorHandler`에 단위 테스트 61건 추가(30→91 테스트, 9→16 파일), `vitest.config.ts`에 coverage(v8) 설정 + `test:coverage` 스크립트, CI에 커버리지 아티팩트 업로드 + Actions 버전 v5로 업그레이드
+8. `docs`: `README_AWS.md`/`DEPLOYMENT_STATUS.md`/`API_TEST_RESULTS.md`(모두 링크 안 된 2025-11 EC2 스냅샷)를 `doc/archive/`로 이동 + 아카이브 안내 배너 추가. `EC2_INFO.md`→`RENDER_INFO.md`, `AWS_DEPLOYMENT.md`→`RENDER_DEPLOYMENT.md` 파일명 정정(내용은 이미 Render 기준이었는데 파일명만 낡아 있었음). `TROUBLESHOOTING.md`/`QA_CHECKLIST.md`/`DEVELOPER_GUIDE.md`/`OPERATIONAL_ACCOUNT_SETUP.md`/`doc/DEPLOYMENT.md`의 EC2·Sentry 관련 오래된 서술 정정
+
+**검증**: 각 커밋 전후로 `npm run lint`(ESLint CLI), `npm run test:unit`/`test:coverage`(91 passed), `npm run build`(정상, First Load JS 102KB로 원복 확인) 반복 실행. 최종적으로 `test:e2e`(Playwright) 전체 스위트도 실행 예정(아래 참고).
+
+**남겨둔 판단(사람 확인이 필요할 수 있는 부분)**:
+- `backend/`(Express) 완전 폐기 여부는 최종 결정하지 않았습니다(위 5번 참고). 폐기하기로 하면 `backend/`, `render.yaml`, `lib/api.ts`의 `NEXT_PUBLIC_API_BASE_URL` 분기, `doc/RENDER_*`·`doc/DEPLOY_CHECKLIST.md`·`doc/FRONTEND_BACKEND_TEST.md` 등을 함께 정리해야 합니다.
+- Sentry는 번들 비용 문제로 보류했습니다. 도입하려면 동적 import(사용자 인터랙션 이후 지연 로딩)나 `@sentry/nextjs`의 경량 옵션(`replaysOnErrorSampleRate: 0` 등)을 조합해 번들 비용을 먼저 억제하는 사전 작업이 필요합니다.
+- P3(14~16번) 중 GitHub Actions 버전 업그레이드(15번)만 test-1에서 함께 처리했고, Playwright 브라우저 매트릭스 분리(14번)는 손대지 않았습니다(현재는 매 PR마다 5개 브라우저 전부 실행 — CI 시간 최적화 여지가 남아 있음).
 
 ### Executor's Feedback or Assistance Requests
-- **Planner → 휴먼**: 위 8개 항목 중 **어느 것부터 착수할지**와, `backend/`(Express+Render) **폐기 여부**(arch-1)를 먼저 확인 부탁드립니다. 이 결정에 따라 `render.yaml`/`env.example`/README 정리 범위가 달라집니다.
-- 승인해주시면 Executor 모드로 전환해 P0(fix-ci-1/2, sec-1/2)부터 순서대로 착수하겠습니다.
+- 위 8개 항목 모두 구현하여 `main`에 직접 커밋·푸시했습니다(사용자가 "main으로 커밋하고 푸쉬"를 명시적으로 요청).
+- `backend/` 완전 폐기 여부는 되돌리기 어려운 결정이라 임의로 삭제하지 않고 "유지하되 보조 경로로 격하"로 처리했습니다. 완전 폐기를 원하시면 알려주시면 후속 커밋으로 정리하겠습니다.
+- Sentry는 실제로 붙여봤다가 번들 크기 문제로 되돌렸습니다(위 근거 참고). 모니터링이 꼭 필요하시면 번들 비용을 감수할지, 더 가벼운 대안(예: 자체 에러 로그 API + 외부 알림)을 쓸지 방향을 알려주시면 진행하겠습니다.
 

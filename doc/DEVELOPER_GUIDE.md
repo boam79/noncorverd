@@ -377,10 +377,10 @@ node scripts/test-pricing-integration.js --sido 11 --type 종합병원 --count 3
 - GitHub 연동 시 자동 배포
 - 환경변수는 Vercel Dashboard에서 설정
 
-### AWS EC2 (Backend)
-- PM2로 프로세스 관리
-- `ecosystem.config.cjs`로 환경변수 관리
-- GitHub Actions로 자동 배포 가능
+### Render (Backend, 선택)
+- Render Dashboard의 네이티브 Git 연동으로 자동 배포(`render.yaml` Blueprint)
+- 별도 GitHub Actions 배포 워크플로우는 사용하지 않음
+- (과거 AWS EC2+PM2로 운영했던 이력은 `doc/archive/README_AWS.md` 참고)
 
 ## 트러블슈팅
 

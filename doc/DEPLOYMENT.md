@@ -79,10 +79,9 @@ curl -I -H "Origin: https://noncorverd.vercel.app" \
 ## 환경변수 체크리스트
 
 ### Frontend (Vercel)
-- [ ] `NEXT_PUBLIC_API_BASE_URL` → `https://noncorverd-backend.onrender.com/opendata`
-- [ ] `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`
-- [ ] `SENTRY_DSN` (선택)
-- [ ] `NEXT_PUBLIC_ANALYTICS_ID` (선택)
+- [ ] `OPENDATA_API_KEY` (Vercel에서 `/api/opendata/*`로 직접 호출 시 필수)
+- [ ] `NEXT_PUBLIC_API_BASE_URL` (Render 백엔드를 쓸 때만) → `https://noncorverd-backend.onrender.com/opendata`
+- [ ] `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN` / `CLIENT_OPENDATA_TOKEN` (fail-closed — 반드시 설정)
 
 ### Backend (Render)
 - [ ] `PORT` → `10000`
@@ -101,12 +100,12 @@ curl -I -H "Origin: https://noncorverd.vercel.app" \
 
 Render Dashboard → 서비스 선택 → **Logs** 탭에서 실시간 로그 확인 가능합니다.
 
-### Sentry (선택)
+### Sentry (미구현)
 
-```bash
-npm install @sentry/nextjs
-npx @sentry/wizard@latest -i nextjs
-```
+`SENTRY_DSN` 등 관련 환경변수는 `env.example`에 예약되어 있으나 현재 코드에서 사용하지 않습니다.
+`@sentry/nextjs`를 붙여봤을 때 클라이언트 공유 번들이 102KB → 182KB로 커지는 것을 확인해 보류했습니다
+(도입하려면 번들 비용을 줄이는 방안이 먼저 필요). 현재 관측성은 `GET /api/health`,
+`GET /api/health/metrics`, `lib/observability/*`(safeServerLog, opendataMetrics)를 사용하세요.
 
 ---
 
