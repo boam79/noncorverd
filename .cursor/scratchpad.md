@@ -1090,3 +1090,67 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 - **조치**: `hasOrthoInName || hasOrthoInDept || hasOrthoCode`이면 즉시 통과, 나머지는 기존 키워드·코드 보조.
 - **문서·테스트**: `USER_GUIDE.md` 안내, E2E 보강(정형외과만·코드 03·다건 샘플).
 
+---
+
+## 🧭 Planner 업데이트 (2026-07-03) — 저장소 전면 진단 및 고도화 제안
+
+### Background and Motivation
+- 신규 요청: "리포지토리를 분석해서 고도화 제안을 해줄 수 있어?" — 기능 추가가 아니라 **현재 상태의 건전성(보안·CI·아키텍처·품질) 진단과 개선 로드맵**을 요구.
+- 방법: 문서만 읽지 않고 **실제로 `npm install`/`build`/`lint`/`test:unit`을 실행**하고 **`gh run list`/`gh run view --log-failed`로 최근 CI 실행 로그를 직접 확인**하여 추정이 아닌 증거 기반으로 문제를 확정함.
+
+### Key Findings (증거 기반)
+
+#### 🔴 P0 — 즉시 조치 권장 (리스크 대비 수정 비용이 낮음)
+1. **CI가 사실상 항상 빨간불**: `gh run list` 기준 최근 push 15건 전부 `Test`·`Deploy` 워크플로우 실패.
+   - `Test` → `e2e` 잡: `.github/workflows/test.yml`이 `npx playwright install --with-deps chromium`만 설치하는데, `playwright.config.ts`는 `chromium/firefox/webkit/Mobile Chrome/Mobile Safari` 5개 프로젝트를 정의 → firefox/webkit/Mobile Safari 실행 시 매번 `Executable doesn't exist` 로 28건씩 실패(최근 실행 로그로 확인). "233 passed / 28 failed"처럼 대부분 통과처럼 보이지만 잡 자체는 항상 실패 상태.
+   - `Deploy` → `deploy-frontend`: `amondnet/vercel-action`에 `VERCEL_TOKEN` 등 시크릿이 없어 즉시 실패(`Input required and not supplied: vercel-token`). `deploy-backend`는 이미 폐기된 **EC2 + PM2** 경로(`ecosystem.config.cjs` 등은 Render 전환 시 삭제됐음)를 그대로 SSH 배포하도록 남아 있어 구성 자체가 죽은 코드.
+   - 결론: 두 워크플로우 모두 "항상 실패"가 정상처럼 방치되어 있어 **실제 회귀가 발생해도 CI 알림으로 못 거른다**. 가장 시급한 항목.
+2. **Next.js 보안 취약점 4건 방치**: `npm audit` 기준 설치 버전 `next@15.5.15`에 High 1건(`GHSA-8h8q-6873-q5fj`, DoS) 포함 총 4건(2 High, 2 Moderate) — Middleware/Proxy 우회, RSC 캐시 포이즈닝 등. `next`는 `^15.5.15`로 caret 고정이라 patch(15.5.20) 자동 반영이 안 됐고, 최신 안정판은 16.2.10. 원격에 `vercel/react-flight-rce-vulnerability-lslq0c`라는 Vercel 자동 보안 브랜치가 이미 존재하지만 매우 오래된(현재 코드베이스의 90% 이상 파일을 삭제하는) 스냅샷 기준이라 그대로 머지 불가 — 별도로 최신 코드베이스에 패치 적용 필요.
+3. **인증 토큰 하드코딩 폴백(보안 결함)**: `lib/opendata/client.ts`의 `validateToken()`이 `CLIENT_OPENDATA_TOKEN`/`NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN` 미설정 시 리터럴 `'dev-client-token-12345'`로 폴백함. 이 문자열은 `env.example`·`README.md`에도 그대로 공개돼 있어, 운영 환경변수 설정을 깜빡하면 **공개된 문자열만으로 인증 우회**가 가능한 구조. "환경변수 없으면 401"로 fail-closed 전환 필요.
+
+#### 🟠 P1 — 단기
+4. **보안 헤더 전무**: `next.config.ts`에 `headers()`가 없어 CSP·HSTS·X-Frame-Options·Referrer-Policy·Permissions-Policy 등 기본 방어선이 없음.
+5. **`next lint` 지원 종료 예고**: 빌드 로그에 "`next lint`는 Next.js 16에서 제거 예정" 경고 노출 중 → `next`/`eslint-config-next` 업그레이드(2번)와 묶어 `@next/codemod next-lint-to-eslint-cli`로 ESLint flat config 마이그레이션 필요.
+6. **프론트/백엔드 로직 이중 유지보수(드리프트 위험)**: `backend/src/adapters/*`(Express, Render 배포)와 `app/api/opendata/*` + `lib/opendata/*`(Vercel 경로, 실제 운영 기본 경로)가 지역코드·시군구·종별 매핑 로직을 **각자 따로** 들고 있음. 스크래치패드 이력을 보면 시군구 코드/관심 분야 버킷 수정이 전부 Vercel 경로에서만 이뤄져 왔고, README도 Render 백엔드를 "보조·선택"이라 명시 — 사실상 죽은 코드에 가까운데 계속 별도 코드로 유지보수 비용만 발생. **완전 은퇴 또는 공통 모듈 추출** 중 하나를 결정할 시점.
+7. **관측성 공백**: `env.example`에 `SENTRY_DSN` 자리만 있고 실제 `@sentry/nextjs` 설치·초기화 코드는 없음(문서상 "Sentry 연동"이라 되어 있으나 실체 없음). `opendataMetrics`도 인메모리라 서버리스 콜드스타트마다 리셋되어 운영 지표로 신뢰 불가.
+8. **단순 헬스체크 부재**: `GET /api/health/metrics`(시크릿 필요)만 있고 업타임 모니터링용 무인증 `GET /api/health`가 없음.
+
+#### 🟡 P2 — 중기 (품질/유지보수성)
+9. **테스트 커버리지 편중**: `lib/**/*.test.ts` 9개 파일·30개 테스트뿐. 오탐/미탐 수정 이력이 가장 많은 `lib/constants/clinicalFocusBuckets.ts`(444줄)와 `recommendation.ts`·`anomalyDetector.ts`·`costEstimator.ts`·`trustScore.ts`·`errorHandler.ts`는 단위 테스트가 전혀 없음. `@vitest/coverage-v8`가 설치돼 있는데도 `test:coverage` 스크립트/커버리지 게이트가 없어 미사용 상태.
+10. **문서 스프롤**: `doc/` 27개 파일 + `.cursor/scratchpad.md` 1,000줄 이상. `AWS_DEPLOYMENT.md`/`EC2_INFO.md`/`README_AWS.md` 등 Render 전환(2026-04) 이후에도 남아있는 폐기 인프라 문서가 신규 기여자에게 혼선을 줄 수 있음.
+11. **redesign-6(RSC/캐시 경계) 미완료**: 팀이 스스로 식별한 백로그 항목. 지역 목록 등 정적 데이터를 서버 컴포넌트/캐시로 옮기면 초기 로드 개선 여지가 있음.
+12. **기능 플래그 잔존**: `NEXT_PUBLIC_UI_V2_BETA` 베타 리본이 아직 게이팅 중인데 redesign 체크리스트는 6번 제외 전부 완료 상태 — 플래그 부채 정리(제거 또는 기본 ON 전환) 시점 결정 필요.
+13. **시군구 커버리지 자동 회귀 감지 부재**: `SIGUNGU_CODE_MAP` 매핑 누락 시 시도 전체 폴백 페이지네이션으로 처리 중이며, Lessons에 "경기도 등 매핑 누락 다수가 정상"이라고 기록될 정도로 상시 이슈. `npm run audit:sigungu` 스크립트가 수동 실행 전용 → 정기 스케줄(GitHub Actions cron) 잡으로 승격하면 회귀를 자동 감지 가능.
+
+#### 🟢 P3 — 장기/선택
+14. Playwright 5개 브라우저 프로젝트를 매 PR마다 전부 실행 중 → PR에는 chromium만, nightly에 풀 매트릭스로 분리하면 CI 시간 절감(13번 CI 수정과 함께 재설계 권장).
+15. GitHub Actions 로그에 Node 20 액션 지원 종료 경고(2026-09-16) 노출 — `actions/checkout@v5`, `setup-node@v5` 등으로 업그레이드 필요.
+16. `render.yaml` 백엔드를 계속 쓸 계획이 없다면(6번 결론에 따라) `render.yaml`·`backend/` 자체를 폐기해 인프라 표면적을 줄이는 것을 고려. 유지한다면 free 플랜 15분 슬립으로 인한 콜드 스타트 UX 저하를 감안해야 함.
+
+### 잘 되어 있는 점 (참고용, 되돌리지 말 것)
+- `zod` 스키마 기반 API 검증, Upstash 선택적 레이트리밋, 안전 로그(`safeServerLog`), `meta.fetchedAt`/출처 표준화 등 신뢰성 장치가 이미 잘 갖춰져 있음.
+- `features/home`, `features/comparison` + `lib/hooks` 분리, URL 상태 단일화(`lib/url/homeSearchParams.ts`) 등 아키텍처 리팩터가 여러 차례 꾸준히 진행되어 구조가 깔끔한 편.
+- 도메인 로직(추천 점수, 이상치 탐지, 비용 시뮬레이터, 신뢰도 점수)이 순수 함수로 `lib/utils/`에 분리되어 있어 테스트 추가가 쉬움(9번 항목의 해결 난도가 낮다는 뜻이기도 함).
+- `npm run lint`/`npm run test:unit`/`npm run build` 모두 현재 시점 기준 정상 통과.
+
+### High-level Task Breakdown (제안 — Executor 승인 대기)
+1. **fix-ci-1**: `test.yml`의 e2e 잡을 `--project=chromium`으로 한정하거나 `playwright install --with-deps`(전체) 로 변경. 성공 기준: 워크플로우 3연속 그린.
+2. **fix-ci-2**: `deploy.yml` 재설계 — Vercel이 Git 연동 자동배포 중이면 `deploy-frontend` 잡 제거, `deploy-backend`(EC2)는 Render 기준으로 교체하거나 백엔드 폐기 결정에 따라 워크플로우 자체 삭제. 성공 기준: Deploy 워크플로우가 실패 없이 종료되거나 의도적으로 제거됨.
+3. **sec-1**: `next`/`eslint-config-next`를 안전 버전(15.5.20 이상 또는 16.x)으로 업그레이드 + `next lint` → ESLint CLI 마이그레이션. 성공 기준: `npm audit` 0 vulnerabilities, `npm run lint`/`build`/`test:unit`/E2E(chromium) 통과.
+4. **sec-2**: `validateToken` fail-closed 전환(+ 하드코딩 기본값 제거) 및 최소 보안 헤더(`next.config.ts` `headers()`) 추가. 성공 기준: 토큰 미설정 시 401, 응답에 CSP/X-Frame-Options 등 헤더 확인.
+5. **arch-1**: `backend/`(Express) 운명 결정 — 완전 폐기(README·render.yaml 정리) 또는 공통 매핑 모듈 추출. 성공 기준: 결정 문서화 + 후속 커밋 범위 확정.
+6. **obs-1**: 무인증 `GET /api/health` 추가, Sentry 연동 여부 결정(설치해서 실사용 또는 관련 env/문서 제거). 성공 기준: 헬스체크 200 확인, 관측성 문서와 코드 상태 일치.
+7. **test-1**: `clinicalFocusBuckets`/`recommendation`/`anomalyDetector`/`costEstimator`/`trustScore`/`errorHandler`에 단위 테스트 추가 + `test:coverage` 스크립트 도입. 성공 기준: 핵심 모듈 커버리지 확보, CI에 커버리지 리포트 노출.
+8. **docs-1**: 폐기 인프라 문서(`AWS_DEPLOYMENT.md`, `EC2_INFO.md`, `README_AWS.md` 등)를 `doc/archive/`로 이동 + 완료 이니셔티브를 스크래치패드에서 요약·아카이브. 성공 기준: `doc/` 최상위가 현재 운영 상태만 반영.
+
+### Project Status Board (진단·고도화)
+- [x] diag-1: 실제 install/build/lint/test 실행으로 현재 상태 검증
+- [x] diag-2: 최근 CI 실행 로그 확인 및 실패 원인 확정
+- [x] diag-3: npm audit 기반 보안 취약점 확인
+- [x] diag-4: 인증/보안 헤더/관측성 공백 코드 리딩으로 확인
+- [ ] fix-ci-1 / fix-ci-2 / sec-1 / sec-2 / arch-1 / obs-1 / test-1 / docs-1 — 휴먼 우선순위 승인 대기
+
+### Executor's Feedback or Assistance Requests
+- **Planner → 휴먼**: 위 8개 항목 중 **어느 것부터 착수할지**와, `backend/`(Express+Render) **폐기 여부**(arch-1)를 먼저 확인 부탁드립니다. 이 결정에 따라 `render.yaml`/`env.example`/README 정리 범위가 달라집니다.
+- 승인해주시면 Executor 모드로 전환해 P0(fix-ci-1/2, sec-1/2)부터 순서대로 착수하겠습니다.
+
