@@ -92,11 +92,16 @@ function parseXmlItem(xml: string): Record<string, string> {
   return result;
 }
 
-/** 인증 토큰 검증 */
+/** 인증 토큰 검증 (fail-closed: 서버 측 토큰이 설정되지 않으면 항상 거부) */
 export function validateToken(req: Request): boolean {
   const token = req.headers.get('x-client-token') || req.headers.get('X-Client-Token');
-  const expected = process.env.CLIENT_OPENDATA_TOKEN || process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || 'dev-client-token-12345';
-  return token === expected;
+  const expected = process.env.CLIENT_OPENDATA_TOKEN || process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN;
+  if (!expected) {
+    // 하드코딩된 기본 토큰으로 폴백하지 않습니다. 운영 환경변수 미설정 시
+    // 누구나 아는 문자열로 인증을 우회할 수 있는 취약점을 방지하기 위함입니다.
+    return false;
+  }
+  return Boolean(token) && token === expected;
 }
 
 export function unauthorizedResponse() {
