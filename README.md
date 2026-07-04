@@ -40,6 +40,12 @@
 - **Backend (선택)**: Render 등 별도 Express — `NEXT_PUBLIC_API_BASE_URL`로만 사용할 때 로컬·스테이징용
 - **선택 기능**: Upstash Redis(`UPSTASH_*`) 설정 시 API Route에서 IP 기준 분당 요청 제한, `METRICS_SECRET` 설정 시 `GET /api/health/metrics`로 인메모리 호출 집계 조회
 
+#### `backend/`(Express) 운영 방침 (2026-07)
+- **운영 기본 경로는 `app/api/opendata/*`(Vercel) 단일 경로**입니다. `backend/`는 로컬 개발 시 프론트만으로 지역·병원 데이터를 보고 싶을 때, 또는 Vercel 없이 자체 호스팅하고 싶을 때 쓰는 **선택적 보조 경로**로 유지합니다.
+- 두 구현은 지역/시군구 코드 매핑, 종별·관심 분야 필터링 로직을 각자 따로 들고 있어 **드리프트 위험**이 있습니다. 신규 매핑·필터 로직은 우선 `app/api/opendata/*` + `lib/opendata/*`에 반영되며, `backend/`는 뒤처질 수 있음을 인지하고 사용하세요.
+- CI/CD에서는 `backend/`를 자동 배포하지 않습니다(과거 EC2 자동배포 워크플로우는 제거됨). Render에 배포하려면 `render.yaml` Blueprint를 Render 대시보드에서 직접 연결하세요.
+- 완전 폐기 여부는 별도로 결정하지 않았습니다(로컬 개발 편의·자체 호스팅 옵션 유지 목적). 폐기하기로 결정되면 `backend/`, `render.yaml`, `lib/api.ts`의 `NEXT_PUBLIC_API_BASE_URL` 분기, 관련 `doc/*` 문서를 함께 정리해야 합니다.
+
 ## 🚀 시작하기
 
 ### 사전 요구사항
