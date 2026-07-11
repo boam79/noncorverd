@@ -119,12 +119,26 @@ class RegionsAdapter extends BaseAdapter {
         }
       });
 
+      const ALLOWED_SIDO = new Set(mockSidoList.map((s) => s.code));
+
       const sidoList = Array.from(sidoMap.entries())
         .map(([code, name]) => ({ code, name }))
+        // 행정 API 원본에 간헐적으로 등장하는 비표준 코드(예: 12 전남광주통합특별시)를 걸러
+        // 광주(29)·전남(46) 등 정상 시도가 누락·오염되지 않게 합니다.
+        .filter((item) => ALLOWED_SIDO.has(item.code))
         .sort((a, b) => Number(a.code) - Number(b.code));
 
-      if (sidoList.length > 0) {
+      // 필터 후 비어 있거나 일부만 있으면 정적 목록으로 보강(누락 시도 채움)
+      if (sidoList.length >= mockSidoList.length) {
         return this.formatResponse(sidoList);
+      }
+      if (sidoList.length > 0) {
+        const found = new Set(sidoList.map((s) => s.code));
+        const merged = [
+          ...sidoList,
+          ...mockSidoList.filter((s) => !found.has(s.code)),
+        ].sort((a, b) => Number(a.code) - Number(b.code));
+        return this.formatResponse(merged);
       }
 
       console.warn('⚠️ 시도 목록 API 응답이 비어 있어 Mock 데이터를 사용합니다.');

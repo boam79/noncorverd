@@ -21,6 +21,7 @@ import { HomeSearchPanel } from '@/components/HomeSearch/HomeSearchPanel';
 import { HomeSearchContextBar } from '@/components/HomeSearch/HomeSearchContextBar';
 import { HomeSearchResultsSection } from '@/components/HomeSearch/HomeSearchResultsSection';
 import { HomeSearchJourneySteps } from '@/components/HomeSearch/HomeSearchJourneySteps';
+import { HomeHero } from '@/components/HomeSearch/HomeHero';
 import { SelectedHospitalsStrip } from '@/components/HomeSearch/SelectedHospitalsStrip';
 import {
   scrollToHomeSection,
@@ -228,8 +229,11 @@ export function HomePageContent() {
 
   const handleRegionChange = useCallback(
     (newSido?: string, newSigungu?: string) => {
+      // 시도가 바뀌면 시군구를 버리고, 같은 시도 안에서는 전달된 시군구를 그대로 반영
       if (sido !== newSido) {
+        setSido(newSido);
         setSigungu(undefined);
+        return;
       }
       setSido(newSido);
       setSigungu(newSigungu);
@@ -245,19 +249,25 @@ export function HomePageContent() {
 
   const showBetaRibbon = isUiV2BetaEnabled();
 
+  const scrollToSearch = useCallback(() => {
+    scrollToHomeSection('region');
+  }, []);
+
   return (
-    <div className="min-h-screen bg-page pb-28 md:pb-24">
-      <Header onHomeClick={handleHomeClick} />
+    <div className="min-h-screen atmosphere pb-28 md:pb-24">
+      <Header onHomeClick={handleHomeClick} compact />
       {showBetaRibbon && (
         <div
-          className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900"
+          className="border-b border-warning-200 bg-warning-50 px-4 py-2 text-center text-sm text-warning-900"
           role="status"
         >
-          UI v2 베타 — 단계 안내·맥락 칩 이동·검색·결과 구역 분리·모바일 접기가 포함됩니다.
-          피드백 환영합니다. (`NEXT_PUBLIC_UI_V2_BETA=1`)
+          UI v2 베타 — 단계 안내·맥락 칩·검색·결과 구역 분리가 포함됩니다.
+          (`NEXT_PUBLIC_UI_V2_BETA=1`)
         </div>
       )}
       <ServerStatusBanner />
+
+      <HomeHero onStart={scrollToSearch} />
 
       <Container className="py-section md:py-section-lg">
         <HomeSearchJourneySteps
@@ -275,7 +285,7 @@ export function HomePageContent() {
           maxSelection={maxSelection}
           onScrollToSection={handleScrollToHomeSection}
         />
-        <div className="mt-section space-y-section">
+        <div className="mt-section space-y-section animate-slide-up">
           <HomeSearchPanel
             recentList={recentList}
             onApplyRecent={applyRecentSearch}

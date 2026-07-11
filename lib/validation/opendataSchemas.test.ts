@@ -49,4 +49,22 @@ describe('pricingBodySchema', () => {
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.hospitalIds).toEqual(['yk1']);
   });
+
+  it('accepts real-length HIRA ykiho (~80 chars)', () => {
+    const ykiho =
+      'JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ3OSQ0NjEwMDIjNjEjJDEjJDQjJDgz';
+    expect(ykiho.length).toBeGreaterThan(32);
+    const r = pricingBodySchema.safeParse({
+      hospitalIds: [ykiho],
+      hospitals: [{ id: ykiho, name: '강북삼성병원' }],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects absurdly long ids', () => {
+    const r = pricingBodySchema.safeParse({
+      hospitalIds: ['x'.repeat(200)],
+    });
+    expect(r.success).toBe(false);
+  });
 });

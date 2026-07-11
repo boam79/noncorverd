@@ -33,15 +33,21 @@ export function parseRegionsQuery(sp: URLSearchParams): RegionsQuery {
   });
 }
 
+/**
+ * HIRA 요양기관기호(ykiho)는 Base64 계열로 흔히 60~100자입니다.
+ * 과거 max(32)는 실제 ID를 전부 거부해 비교(pricing) API가 항상 400이 났습니다.
+ */
+export const HIRA_YKIHO_MAX_LEN = 128;
+
 const hospitalRefSchema = z.object({
-  id: z.string().min(1).max(32),
+  id: z.string().min(1).max(HIRA_YKIHO_MAX_LEN),
   name: z.string().max(200).optional().default(''),
 });
 
 /** POST /api/opendata/pricing */
 export const pricingBodySchema = z.object({
   hospitalIds: z
-    .array(z.string().min(1).max(32))
+    .array(z.string().min(1).max(HIRA_YKIHO_MAX_LEN))
     .min(1, 'hospitalIds가 필요합니다.')
     .max(12, '한 번에 최대 12개 병원만 조회할 수 있습니다.'),
   hospitals: z.array(hospitalRefSchema).optional(),
