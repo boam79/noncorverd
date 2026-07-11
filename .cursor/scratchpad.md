@@ -1092,7 +1092,42 @@ Executor는 **한 번에 아래 한 단계만** 수행하고, 성공 기준 충�
 
 ---
 
-## 🧭 Planner 업데이트 (2026-07-03) — 저장소 전면 진단 및 고도화 제안
+## 🧭 Planner 업데이트 (2026-07-11) — 전면 디자인 개편 + API 실점검 + 버그 수정
+
+### Background and Motivation
+- 사용자 요청: "전면 디자인을 새롭게 구성하고 api들을 점검해서 실제 테스트 하고 버그들을 찾아서 수정 하고 main으로 커밋하고 푸쉬해"
+- Executor 모드로 즉시 착수(명시적 구현·푸시 지시).
+
+### Key Findings (API 실호출 2026-07-11)
+1. **P0 버그 — 비급여 가격 API 전부 거부**: `pricingBodySchema`가 `hospitalIds`/`id`를 `max(32)`로 제한하는데, 실제 HIRA `ykiho`는 ~80자. 프로덕션 POST `/api/opendata/pricing`이 `400 Too big`로 실패 → **비교 기능 핵심이 깨진 상태**.
+2. **P0 버그 — URL 쿼리 복원 실패**: `RegionSelector`가 마운트 시 `selectedSido===''`로 `onRegionChange(undefined)`를 호출해 부모가 URL에서 복원한 `sido`를 지움. E2E "메인 URL 쿼리로 시도·관심 분야 복원" 실패 원인.
+3. **P1 — Render 시도 목록 오염**: `code:12` `전남광주통합특별시`가 노출되고 광주(29)·전남(46)이 누락. Vercel 경로(`FALLBACK_SIDO`)는 정상.
+4. Vercel `GET /api/health`, regions, hospitals(종로 200건)는 정상. pricing만 스키마로 막힘.
+
+### High-level Task Breakdown
+1. **bug-pricing-1**: ykiho max 길이 완화(128) + 단위 테스트 + 실호출 재검증
+2. **bug-url-1**: RegionSelector를 부모 제어형으로 정리(마운트 시 clear 제거)
+3. **bug-render-sido-1**: backend 시도 목록을 알려진 코드만 허용하도록 필터
+4. **design-1**: 토큰·폰트·히어로·홈/비교 UI 전면 개편(브랜드 우선, 카드 최소화, 이모지 제거)
+5. **verify-1**: lint/unit/build/e2e → main 커밋·푸시
+
+### Project Status Board (2026-07-11)
+- [x] bug-pricing-1
+- [x] bug-url-1
+- [x] bug-render-sido-1
+- [x] design-1
+- [x] verify-1
+
+### ✅ Executor 완료 보고 (2026-07-11)
+- pricing 스키마 ykiho max 32→128 (실측 ~80자 ID가 400이던 P0)
+- RegionSelector 부모 제어형으로 재작성 → URL `?sido=11&focus=orthopedics` 복원 E2E 통과
+- Render 시도 목록 비표준 코드(12) 필터 + 누락 시도 보강
+- 전면 디자인: 브랜드「비급여비교」, teal/slate, IBM Plex Sans KR + Outfit, 풀블리드 히어로
+- 검증: unit 93, lint, build, chromium E2E 52 passed / 1 skipped
+
+---
+
+## 🧭 Planner 업데이트 (2026-07-03) — 저장소 전면 진단 및 고도화 제안 (outdated 상태보드 아래는 이전 기록)
 
 ### Background and Motivation
 - 신규 요청: "리포지토리를 분석해서 고도화 제안을 해줄 수 있어?" — 기능 추가가 아니라 **현재 상태의 건전성(보안·CI·아키텍처·품질) 진단과 개선 로드맵**을 요구.

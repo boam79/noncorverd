@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-page text-gray-600">
+        <div className="flex min-h-screen items-center justify-center atmosphere text-ink-muted">
           불러오는 중…
         </div>
       }

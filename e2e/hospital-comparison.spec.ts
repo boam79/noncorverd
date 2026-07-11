@@ -11,7 +11,7 @@ import {
 async function prepareComparisonPage(page: import('@playwright/test').Page) {
   await installComparisonFlowMocks(page);
   await page.goto('/');
-  await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+  await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
 
   // 시도 선택(서울) — Playwright selectOption의 label은 문자열만 지원(정규식 불가)
   const sidoSelect = page.getByLabel('시도 선택');
@@ -121,7 +121,7 @@ test.describe('병원 비교 핵심 플로우', () => {
   test('추천 병원 불러오기 버튼 동작', async ({ page }) => {
     await installComparisonFlowMocks(page);
     await page.goto('/');
-    await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+    await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
 
     const sido = page.getByLabel('시도 선택');
     await expect(sido.locator('option[value="11"]')).toHaveCount(1, {
@@ -183,7 +183,7 @@ test.describe('병원 비교 핵심 플로우', () => {
   test('관심 분야 선택 후 추천 병원 불러오기', async ({ page }) => {
     await installObstetricsRecommendMocks(page);
     await page.goto('/');
-    await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+    await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
 
     const sidoSelect = page.getByLabel('시도 선택');
     await expect(sidoSelect).toBeEnabled({ timeout: 30000 });
@@ -219,7 +219,7 @@ test.describe('병원 비교 핵심 플로우', () => {
   test('메인 URL 쿼리로 시도·관심 분야 복원', async ({ page }) => {
     await installComparisonFlowMocks(page);
     await page.goto('/?sido=11&focus=orthopedics');
-    await expect(page).toHaveTitle(/비급여 비교|의료기관/);
+    await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
     const sidoSelect = page.getByLabel('시도 선택');
     await expect(sidoSelect).toHaveValue('11', { timeout: 30000 });
     await expandHomeClinicalIfCollapsed(page);

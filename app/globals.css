@@ -3,25 +3,60 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f3f7f8;
+  --foreground: #0f172a;
+  --color-page: #f3f7f8;
+  --color-ink: #0f172a;
+  --color-ink-muted: #334155;
+  --color-ink-soft: #64748b;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef4f5;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);
+  --color-line: #d5e0e3;
+  --color-line-strong: #b7c7cc;
+  --color-brand: #0d9488;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  /* 전체 화면 대기 분위기 — 플랫 단색 대신 그라데이션 + 미세 그리드 */
+  .atmosphere {
+    background:
+      radial-gradient(1200px 600px at 12% -10%, rgba(20, 184, 166, 0.18), transparent 55%),
+      radial-gradient(900px 500px at 88% 8%, rgba(15, 23, 42, 0.08), transparent 50%),
+      linear-gradient(165deg, #f7fbfb 0%, #eef4f6 48%, #e8f0f2 100%);
+  }
+
+  .atmosphere-grid {
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
+  }
+
+  .hero-visual {
+    background:
+      linear-gradient(135deg, rgba(13, 148, 136, 0.92), rgba(15, 23, 42, 0.88)),
+      repeating-linear-gradient(
+        -12deg,
+        transparent,
+        transparent 18px,
+        rgba(255, 255, 255, 0.04) 18px,
+        rgba(255, 255, 255, 0.04) 19px
+      );
+  }
+
+  .section-rule {
+    border-top: 1px solid var(--color-line);
+  }
 }
 
 @layer utilities {
@@ -29,22 +64,19 @@ body {
     text-wrap: balance;
   }
 
-  /* Touch-friendly interactive elements */
   .touch-target {
     min-height: 48px;
     min-width: 48px;
   }
 
-  /* WCAG 4.5:1 색상 대비 보장 */
   .text-contrast {
-    color: #171717; /* foreground */
+    color: #0f172a;
   }
 
   .bg-contrast {
-    background-color: #ffffff; /* background */
+    background-color: #ffffff;
   }
 
-  /* 모바일 스와이프 가능한 컨테이너 */
   .swipeable {
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
@@ -54,24 +86,31 @@ body {
     scroll-snap-align: start;
   }
 
-  /* 스크롤바 스타일링 (데스크톱) */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #eef4f5;
     border-radius: 4px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: #b7c7cc;
     border-radius: 4px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: #94a8ae;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-hero-rise,
+    .animate-slide-up,
+    .animate-fade-in,
+    .animate-bar-grow {
+      animation: none !important;
+    }
   }
 }
-

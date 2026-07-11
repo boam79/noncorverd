@@ -74,33 +74,34 @@ export function CompareBar({
   return (
     <div
       id="compare-bar"
-      className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up border-t border-line bg-surface/95 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-surface/90"
+      className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up border-t border-line bg-surface-glass backdrop-blur-md"
     >
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-1 items-center gap-4">
             <button
+              type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-ink-muted hover:text-ink"
             >
-              {isExpanded ? '▲ 접기' : '▼ 펼치기'} ({selectedHospitals.length}
-              /{maxSelection})
+              {isExpanded ? '접기' : '펼치기'} ({selectedHospitals.length}/{maxSelection})
             </button>
             {isExpanded && (
               <div className="flex flex-wrap gap-2">
                 {selectedHospitals.map((hospital) => (
                   <div
                     key={hospital.id}
-                    className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    className="flex items-center gap-2 rounded-control border border-brand-200 bg-brand-50 px-3 py-1 text-sm text-brand-900"
                   >
                     <span>{hospital.name}</span>
                     {onRemoveHospital && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRemoveHospital(hospital.id);
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-bold"
+                        className="font-bold text-brand-700 hover:text-brand-900"
                         aria-label={`${hospital.name} 선택 해제`}
                       >
                         ×
@@ -115,21 +116,22 @@ export function CompareBar({
             <button
               type="button"
               onClick={handleCopyShareLink}
-              className="px-3 py-2 text-sm text-primary-700 hover:text-primary-900 border border-primary-200 rounded-lg touch-target transition-colors"
+              className="touch-target rounded-control border border-brand-200 px-3 py-2 text-sm text-brand-800 transition-colors hover:bg-brand-50"
               aria-label="비교 화면 공유 링크 복사"
             >
               {shareCopied ? '복사됨' : '링크 공유'}
             </button>
             <button
+              type="button"
               onClick={onClear}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg touch-target transition-colors"
+              className="touch-target rounded-control border border-line px-4 py-2 text-sm text-ink-muted transition-colors hover:text-ink"
               aria-label="선택 초기화"
             >
               초기화
             </button>
             <Link
               href="/comparison"
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium text-center touch-target transition-colors shadow-md hover:shadow-lg"
+              className="touch-target rounded-control bg-brand-700 px-6 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-brand-800"
               aria-label="병원 비교하기"
             >
               비교하기

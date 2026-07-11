@@ -59,20 +59,20 @@ export function HomeSearchPanel({
 
   return (
     <div
-      className="space-y-6 rounded-card border-2 border-primary-100 bg-surface p-6 shadow-md ring-1 ring-primary-100/70 md:p-8"
+      className="space-y-6 border-t border-line pt-8"
       role="search"
       aria-labelledby="search-heading"
     >
       <div className="space-y-1">
         <h2
           id="search-heading"
-          className="text-xl font-semibold tracking-tight text-gray-900 md:text-2xl"
+          className="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl"
         >
           검색 조건
         </h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-muted">
           지역을 먼저 정한 뒤, 필요하면 이름·관심 분야로 좁혀 보세요. 병원명은{' '}
-          <strong className="font-semibold text-gray-800">검색 버튼 또는 Enter</strong>로
+          <strong className="font-semibold text-ink">검색 버튼 또는 Enter</strong>로
           적용됩니다.
         </p>
       </div>

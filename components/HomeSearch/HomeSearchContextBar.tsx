@@ -19,12 +19,12 @@ export interface HomeSearchContextBarProps {
 
 function chipClass(active: boolean, interactive: boolean) {
   return [
-    'inline-flex max-w-full items-center gap-1 truncate rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+    'inline-flex max-w-full items-center gap-1 truncate rounded-control border px-3 py-1.5 text-xs font-medium transition-colors',
     active
-      ? 'border-primary-200 bg-primary-50 text-primary-900'
-      : 'border-line bg-surface text-gray-600',
+      ? 'border-brand-200 bg-brand-50 text-brand-900'
+      : 'border-line bg-surface text-ink-muted',
     interactive
-      ? 'cursor-pointer hover:border-primary-300 hover:bg-primary-50/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1'
+      ? 'cursor-pointer hover:border-brand-300 hover:bg-brand-50/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1'
       : '',
   ].join(' ');
 }
@@ -71,7 +71,7 @@ export function HomeSearchContextBar({
 
   return (
     <div
-      className="sticky top-0 z-30 -mx-4 border-b border-line/90 bg-page/95 px-4 py-2.5 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-page/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+      className="sticky top-14 z-30 -mx-4 border-b border-line/90 bg-surface-glass px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
       aria-label="현재 검색 맥락"
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
@@ -83,11 +83,11 @@ export function HomeSearchContextBar({
             aria-label="지역 조건으로 스크롤"
             onClick={() => go('region')}
           >
-            📍 {regionLabel}
+            지역 · {regionLabel}
           </button>
         ) : (
           <span className={chipClass(!!sido, false)} title={regionLabel}>
-            📍 {regionLabel}
+            지역 · {regionLabel}
           </span>
         )}
         {interactive ? (
@@ -98,11 +98,11 @@ export function HomeSearchContextBar({
             aria-label="관심 분야로 스크롤"
             onClick={() => go('focus')}
           >
-            {focusChip ? `🎯 ${clinicalFocusLabel}` : '🎯 관심 분야 없음'}
+            {focusChip ? `관심 · ${clinicalFocusLabel}` : '관심 분야 없음'}
           </button>
         ) : (
           <span className={chipClass(!!focusChip, false)} title="관심 분야">
-            {focusChip ? `🎯 ${clinicalFocusLabel}` : '🎯 관심 분야 없음'}
+            {focusChip ? `관심 · ${clinicalFocusLabel}` : '관심 분야 없음'}
           </span>
         )}
         {interactive ? (
@@ -113,11 +113,11 @@ export function HomeSearchContextBar({
             aria-label="의료기관명 검색으로 스크롤"
             onClick={() => go('name')}
           >
-            {queryChip ? `🔎 “${hospitalNameCommitted.trim()}”` : '🔎 병원명 검색 없음'}
+            {queryChip ? `이름 · ${hospitalNameCommitted.trim()}` : '병원명 검색 없음'}
           </button>
         ) : (
           <span className={chipClass(!!queryChip, false)} title="병원명 검색">
-            {queryChip ? `🔎 “${hospitalNameCommitted.trim()}”` : '🔎 병원명 검색 없음'}
+            {queryChip ? `이름 · ${hospitalNameCommitted.trim()}` : '병원명 검색 없음'}
           </span>
         )}
         {interactive ? (
@@ -130,11 +130,11 @@ export function HomeSearchContextBar({
             }
             onClick={() => go(selectedCount > 0 ? 'compareBar' : 'results')}
           >
-            ✅ 선택 {selectedCount}/{maxSelection}
+            선택 {selectedCount}/{maxSelection}
           </button>
         ) : (
           <span className={chipClass(selectedCount > 0, false)} title="비교 예정 병원">
-            ✅ 선택 {selectedCount}/{maxSelection}
+            선택 {selectedCount}/{maxSelection}
           </span>
         )}
       </div>
