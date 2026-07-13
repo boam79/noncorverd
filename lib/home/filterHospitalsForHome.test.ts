@@ -78,6 +78,7 @@ describe('filterHospitalsForHome', () => {
     const all = [
       h({ id: '1', name: 'A', address: '세종특별자치시 한누리대로 1' }),
       h({ id: '2', name: 'B', address: '전라남도 목포시 1' }),
+      h({ id: '3', name: 'C', address: '서울특별시 종로구 세종대로 1' }),
     ];
     const out = filterHospitalsForHome({
       allHospitals: all,

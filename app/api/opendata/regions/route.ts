@@ -52,7 +52,15 @@ export async function GET(request: NextRequest) {
     // fallback: 시도 목록은 하드코딩 데이터 반환
     if (!sido) {
       recordOpendataRequest('regions', 200);
-      return NextResponse.json({ ok: true, data: FALLBACK_SIDO, meta: { ...metaBase } });
+      return NextResponse.json({
+        ok: true,
+        data: FALLBACK_SIDO,
+        meta: {
+          ...metaBase,
+          degraded: true,
+          source: 'fallback-sido',
+        },
+      });
     }
     recordOpendataRequest('regions', 502);
     return NextResponse.json({ ok: false, error: { code: 'API_ERROR', message } }, { status: 502 });

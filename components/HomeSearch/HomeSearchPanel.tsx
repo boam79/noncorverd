@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { RegionSelector } from '@/components/RegionSelector/RegionSelector';
 import { ClinicalFocusSelector } from '@/components/ClinicalFocusFilter/ClinicalFocusSelector';
+import { InstitutionFilter } from '@/components/InstitutionFilter/InstitutionFilter';
 import type { ClinicalFocusId } from '@/lib/constants/clinicalFocusBuckets';
 import type { HospitalRecommendation } from '@/lib/utils/recommendation';
 import type { RecentSearchEntry } from '@/lib/recentSearches';
+import type { MedicalInstitutionType } from '@/types';
 import { HOME_SECTION_IDS } from '@/lib/home/homeSearchSectionIds';
 
 export interface HomeSearchPanelProps {
@@ -20,6 +22,8 @@ export interface HomeSearchPanelProps {
   onRegionChange: (newSido?: string, newSigungu?: string) => void;
   clinicalFocus: ClinicalFocusId;
   onClinicalFocusChange: (value: ClinicalFocusId) => void;
+  selectedTypes: MedicalInstitutionType[];
+  onSelectedTypesChange: (types: MedicalInstitutionType[]) => void;
   filteredHospitalCount: number;
   isRecommending: boolean;
   onAutoRecommend: () => void;
@@ -41,6 +45,8 @@ export function HomeSearchPanel({
   onRegionChange,
   clinicalFocus,
   onClinicalFocusChange,
+  selectedTypes,
+  onSelectedTypesChange,
   filteredHospitalCount,
   isRecommending,
   onAutoRecommend,
@@ -162,6 +168,13 @@ export function HomeSearchPanel({
             시도를 선택하면 더 정확한 검색이 가능합니다.
           </p>
         )}
+      </div>
+
+      <div>
+        <InstitutionFilter
+          selectedTypes={selectedTypes}
+          onChange={onSelectedTypesChange}
+        />
       </div>
 
       <div id={HOME_SECTION_IDS.focus}>

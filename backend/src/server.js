@@ -73,8 +73,8 @@ app.use((req, res, next) => {
 // Error handling (must be last - Express requires 4 args to identify error middleware)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Backend server running on http://0.0.0.0:${PORT}`);
   console.log(`📡 OpenData Gateway: http://localhost:${PORT}/opendata`);
 });
 

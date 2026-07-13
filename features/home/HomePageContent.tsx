@@ -33,6 +33,7 @@ import {
   serializeHomeSearchParams,
 } from '@/lib/url/homeSearchParams';
 import { isUiV2BetaEnabled } from '@/lib/featureFlags';
+import type { MedicalInstitutionType } from '@/types';
 
 /**
  * 메인(홈) 화면 — 검색 조건과 URL 쿼리(`sido`, `sigungu`, `q`, `focus`) 동기화.
@@ -48,6 +49,7 @@ export function HomePageContent() {
   const [hospitalNameInput, setHospitalNameInput] = useState<string>('');
   const [hospitalName, setHospitalName] = useState<string>('');
   const [clinicalFocus, setClinicalFocus] = useState<ClinicalFocusId>('none');
+  const [selectedTypes, setSelectedTypes] = useState<MedicalInstitutionType[]>([]);
   const [recentList, setRecentList] = useState<RecentSearchEntry[]>([]);
 
   const { selectedHospitals, toggleHospital, clearHospitals, maxSelection } = useComparisonStore();
@@ -122,6 +124,7 @@ export function HomePageContent() {
     hospitalNameInput,
     hospitalNameCommitted: hospitalName,
     clinicalFocus,
+    types: selectedTypes,
   });
 
   useEffect(() => {
@@ -298,6 +301,8 @@ export function HomePageContent() {
             onRegionChange={handleRegionChange}
             clinicalFocus={clinicalFocus}
             onClinicalFocusChange={setClinicalFocus}
+            selectedTypes={selectedTypes}
+            onSelectedTypesChange={setSelectedTypes}
             filteredHospitalCount={hospitals.length}
             isRecommending={isRecommending}
             onAutoRecommend={handleAutoRecommend}

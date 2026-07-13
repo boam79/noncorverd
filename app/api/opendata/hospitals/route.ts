@@ -14,6 +14,8 @@ import {
   parseDgsbjtCdToDepartments,
   splitDgsbjtCdNm,
 } from '@/lib/constants/clinicalFocusBuckets';
+import { isSejongAddress } from '@/lib/opendata/sejongAddress';
+import { normalizeHospitalType } from '@/lib/opendata/hospitalType';
 import type { Hospital } from '@/types';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
@@ -82,7 +84,7 @@ function mapHospital(raw: RawHospital): Hospital {
     name: raw.yadmNm ?? '',
     address: raw.addr ?? '',
     phone: raw.telno ?? '',
-    type: (raw.clCdNm ?? raw.clCd ?? '병원') as Hospital['type'],
+    type: normalizeHospitalType(raw.clCdNm, raw.clCd),
     departments,
     dgsbjtCdRaw: dgsbjtRaw,
     sidoCd: raw.sidoCd ?? '',
@@ -265,9 +267,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (useSejongAddressFilter) {
-      filtered = filtered.filter((h) => (h.address || '').includes('세종'));
-      // HIRA sidoCd=361000 이 비거나 주소 필터 후 0건이면 광역 폴백(시도 파라미터 없이 이름 검색 대신
-      // 충남·세종 주소 스캔은 비용이 커서, sido 없이 병원명 없을 때 세종 키워드로 재시도)
+      filtered = filtered.filter((h) => isSejongAddress(h.address));
+      // HIRA sidoCd=361000 이 비거나 주소 필터 후 0건이면 이름 검색 폴백
       if (filtered.length === 0 && !hospitalName) {
         const fallbackParams: Record<string, string | number> = {
           ...baseParams,
@@ -280,7 +281,7 @@ export async function GET(request: NextRequest) {
           maxPagesForSigunguAddressFallback()
         );
         if (truncated) listTruncated = true;
-        filtered = fallbackHospitals.filter((h) => (h.address || '').includes('세종'));
+        filtered = fallbackHospitals.filter((h) => isSejongAddress(h.address));
       }
     }
 

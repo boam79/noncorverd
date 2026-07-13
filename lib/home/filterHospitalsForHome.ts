@@ -5,6 +5,7 @@ import {
 } from '@/lib/constants/clinicalFocusBuckets';
 import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
 import { cleanSigunguLabelForAddress } from '@/lib/opendata/adminSigunguList';
+import { isSejongAddress } from '@/lib/opendata/sejongAddress';
 
 export function filterHospitalsForHome(options: {
   allHospitals: Hospital[];
@@ -35,7 +36,7 @@ export function filterHospitalsForHome(options: {
 
   const adminSido = sido ? String(sido).padStart(2, '0').substring(0, 2) : '';
   if (adminSido === '36') {
-    filtered = filtered.filter((h) => (h.address || '').includes('세종'));
+    filtered = filtered.filter((h) => isSejongAddress(h.address));
   }
 
   if (sigungu && filtered.length > 0) {

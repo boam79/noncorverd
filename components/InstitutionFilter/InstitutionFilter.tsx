@@ -27,32 +27,26 @@ export function InstitutionFilter({
   };
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 mb-3">
-        의료기관 종별
-      </label>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-medium text-ink">의료기관 종별</legend>
+      <p className="text-xs text-ink-muted">선택하지 않으면 종별 제한 없이 검색합니다.</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
         {INSTITUTION_TYPES.map((type) => (
           <label
             key={type}
-            className={`flex items-center space-x-2 p-3 border rounded-xl cursor-pointer transition-all touch-target min-h-[48px] ${
-              selectedTypes.includes(type)
-                ? 'border-primary-400 bg-primary-50 shadow-sm'
-                : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
-            }`}
+            className="inline-flex items-center gap-2 text-sm text-ink touch-target"
           >
             <input
               type="checkbox"
               checked={selectedTypes.includes(type)}
               onChange={() => toggleType(type)}
-              className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-2 transition-all"
+              className="h-4 w-4 rounded border-line text-brand-600 focus:ring-brand-500"
               aria-label={`${type} ${selectedTypes.includes(type) ? '선택 해제' : '선택'}`}
             />
-            <span className={`text-sm font-medium ${selectedTypes.includes(type) ? 'text-primary-700' : 'text-gray-700'}`}>{type}</span>
+            <span>{type}</span>
           </label>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }
-

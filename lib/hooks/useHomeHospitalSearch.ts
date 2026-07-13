@@ -1,8 +1,9 @@
+'use client';
+
 import { useMemo } from 'react';
-import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useRegions } from '@/lib/hooks/useRegions';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, MedicalInstitutionType } from '@/types';
 import type { ClinicalFocusId } from '@/lib/constants/clinicalFocusBuckets';
 import { filterHospitalsForHome } from '@/lib/home/filterHospitalsForHome';
 
@@ -10,20 +11,22 @@ export interface UseHomeHospitalSearchParams {
   sido?: string;
   sigungu?: string;
   hospitalNameInput: string;
-  /** 시도 없을 때만 엔터로 확정된 병원명 검색에 사용 */
+  /** 확정 검색어(목록·URL·API에 반영된 값) — Enter/검색 버튼으로만 갱신 */
   hospitalNameCommitted: string;
   clinicalFocus: ClinicalFocusId;
+  types?: MedicalInstitutionType[];
 }
 
 export function useHomeHospitalSearch({
   sido,
   sigungu,
-  hospitalNameInput,
+  hospitalNameInput: _hospitalNameInput,
   hospitalNameCommitted,
   clinicalFocus,
+  types,
 }: UseHomeHospitalSearchParams) {
-  const debouncedHospitalInput = useDebouncedValue(hospitalNameInput, 400);
-  const apiHospitalName = sido ? debouncedHospitalInput.trim() : hospitalNameCommitted.trim();
+  // 시도 유무와 관계없이 Enter/검색으로 확정된 이름만 API에 사용 (debounce·URL 불일치 방지)
+  const apiHospitalName = hospitalNameCommitted.trim();
 
   const { data: sigunguBundle } = useRegions(sido);
   const sigunguList = useMemo(
@@ -39,6 +42,7 @@ export function useHomeHospitalSearch({
   } = useHospitals({
     sido,
     sigungu,
+    types,
     hospitalName: apiHospitalName || undefined,
     enabled: !!sido || !!hospitalNameCommitted.trim(),
   });
@@ -49,7 +53,7 @@ export function useHomeHospitalSearch({
   );
   const hospitalsMeta = hospitalsBundle?.meta as ApiResponse['meta'] | undefined;
 
-  // 시군구가 선택됐는데 목록이 아직 없으면 주소 필터 전 로딩으로 간주 (전체 시도 목록 깜빡임 방지)
+  // 시군구가 선택됐는데 목록이 아직 없으면 주소 필터 전 로딩으로 간주
   const waitingForSigunguMeta = Boolean(sido && sigungu && sigunguList.length === 0);
   const isLoading = hospitalsLoading || waitingForSigunguMeta;
 

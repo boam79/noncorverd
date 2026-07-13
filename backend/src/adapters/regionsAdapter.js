@@ -142,10 +142,10 @@ class RegionsAdapter extends BaseAdapter {
       }
 
       console.warn('⚠️ 시도 목록 API 응답이 비어 있어 Mock 데이터를 사용합니다.');
-      return this.formatResponse(mockSidoList);
+      return this.formatResponse(mockSidoList, { degraded: true, source: 'fallback-sido' });
     } catch (error) {
       console.warn('⚠️ 시도 목록 조회 실패, Mock 데이터 반환:', error.message);
-      return this.formatResponse(mockSidoList);
+      return this.formatResponse(mockSidoList, { degraded: true, source: 'fallback-sido' });
     }
   }
 
@@ -194,90 +194,52 @@ class RegionsAdapter extends BaseAdapter {
       );
 
       if (sigunguList.length === 0) {
-        console.warn(`⚠️ 시군구 데이터가 없어 Mock 데이터를 반환합니다. (sido=${sido})`);
-        return this.formatResponse(mockData);
+        console.warn(`⚠️ 시군구 데이터가 없어 오류를 반환합니다. (sido=${sido})`);
+        if (mockData.length > 0) {
+          return this.formatResponse(mockData, { degraded: true, source: 'fallback-sigungu' });
+        }
+        return this.formatError('API_ERROR', '시군구 목록을 불러오지 못했습니다.');
       }
 
       console.log(`✅ 시군구 목록 반환: ${sigunguList.length}개 (sido=${sido})`);
       return this.formatResponse(sigunguList);
     } catch (error) {
-      console.warn('⚠️ 시군구 조회 실패, Mock 데이터 반환:', error.message);
-      return this.formatResponse(mockData);
+      console.warn('⚠️ 시군구 조회 실패:', error.message);
+      if (mockData.length > 0) {
+        return this.formatResponse(mockData, { degraded: true, source: 'fallback-sigungu' });
+      }
+      return this.formatError('API_ERROR', error.message || '시군구 목록 조회에 실패했습니다.');
     }
   }
 
   /**
-   * Mock 시군구 데이터 (API 실패 시 사용)
+   * Mock 시군구 데이터 (API 실패 시 사용) — 행정안전부 6자리 코드
    */
   getMockSigunguList(sido) {
     const mockData = {
       '11': [ // 서울특별시
-        { code: '110000', name: '종로구' },
-        { code: '140000', name: '중구' },
-        { code: '170000', name: '용산구' },
-        { code: '200000', name: '성동구' },
-        { code: '215000', name: '광진구' },
-        { code: '230000', name: '동대문구' },
-        { code: '260000', name: '중랑구' },
-        { code: '290000', name: '성북구' },
-        { code: '305000', name: '강북구' },
-        { code: '320000', name: '도봉구' },
-        { code: '350000', name: '노원구' },
-        { code: '380000', name: '은평구' },
-        { code: '410000', name: '서대문구' },
-        { code: '440000', name: '마포구' },
-        { code: '470000', name: '양천구' },
-        { code: '500000', name: '강서구' },
-        { code: '530000', name: '구로구' },
-        { code: '545000', name: '금천구' },
-        { code: '560000', name: '영등포구' },
-        { code: '590000', name: '동작구' },
-        { code: '620000', name: '관악구' },
-        { code: '650000', name: '서초구' },
-        { code: '680000', name: '강남구' },
-        { code: '710000', name: '송파구' },
-        { code: '740000', name: '강동구' },
+        { code: '111100', name: '서울특별시 종로구' },
+        { code: '111400', name: '서울특별시 중구' },
+        { code: '116800', name: '서울특별시 강남구' },
       ],
-      '21': [ // 부산광역시
-        { code: '210001', name: '중구' },
-        { code: '210002', name: '서구' },
-        { code: '210003', name: '동구' },
-        { code: '210004', name: '영도구' },
-        { code: '210005', name: '부산진구' },
-        { code: '210006', name: '서구' },
-        { code: '210007', name: '동래구' },
-        { code: '210008', name: '남구' },
-        { code: '210009', name: '북구' },
-        { code: '210010', name: '해운대구' },
-        { code: '210011', name: '사하구' },
-        { code: '210012', name: '금정구' },
-        { code: '210013', name: '강서구' },
-        { code: '210014', name: '연제구' },
-        { code: '210015', name: '수영구' },
-        { code: '210016', name: '사상구' },
-        { code: '210017', name: '기장군' },
+      '26': [ // 부산광역시
+        { code: '261100', name: '부산광역시 중구' },
+        { code: '263500', name: '부산광역시 해운대구' },
       ],
-      '26': [ // 울산광역시 (대표 몇 개 구/군)
-        { code: '260001', name: '중구' },
-        { code: '260002', name: '동구' },
-        { code: '260003', name: '북구' },
-        { code: '260004', name: '울주군' },
-        { code: '260005', name: '남구' },
+      '31': [ // 울산광역시
+        { code: '311100', name: '울산광역시 중구' },
+        { code: '317100', name: '울산광역시 울주군' },
       ],
-      '31': [ // 경기도 (대표 주요 시)
-        { code: '310100', name: '광명시' },
-        { code: '310200', name: '평택시' },
-        { code: '310300', name: '수원시' },
-        { code: '310400', name: '용인시' },
-        { code: '310500', name: '고양시' },
-        { code: '310600', name: '성남시' },
+      '36': [ // 세종특별자치시
+        { code: '361100', name: '세종특별자치시' },
       ],
-      '41': [ // 세종특별자치시
-        { code: '410000', name: '세종시' },
+      '41': [ // 경기도
+        { code: '411100', name: '경기도 수원시' },
+        { code: '413100', name: '경기도 구리시' },
       ],
     };
 
-    return mockData[sido] || [];
+    return mockData[String(sido).padStart(2, '0')] || [];
   }
 
   /**

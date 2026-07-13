@@ -1336,3 +1336,45 @@ Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변�
 
 ### Project Status Board
 - [x] fix-pricing / share-sejong / backend / verify
+
+---
+
+## 🔍 Bug Hunt #3 (2026-07-13) — Planner only
+
+### Background
+- 사용자: "버그 찾아줘" — Round2 이후 잔여 재조사. 수정은 미착수.
+
+### 잔여 (우선순위)
+
+#### P0
+1. 세종 주소 가드 `includes('세종')` → 서울 `세종대로` 등 오탐 (서버·클라이언트·yadmNm 폴백)
+2. Express clCd 매핑이 Next와 불일치 (Render 경로)
+3. Express regions Mock 시도 키 뒤바뀜 + ok:true 위장
+
+#### P1
+4. InstitutionFilter 미연결
+5. sido 있을 때 병원명 debounce API vs Enter/URL 불일치
+6. 공유·자동추천 배치 pricing이 병원별 ok:false 무시
+7. Next regions 시도 실패 시 FALLBACK을 ok:true로 위장
+8. Express 세종/주소폴백 미구현, 강화군 매핑 주석, pricing 부분실패 미지원
+9. HospitalCard role=button + checkbox 중첩 a11y
+10. mapHospital type unsafe cast
+
+#### P2
+- CSP unsafe-inline, 공개 토큰, UTC today, 이름만으로 항목 병합, orphan sigungu UX, usePricing 미사용, E2E 12자리 코드, divide 이중선, rate-limit 공용 버킷, 최근검색 debounce, Render 0.0.0.0
+
+### Status
+- [x] 조사
+- [ ] Executor 수정 (대기)
+
+---
+
+## ✅ Bugfix Round 3 Executor (2026-07-13)
+
+### 완료
+- P0: isSejongAddress(세종특별자치시) · Express clCd/mapHospitalType · regions mock 키·degraded
+- P1: 병원명 committed-only API · share/recommend ok:false · regions degraded meta · HospitalCard label · normalizeHospitalType · InstitutionFilter 연결 · Render 0.0.0.0
+- unit 109
+
+### Status Board
+- [x] ex-p0 / ex-p1a / ex-p1b / verify

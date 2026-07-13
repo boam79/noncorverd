@@ -90,7 +90,16 @@ export function useComparisonShareHydration(
           return;
         }
 
-        const list = response.data as HospitalPricing[];
+        const list = (response.data as Array<HospitalPricing & { ok?: boolean }>).filter(
+          (p) => p.ok !== false
+        );
+        if (list.length === 0) {
+          clearHospitals?.();
+          setShareError('공유된 병원 가격 정보를 불러오지 못했습니다.');
+          setShareDone(true);
+          return;
+        }
+
         const hospitals: Hospital[] = list.map((p) => ({
           id: p.hospitalId,
           name: p.hospitalName || '이름 미상',

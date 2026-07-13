@@ -48,7 +48,14 @@ export function useHomeAutoRecommend(options: {
         throw new Error(response.error?.message || '추천 데이터를 가져오지 못했습니다.');
       }
 
-      const pricingData = response.data as HospitalPricing[];
+      const pricingData = (response.data as Array<HospitalPricing & { ok?: boolean }>).filter(
+        (row) => row.ok !== false
+      );
+      if (pricingData.length === 0) {
+        setRecommendMessage('추천에 사용할 가격 정보를 불러오지 못했습니다.');
+        return;
+      }
+
       const recommendations = recommendHospitals(
         pricingData,
         Math.min(3, remainingSlots)
