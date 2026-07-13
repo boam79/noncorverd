@@ -55,7 +55,11 @@ export function CompareBar({
     const payload = {
       v: 1 as const,
       i: ids,
-      ...(q && Object.keys(q).length > 0 ? { q } : {}),
+      ...(q &&
+      Object.keys(q).length > 0 &&
+      window.location.pathname.startsWith('/comparison')
+        ? { q }
+        : {}),
     };
     const url = `${window.location.origin}/comparison?${SHARE_PARAM}=${encodeSharePayload(payload)}`;
     try {
@@ -131,6 +135,7 @@ export function CompareBar({
             </button>
             <Link
               href="/comparison"
+              onClick={onCompare}
               className="touch-target rounded-control bg-brand-700 px-6 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-brand-800"
               aria-label="병원 비교하기"
             >

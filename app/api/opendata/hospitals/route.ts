@@ -55,43 +55,49 @@ function matchesType(clCdNm: string, name: string, selectedType: string): boolea
 }
 
 interface RawHospital {
-  ykiho?: string;
-  yadmNm?: string;
-  addr?: string;
-  telno?: string;
-  clCd?: string;
-  clCdNm?: string;
-  sidoCd?: string;
-  sgguCd?: string;
-  postNo?: string;
-  XPos?: string;
-  YPos?: string;
-  dgsbjtCd?: string;
-  dgsbjtCdNm?: string;
-  deptCd?: string;
-  [key: string]: string | undefined;
+  ykiho?: string | number;
+  yadmNm?: string | number;
+  addr?: string | number;
+  telno?: string | number;
+  clCd?: string | number;
+  clCdNm?: string | number;
+  sidoCd?: string | number;
+  sgguCd?: string | number;
+  postNo?: string | number;
+  XPos?: string | number;
+  YPos?: string | number;
+  dgsbjtCd?: string | number;
+  dgsbjtCdNm?: string | number;
+  deptCd?: string | number;
+  [key: string]: string | number | undefined;
+}
+
+function fieldText(value: unknown): string {
+  if (value == null) return '';
+  return String(value);
 }
 
 function mapHospital(raw: RawHospital): Hospital {
-  const dgsbjtRaw = raw.dgsbjtCd ?? raw.deptCd;
+  const dgsbjtRaw = fieldText(raw.dgsbjtCd ?? raw.deptCd) || undefined;
   const fromCodes = parseDgsbjtCdToDepartments(dgsbjtRaw);
-  const fromNm = splitDgsbjtCdNm(raw.dgsbjtCdNm);
+  const fromNm = splitDgsbjtCdNm(fieldText(raw.dgsbjtCdNm) || undefined);
   const departments: string[] = [...fromCodes];
   for (const n of fromNm) {
     if (n && !departments.includes(n)) departments.push(n);
   }
+  const ykiho = fieldText(raw.ykiho);
   return {
-    id: raw.ykiho ?? '',
-    name: raw.yadmNm ?? '',
-    address: raw.addr ?? '',
-    phone: raw.telno ?? '',
+    id: ykiho,
+    name: fieldText(raw.yadmNm),
+    address: fieldText(raw.addr),
+    phone: fieldText(raw.telno),
     type: normalizeHospitalType(raw.clCdNm, raw.clCd),
     departments,
     dgsbjtCdRaw: dgsbjtRaw,
-    sidoCd: raw.sidoCd ?? '',
-    sgguCd: raw.sgguCd ?? '',
-    clCdNm: raw.clCdNm ?? '',
-    ykiho: raw.ykiho ?? '',
+    sidoCd: fieldText(raw.sidoCd),
+    sgguCd: fieldText(raw.sgguCd),
+    clCdNm: fieldText(raw.clCdNm),
+    ykiho,
   };
 }
 

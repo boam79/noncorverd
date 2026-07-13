@@ -108,7 +108,7 @@ export function MobileComparisonView({
 
           return (
             <div
-              key={`${item.name}-${currentHospital.hospitalId}`}
+              key={`${item.itemKey}-${currentHospital.hospitalId}`}
               className={`bg-white border border-gray-200 rounded-lg ${cardPad} animate-fade-in`}
             >
               <div className="flex items-start justify-between mb-2 gap-3">

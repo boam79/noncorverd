@@ -1414,3 +1414,29 @@ CSP unsafe-inline, HSTS 로컬, E2E fixture, usePricing 미사용, mock 잔존, 
 - sigungu 6자리 정규화, orphan UX, types URL, regions degraded UI, 최근검색 시도명
 - Express 다중종별 후필터, pricing allSettled ok 플래그, E2E 6자리 fixture
 - unit 119, lint, build OK → main
+
+---
+
+## 🔍 User Story Bug Hunt (2026-07-13) — Executor
+
+### 재현
+- Prod `/api/opendata/hospitals` → 502 `(b || "").trim is not a function`
+- 원인: HIRA JSON `clCd` 숫자 → `normalizeHospitalType` `.trim()` 실패 (핵심 유저스토리 차단)
+
+### 수정
+1. **P0** `normalizeHospitalType` / `mapHospital` / `mapPricingItem` / `isSejongAddress` 숫자·비문자 필드 문자열화
+2. 홈 리셋 시 `selectedTypes` 미초기화 → URL에 types 재주입
+3. 시군구 API 실패 시 `waitingForSigunguMeta` 무한 로딩
+4. 비교표 pin/key/수량에 `itemKey`(comparisonItemKey) 사용
+5. 공유 페이로드 병원 ID 중복 제거; 홈에서 공유 시 스테일 `q` 제외
+
+### 검증
+- unit 124, lint, build, chromium E2E 52 passed / 1 skipped
+
+### Project Status Board
+- [x] us-hunt
+- [x] us-fix
+- [ ] us-push (커밋·PR·main)
+
+### Executor's Feedback
+- Prod 배포 후 hospitals 200 재확인 필요. Vercel에 최신 main 반영되면 P0 해소.

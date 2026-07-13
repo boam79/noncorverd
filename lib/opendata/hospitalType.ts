@@ -1,15 +1,21 @@
 import type { MedicalInstitutionType } from '@/types';
 
+/** HIRA JSON은 clCd 등을 숫자로 줄 수 있음 — trim 전 문자열화 */
+function asText(value: unknown): string {
+  if (value == null) return '';
+  return String(value).trim();
+}
+
 /**
  * HIRA clCd / clCdNm → UI MedicalInstitutionType
  * (app/api hospitals TYPE_CLCDS 와 맞춤)
  */
 export function normalizeHospitalType(
-  clCdNm?: string,
-  clCd?: string
+  clCdNm?: string | number | null,
+  clCd?: string | number | null
 ): MedicalInstitutionType {
-  const name = (clCdNm || '').trim();
-  const code = (clCd || '').trim();
+  const name = asText(clCdNm);
+  const code = asText(clCd);
 
   if (name.includes('치과') || code === '41' || code === '51') return '치과';
   if (name.includes('요양') || code === '28') return '요양병원';

@@ -19,4 +19,9 @@ describe('shareLink', () => {
     expect(decoded?.i.length).toBeLessThanOrEqual(5);
     expect(decoded?.q?.초음파).toBe(2);
   });
+
+  it('dedupes hospital ids on encode and decode', () => {
+    const encoded = encodeSharePayload({ v: 1, i: ['a', 'a', 'b', 'a'] });
+    expect(decodeSharePayload(encoded)?.i).toEqual(['a', 'b']);
+  });
 });

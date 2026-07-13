@@ -105,6 +105,7 @@ export function HomePageContent() {
     setHospitalNameInput('');
     setHospitalName('');
     setClinicalFocus('none');
+    setSelectedTypes([]);
     clearHospitals();
     router.replace('/', { scroll: false });
   }, [clearHospitals, router]);
@@ -260,9 +261,7 @@ export function HomePageContent() {
   );
 
   const handleCompare = () => {
-    if (selectedHospitals.length > 0) {
-      router.push('/comparison');
-    }
+    // 비교 이동은 CompareBar Link가 담당 (이중 history 방지)
   };
 
   const showBetaRibbon = isUiV2BetaEnabled();

@@ -45,6 +45,17 @@ describe('calculateEstimatedTotalForHospital', () => {
     ).toBe(30000);
   });
 
+  it('prefers comparisonItemKey over legacy display name', () => {
+    const coded: HospitalPricing = {
+      hospitalId: 'h1',
+      hospitalName: '병원',
+      items: [{ id: '1', name: '초음파', price: 10000, code: 'A1' }],
+    };
+    expect(
+      calculateEstimatedTotalForHospital(coded, { 'code:A1': 2, 초음파: 9 })
+    ).toBe(20000);
+  });
+
   it('returns 0 for a hospital with no items', () => {
     expect(
       calculateEstimatedTotalForHospital({ hospitalId: 'h2', hospitalName: '병원2', items: [] }, {})

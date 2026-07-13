@@ -4,17 +4,17 @@
  */
 
 export interface RawPricingItem {
-  npayKorNm?: string;
-  curAmt?: string;
-  maxAmt?: string;
-  minAmt?: string;
-  npayClsNm?: string;
-  yadmNpayCdNm?: string;
-  npayCd?: string;
-  adtFrDd?: string;
-  adtEndDd?: string;
-  urlAddr?: string;
-  [key: string]: string | undefined;
+  npayKorNm?: string | number;
+  curAmt?: string | number;
+  maxAmt?: string | number;
+  minAmt?: string | number;
+  npayClsNm?: string | number;
+  yadmNpayCdNm?: string | number;
+  npayCd?: string | number;
+  adtFrDd?: string | number;
+  adtEndDd?: string | number;
+  urlAddr?: string | number;
+  [key: string]: string | number | undefined;
 }
 
 export interface MappedPricingItem {
@@ -47,8 +47,8 @@ export function todayYmdKst(now = new Date()): string {
 }
 
 /** HIRA YYYYMMDD → YYYY-MM-DD (이미 하이픈이면 그대로) */
-export function normalizeHiraDate(value?: string): string {
-  if (!value) return '';
+export function normalizeHiraDate(value?: string | number | null): string {
+  if (value == null || value === '') return '';
   const str = String(value).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
   if (/^\d{8}$/.test(str)) {
@@ -57,11 +57,16 @@ export function normalizeHiraDate(value?: string): string {
   return str;
 }
 
-function toYmdDigits(value?: string): string {
-  return String(value || '')
+function toYmdDigits(value?: string | number | null): string {
+  return String(value ?? '')
     .replace(/-/g, '')
     .replace(/\D/g, '')
     .slice(0, 8);
+}
+
+function textField(value: unknown): string {
+  if (value == null) return '';
+  return String(value).trim();
 }
 
 /**
@@ -82,7 +87,7 @@ export function isPricingItemActive(raw: RawPricingItem, todayYmd?: string): boo
 
 /** 비교표 집계 키 — 코드가 있으면 코드 우선(동명 이종 항목 분리) */
 export function comparisonItemKey(item: { name: string; code?: string }): string {
-  const code = item.code?.trim();
+  const code = item.code == null ? '' : String(item.code).trim();
   if (code) return `code:${code}`;
   return `name:${item.name}`;
 }
@@ -90,20 +95,20 @@ export function comparisonItemKey(item: { name: string; code?: string }): string
 export function mapPricingItem(raw: RawPricingItem): MappedPricingItem {
   const startDate = normalizeHiraDate(raw.adtFrDd);
   const endDate = normalizeHiraDate(raw.adtEndDd);
-  const code = raw.npayCd?.trim() || undefined;
-  const name = raw.npayKorNm ?? raw.yadmNpayCdNm ?? '';
+  const code = textField(raw.npayCd) || undefined;
+  const name = textField(raw.npayKorNm) || textField(raw.yadmNpayCdNm);
   return {
     id: code || `${name}|${startDate}|${raw.curAmt ?? ''}`,
     name,
     price: Number(raw.curAmt ?? 0),
     maxPrice: Number(raw.maxAmt ?? 0),
     minPrice: Number(raw.minAmt ?? 0),
-    category: raw.npayClsNm ?? '',
-    unit: raw.yadmNpayCdNm ?? '',
+    category: textField(raw.npayClsNm),
+    unit: textField(raw.yadmNpayCdNm),
     code,
     startDate,
     endDate,
-    url: raw.urlAddr ?? '',
+    url: textField(raw.urlAddr),
   };
 }
 

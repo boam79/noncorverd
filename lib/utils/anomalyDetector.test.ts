@@ -4,6 +4,7 @@ import type { ComparisonItemEntry } from '@/components/ComparisonTable/types';
 
 function makeItem(overrides: Partial<ComparisonItemEntry>): ComparisonItemEntry {
   return {
+    itemKey: 'name:초음파',
     name: '초음파',
     averagePrice: 10000,
     maxPrice: 10000,

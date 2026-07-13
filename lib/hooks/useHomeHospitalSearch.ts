@@ -28,7 +28,12 @@ export function useHomeHospitalSearch({
   // 시도 유무와 관계없이 Enter/검색으로 확정된 이름만 API에 사용 (debounce·URL 불일치 방지)
   const apiHospitalName = hospitalNameCommitted.trim();
 
-  const { data: sigunguBundle } = useRegions(sido);
+  const {
+    data: sigunguBundle,
+    isPending: sigunguPending,
+    isError: sigunguError,
+    isFetched: sigunguFetched,
+  } = useRegions(sido);
   const sigunguList = useMemo(
     () => sigunguBundle?.regions ?? [],
     [sigunguBundle]
@@ -53,8 +58,14 @@ export function useHomeHospitalSearch({
   );
   const hospitalsMeta = hospitalsBundle?.meta as ApiResponse['meta'] | undefined;
 
-  // 시군구가 선택됐는데 목록이 아직 없으면 주소 필터 전 로딩으로 간주
-  const waitingForSigunguMeta = Boolean(sido && sigungu && sigunguList.length === 0);
+  // 시군구 메타 로딩 중에만 대기 — 실패/빈 목록 후엔 무한 스켈레톤 방지
+  const waitingForSigunguMeta = Boolean(
+    sido &&
+      sigungu &&
+      sigunguList.length === 0 &&
+      !sigunguError &&
+      (sigunguPending || !sigunguFetched)
+  );
   const isLoading = hospitalsLoading || waitingForSigunguMeta;
 
   const hospitals = useMemo(

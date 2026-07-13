@@ -3,6 +3,7 @@ import type {
   EstimatedTotalByHospitalId,
   QuantityByItemName,
 } from '@/components/ComparisonTable/types';
+import { comparisonItemKey } from '@/lib/opendata/mapPricingItem';
 
 function normalizeQuantity(value: number | undefined): number {
   if (!Number.isFinite(value) || value === undefined) {
@@ -16,9 +17,16 @@ function normalizeQuantity(value: number | undefined): number {
 
 export function getItemQuantity(
   quantities: QuantityByItemName,
-  itemName: string
+  itemKey: string,
+  legacyName?: string
 ): number {
-  return normalizeQuantity(quantities[itemName]);
+  if (Object.prototype.hasOwnProperty.call(quantities, itemKey)) {
+    return normalizeQuantity(quantities[itemKey]);
+  }
+  if (legacyName && Object.prototype.hasOwnProperty.call(quantities, legacyName)) {
+    return normalizeQuantity(quantities[legacyName]);
+  }
+  return normalizeQuantity(undefined);
 }
 
 export function calculateEstimatedTotalForHospital(
@@ -26,7 +34,8 @@ export function calculateEstimatedTotalForHospital(
   quantities: QuantityByItemName
 ): number {
   return (hospital.items || []).reduce((sum, item) => {
-    const quantity = getItemQuantity(quantities, item.name);
+    const key = comparisonItemKey(item);
+    const quantity = getItemQuantity(quantities, key, item.name);
     return sum + item.price * quantity;
   }, 0);
 }

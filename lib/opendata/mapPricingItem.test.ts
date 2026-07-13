@@ -85,6 +85,23 @@ describe('mapPricingItem', () => {
     expect(mapped.startDate).toBe('');
     expect(mapped.endDate).toBe('');
   });
+
+  it('coerces numeric HIRA JSON fields without throwing', () => {
+    const mapped = mapPricingItem({
+      npayKorNm: 'CT',
+      curAmt: 120000,
+      npayCd: 99001,
+      adtFrDd: 20240101,
+      adtEndDd: 99991231,
+    });
+    expect(mapped.code).toBe('99001');
+    expect(mapped.price).toBe(120000);
+    expect(mapped.startDate).toBe('2024-01-01');
+    expect(mapped.endDate).toBe('9999-12-31');
+    expect(isPricingItemActive({ adtFrDd: 20240101, adtEndDd: 99991231 }, '20260713')).toBe(
+      true
+    );
+  });
 });
 
 describe('averagePositivePrice', () => {

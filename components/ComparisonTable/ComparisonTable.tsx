@@ -67,7 +67,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
       });
     });
 
-    return Array.from(map.entries()).map(([, entries]) => {
+    return Array.from(map.entries()).map(([itemKey, entries]) => {
       const prices = entries.map((entry) => entry.price);
       const maxPrice = Math.max(...prices);
       const minPrice = Math.min(...prices);
@@ -107,6 +107,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
       const uniqueHospitalCount = new Set(entries.map((e) => e.hospitalId)).size;
 
       return {
+        itemKey,
         name,
         averagePrice,
         maxPrice,
@@ -135,7 +136,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('popularity');
   const [densityMode, setDensityMode] = useState<DensityMode>('comfortable');
-  const [pinnedItemNames, setPinnedItemNames] = useState<string[]>([]);
+  const [pinnedItemKeys, setPinnedItemKeys] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
   const [quantities, setQuantities] = useState<QuantityByItemName>({});
@@ -240,23 +241,23 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
   }, [aggregatedItems, pricingData, viewMode, sortMode, searchTerm]);
 
   const sortedWithPins = useMemo(() => {
-    const pinSet = new Set(pinnedItemNames);
-    const pinnedList = pinnedItemNames
-      .map((name) => filteredItems.find((item) => item.name === name))
+    const pinSet = new Set(pinnedItemKeys);
+    const pinnedList = pinnedItemKeys
+      .map((key) => filteredItems.find((item) => item.itemKey === key))
       .filter((item): item is ComparisonItemEntry => Boolean(item));
-    const rest = filteredItems.filter((item) => !pinSet.has(item.name));
+    const rest = filteredItems.filter((item) => !pinSet.has(item.itemKey));
     return [...pinnedList, ...rest];
-  }, [filteredItems, pinnedItemNames]);
+  }, [filteredItems, pinnedItemKeys]);
 
   const visibleItems = sortedWithPins.slice(0, visibleCount);
   const hasMore = sortedWithPins.length > visibleCount;
 
-  const togglePinItem = (name: string) => {
-    setPinnedItemNames((prev) => {
-      if (prev.includes(name)) {
-        return prev.filter((n) => n !== name);
+  const togglePinItem = (itemKey: string) => {
+    setPinnedItemKeys((prev) => {
+      if (prev.includes(itemKey)) {
+        return prev.filter((k) => k !== itemKey);
       }
-      return [...prev, name];
+      return [...prev, itemKey];
     });
   };
   const estimatedTotalsByHospitalId = useMemo(
@@ -464,24 +465,24 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               const quantityInputId = `quantity-${itemIndex}`;
 
               return (
-                <tr key={item.name} className="hover:bg-gray-50 align-top">
+                <tr key={item.itemKey} className="hover:bg-gray-50 align-top">
                   <td className={`${cellPad} text-sm text-gray-500 align-middle`}>
                     <button
                       type="button"
-                      onClick={() => togglePinItem(item.name)}
+                      onClick={() => togglePinItem(item.itemKey)}
                       className={`rounded-md border px-2 py-1 text-xs font-medium touch-target ${
-                        pinnedItemNames.includes(item.name)
+                        pinnedItemKeys.includes(item.itemKey)
                           ? 'border-amber-300 bg-amber-50 text-amber-900'
                           : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                       }`}
-                      aria-pressed={pinnedItemNames.includes(item.name)}
+                      aria-pressed={pinnedItemKeys.includes(item.itemKey)}
                       aria-label={
-                        pinnedItemNames.includes(item.name)
+                        pinnedItemKeys.includes(item.itemKey)
                           ? `${item.name} 핀 해제`
                           : `${item.name} 위로 핀`
                       }
                     >
-                      {pinnedItemNames.includes(item.name) ? '★' : '☆'}
+                      {pinnedItemKeys.includes(item.itemKey) ? '★' : '☆'}
                     </button>
                   </td>
                   <td className={`${cellPad} text-sm text-gray-900`}>
@@ -496,7 +497,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                           type="number"
                           min={0}
                           max={99}
-                          value={getItemQuantity(quantities, item.name)}
+                          value={getItemQuantity(quantities, item.itemKey, item.name)}
                           onChange={(event) => {
                             const rawValue = Number(event.target.value);
                             const nextValue = Number.isFinite(rawValue)
@@ -504,7 +505,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                               : 0;
                             setQuantities((prev) => ({
                               ...prev,
-                              [item.name]: nextValue,
+                              [item.itemKey]: nextValue,
                             }));
                           }}
                           className="w-20 rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -545,7 +546,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                     if (!entry) {
                       return (
                         <td
-                          key={`${item.name}-${hospital.hospitalId}`}
+                          key={`${item.itemKey}-${hospital.hospitalId}`}
                           className={`${cellPad} text-sm text-gray-400 text-center`}
                         >
                           -
@@ -555,7 +556,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
                     return (
                       <td
-                        key={`${item.name}-${hospital.hospitalId}`}
+                        key={`${item.itemKey}-${hospital.hospitalId}`}
                         className={`${cellPad} text-sm ${
                           entry.isHighest
                             ? 'text-red-600 font-semibold'
