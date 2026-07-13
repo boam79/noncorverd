@@ -1267,3 +1267,7 @@ Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변�
 ### Lessons
 - `_cache` 를 공공 API 쿼리에 넣지 말 것 (Next revalidate 전용).
 - 클라이언트 토큰은 `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`만 브라우저에 존재.
+
+### ✅ main 반영 (2026-07-13)
+- Fast-forward `c58900e..ab24f68` → `origin/main` 푸시 완료.
+- 커밋: `fix: 세종·전남 코드 충돌·가격 매핑·공유/부분실패 등 버그 일괄 수정`
