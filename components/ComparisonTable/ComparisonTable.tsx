@@ -447,8 +447,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               </tr>
             )}
             {visibleItems.length > 0 &&
-              visibleItems.map((item) => {
+              visibleItems.map((item, itemIndex) => {
               const dateLabel = formatDateRange(item.startDate, item.endDate);
+              const quantityInputId = `quantity-${itemIndex}`;
 
               return (
                 <tr key={item.name} className="hover:bg-gray-50 align-top">
@@ -475,11 +476,11 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                     <div className="font-medium">{item.name}</div>
                     <div className="mt-1 text-xs text-gray-500 space-y-1">
                       <div className="flex items-center gap-2">
-                        <label htmlFor={`quantity-${item.name}`} className="text-gray-600">
+                        <label htmlFor={quantityInputId} className="text-gray-600">
                           횟수
                         </label>
                         <input
-                          id={`quantity-${item.name}`}
+                          id={quantityInputId}
                           type="number"
                           min={0}
                           max={99}

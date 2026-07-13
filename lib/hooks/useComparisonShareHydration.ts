@@ -28,7 +28,8 @@ function waitForPersistHydration(): Promise<void> {
 export function useComparisonShareHydration(
   searchParams: URLSearchParams,
   router: ComparisonShareRouter,
-  setSelectedHospitals: (hospitals: Hospital[]) => void
+  setSelectedHospitals: (hospitals: Hospital[]) => void,
+  clearHospitals?: () => void
 ): {
   shareDone: boolean;
   shareError: string | null;
@@ -55,6 +56,7 @@ export function useComparisonShareHydration(
 
   useEffect(() => {
     if (rawShare && !decodedPreview) {
+      clearHospitals?.();
       setShareError('공유 링크 형식이 올바르지 않습니다.');
       setShareDone(true);
       return;
@@ -80,6 +82,7 @@ export function useComparisonShareHydration(
         if (cancelled) return;
 
         if (!response.ok || !Array.isArray(response.data)) {
+          clearHospitals?.();
           setShareError(
             response.error?.message || '공유된 병원 정보를 불러오지 못했습니다.'
           );
@@ -113,6 +116,7 @@ export function useComparisonShareHydration(
         setShareDone(true);
       } catch (e) {
         if (!cancelled) {
+          clearHospitals?.();
           setShareError(
             e instanceof Error ? e.message : '공유 링크 처리 중 오류가 발생했습니다.'
           );
@@ -124,7 +128,7 @@ export function useComparisonShareHydration(
     return () => {
       cancelled = true;
     };
-  }, [rawShare, decodedPreview, router, setSelectedHospitals]);
+  }, [rawShare, decodedPreview, router, setSelectedHospitals, clearHospitals]);
 
   return { shareDone, shareError, shareLoading };
 }

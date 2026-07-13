@@ -30,7 +30,7 @@ export function HospitalCardList({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+    <div className="divide-y divide-line rounded-xl border border-line bg-surface">
       {hospitals.map((hospital) => (
         <HospitalCard
           key={hospital.id}
@@ -43,4 +43,3 @@ export function HospitalCardList({
     </div>
   );
 }
-

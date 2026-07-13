@@ -28,13 +28,20 @@ export function usePricingProgressive(hospitals: Hospital[], enabled: boolean) {
           [{ id: h.id, name: h.name }]
         );
         if (response.ok && Array.isArray(response.data)) {
-          const list = response.data as HospitalPricing[];
+          const list = response.data as Array<HospitalPricing & { ok?: boolean }>;
           const row =
             list[0] ?? {
               hospitalId: h.id,
               hospitalName: h.name,
               items: [],
             };
+          // 라우트가 병원 단위 ok:false 를 내려도 HTTP 200 이므로 부분실패로 취급
+          if (row.ok === false) {
+            throw attachQueryErrorMeta(
+              new Error('이 병원의 가격 정보를 불러오지 못했습니다.'),
+              { code: 'HOSPITAL_PRICING_FAILED', retryable: true }
+            );
+          }
           const meta = response.meta as PricingProgressMeta | undefined;
           return { row, meta };
         }

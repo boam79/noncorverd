@@ -167,7 +167,7 @@ class HospitalsAdapter extends BaseAdapter {
       '311400': '260001', // 남구
       '311700': '260002', // 동구
       '312000': '260004', // 북구
-      '317100': '260005', // 울주군
+      '317100': '260100', // 울주군
       // 대구광역시 (sido=27, 행정안전부 코드 → HIRA sidoCd=230000)
       '271100': '230006', // 중구 (HIRA sgguCd=230006)
       '271400': '230002', // 동구 (HIRA sgguCd=230002)
@@ -178,33 +178,31 @@ class HospitalsAdapter extends BaseAdapter {
       '272900': '230008', // 달서구 (HIRA sgguCd=230008)
       '277100': '230009', // 달성군 (HIRA sgguCd=230009)
       '277200': '230010', // 군위군 (HIRA sgguCd=230010, 추정)
-      // 인천광역시 (sido=28, 행정안전부 코드)
-      '281100': '280001', // 중구
-      '281400': '280002', // 동구
-      '281770': '280003', // 미추홀구
-      '281850': '280004', // 연수구
-      '282000': '280005', // 남동구
-      '282370': '280006', // 부평구
-      '282450': '280007', // 계양구
-      '282600': '280008', // 서구
+      // 인천광역시 (sido=28) — HIRA 실측 220xxx (프론트 codeMap과 동기화)
+      '281100': '220004', // 중구
+      '281400': '220002', // 동구
+      '281770': '220001', // 미추홀구
+      '281850': '220007', // 연수구
+      '282000': '220006', // 남동구
+      '282370': '220003', // 부평구
+      '282450': '220008', // 계양구
+      '282600': '220005', // 서구
       // 주의: 강화군과 옹진군은 HIRA API에서 제대로 필터링되지 않을 수 있음
-      // '287100': '280009', // 강화군 (주석 처리 - HIRA API 문제로 인해 비활성화)
-      // '287200': '280010', // 옹진군 (주석 처리 - HIRA API 문제로 인해 비활성화)
-      // 광주광역시 (sido=29, 행정안전부 코드 → HIRA sidoCd=240000)
-      '291100': '240001', // 동구 (HIRA sgguCd=240001)
-      '291400': '240002', // 서구 (HIRA sgguCd=240002)
-      '291550': '240003', // 남구 (HIRA sgguCd=240003)
-      '291700': '240004', // 북구 (HIRA sgguCd=240004)
-      '292000': '240005', // 광산구 (HIRA sgguCd=240005)
+      // '287100': '220100', // 강화군
+      // 광주광역시 (sido=29 → HIRA 240000) — 프론트 codeMap과 동기화
+      '291100': '240001', // 동구
+      '291400': '240003', // 서구
+      '291550': '240005', // 남구
+      '291700': '240002', // 북구
+      '292000': '240004', // 광산구
       // 대전광역시 (sido=30, 행정안전부 코드 → HIRA sidoCd=250000)
       '301100': '250004', // 동구 (HIRA sgguCd=250004)
       '301400': '250005', // 중구 (HIRA sgguCd=250005)
       '301700': '250003', // 서구 (HIRA sgguCd=250003)
       '302000': '250001', // 유성구 (HIRA sgguCd=250001)
       '302300': '250002', // 대덕구 (HIRA sgguCd=250002)
-      // 세종특별자치시 (sido=36, 행정안전부 코드)
-      // 주의: HIRA API에서 세종은 제대로 지원하지 않을 수 있음
-      // '361100': '360001', // 세종시 (주석 처리 - HIRA API 문제로 인해 비활성화)
+      // 세종특별자치시
+      '361100': '361100',
       // 제주특별자치도 (sido=50, 행정안전부 코드 → HIRA sidoCd=390000)
       '501100': '390200', // 제주시 (HIRA sgguCd=390200)
       '501300': '390100', // 서귀포시 (HIRA sgguCd=390100)
@@ -239,8 +237,8 @@ class HospitalsAdapter extends BaseAdapter {
     const serviceKey = process.env.api_key || process.env.HIRA_SERVICE_KEY || this.serviceKey;
     
     if (!serviceKey) {
-      console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
+      console.error('❌ Service Key가 없어 병원 목록을 조회할 수 없습니다.');
+      return this.formatError('MISSING_SERVICE_KEY', '공공데이터 API 키가 설정되지 않았습니다.');
     }
 
     // Service Key를 임시로 설정
@@ -364,10 +362,12 @@ class HospitalsAdapter extends BaseAdapter {
               console.log(`⚠️ 첫 페이지 실패했지만 기존 데이터 ${allHospitals.length}개 반환`);
               break;
             }
-            // 데이터가 없으면 Mock 데이터 반환
-            console.warn('⚠️ API 호출 실패 및 데이터 없음, Mock 데이터 반환');
-            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
-          }
+            // 데이터가 없으면 에러 반환 (가짜 Mock 병원으로 성공 위장하지 않음)
+            console.warn('⚠️ API 호출 실패 및 데이터 없음');
+            return this.formatError(
+              'API_ERROR',
+              result.error?.message || '병원 목록 조회에 실패했습니다.'
+            );          }
           // 이후 페이지 실패 시 기존 데이터 반환
           break;
         }
@@ -375,8 +375,8 @@ class HospitalsAdapter extends BaseAdapter {
         // 데이터가 없는 경우
         if (!result.data || result.data.length === 0) {
           if (pageNo === 1) {
-            console.warn('⚠️ API 응답에 데이터가 없습니다. Mock 데이터 반환');
-            return this.formatResponse(this.getMockHospitals({ sido, sigungu, type, hospitalName }));
+            console.warn('⚠️ API 응답에 데이터가 없습니다. 빈 목록 반환');
+            return this.formatResponse([], { total: '0', page: '1', limit: '0' });
           }
           break;
         }
@@ -458,12 +458,8 @@ class HospitalsAdapter extends BaseAdapter {
       
       return this.formatResponse(allHospitals, { total: String(finalTotal), page: '1', limit: String(allHospitals.length) });
     } catch (error) {
-      console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      const mockData = this.getMockHospitals({ sido, sigungu, type, hospitalName });
-      // Mock 데이터도 캐시에 저장 (짧은 시간 동안)
-      const cacheKey = this.getCacheKey(sido, sigungu, type, hospitalName);
-      this.setCache(cacheKey, mockData);
-      return this.formatResponse(mockData);
+      console.warn('⚠️ API 호출 실패:', error.message);
+      return this.formatError('API_ERROR', error.message || '병원 목록 조회에 실패했습니다.');
     }
   }
 

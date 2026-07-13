@@ -59,10 +59,11 @@ export function useHomeHospitalSearch({
         allHospitals,
         sigunguList,
         sigungu,
+        sido,
         nameForClientFilter: apiHospitalName,
         clinicalFocus,
       }),
-    [allHospitals, sigungu, sigunguList, apiHospitalName, clinicalFocus]
+    [allHospitals, sigungu, sigunguList, sido, apiHospitalName, clinicalFocus]
   );
 
   return {

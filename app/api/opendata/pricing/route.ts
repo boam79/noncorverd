@@ -6,6 +6,7 @@ import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
 import {
   averagePositivePrice,
+  isPricingItemActive,
   mapPricingItem,
   type RawPricingItem,
 } from '@/lib/opendata/mapPricingItem';
@@ -109,12 +110,16 @@ async function fetchHospitalPricing(ykiho: string) {
     });
     if (pageNo === 1) total = Number(t) || 0;
 
-    const batch = (items as RawPricingItem[]).map(mapPricingItem);
-    if (batch.length === 0) break;
+    const batch = (items as RawPricingItem[])
+      .filter((raw) => isPricingItemActive(raw))
+      .map(mapPricingItem);
+    if (batch.length === 0 && (items as RawPricingItem[]).length === 0) break;
+    // 페이지에 원본은 있었으나 전부 만료면 다음 페이지 계속
     mapped.push(...batch);
 
-    if (total > 0 && mapped.length >= total) break;
-    if (batch.length < 100) break;
+    if ((items as RawPricingItem[]).length === 0) break;
+    if (total > 0 && pageNo * 100 >= total) break;
+    if ((items as RawPricingItem[]).length < 100) break;
   }
 
   return {

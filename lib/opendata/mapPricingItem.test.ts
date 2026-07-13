@@ -1,8 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { averagePositivePrice, mapPricingItem } from '@/lib/opendata/mapPricingItem';
+import {
+  averagePositivePrice,
+  isPricingItemActive,
+  mapPricingItem,
+  normalizeHiraDate,
+} from '@/lib/opendata/mapPricingItem';
+
+describe('normalizeHiraDate', () => {
+  it('converts YYYYMMDD to ISO date', () => {
+    expect(normalizeHiraDate('20240101')).toBe('2024-01-01');
+    expect(normalizeHiraDate('99991231')).toBe('9999-12-31');
+  });
+
+  it('keeps already-normalized dates', () => {
+    expect(normalizeHiraDate('2024-01-01')).toBe('2024-01-01');
+  });
+});
+
+describe('isPricingItemActive', () => {
+  it('keeps open-ended and future end dates', () => {
+    expect(isPricingItemActive({ adtEndDd: '99991231' }, '20260713')).toBe(true);
+    expect(isPricingItemActive({ adtEndDd: '20261231' }, '20260713')).toBe(true);
+  });
+
+  it('drops expired items', () => {
+    expect(isPricingItemActive({ adtEndDd: '20200101' }, '20260713')).toBe(false);
+  });
+});
 
 describe('mapPricingItem', () => {
-  it('maps HIRA fields to UI startDate/endDate', () => {
+  it('maps HIRA fields to UI startDate/endDate ISO and code', () => {
     const mapped = mapPricingItem({
       npayKorNm: '초음파',
       curAmt: '50000',
@@ -10,14 +37,17 @@ describe('mapPricingItem', () => {
       minAmt: '40000',
       npayClsNm: '검사',
       yadmNpayCdNm: '회',
+      npayCd: 'ABC',
       adtFrDd: '20240101',
       adtEndDd: '99991231',
       urlAddr: 'https://example.com',
     });
     expect(mapped.name).toBe('초음파');
     expect(mapped.price).toBe(50000);
-    expect(mapped.startDate).toBe('20240101');
-    expect(mapped.endDate).toBe('99991231');
+    expect(mapped.startDate).toBe('2024-01-01');
+    expect(mapped.endDate).toBe('9999-12-31');
+    expect(mapped.code).toBe('ABC');
+    expect(mapped.id).toBe('ABC');
     expect(mapped.url).toBe('https://example.com');
   });
 

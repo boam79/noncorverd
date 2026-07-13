@@ -48,8 +48,8 @@ class PricingAdapter extends BaseAdapter {
     const serviceKey = process.env.api_key || process.env.HIRA_PRICING_SERVICE_KEY || this.serviceKey;
     
     if (!serviceKey) {
-      console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-      return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
+      console.error('❌ Service Key가 없어 가격 정보를 조회할 수 없습니다.');
+      return this.formatError('MISSING_SERVICE_KEY', '공공데이터 API 키가 설정되지 않았습니다.');
     }
 
     // Service Key를 임시로 설정
@@ -69,14 +69,13 @@ class PricingAdapter extends BaseAdapter {
         .map((r) => r.data);
 
       if (validResults.length === 0) {
-        // 모든 API 호출 실패 시 Mock 데이터 사용
-        return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
+        return this.formatError('API_ERROR', '선택한 병원의 가격 정보를 불러오지 못했습니다.');
       }
 
       return this.formatResponse(validResults);
     } catch (error) {
-      console.warn('⚠️ API 호출 실패, Mock 데이터 반환:', error.message);
-      return this.formatResponse(this.getMockPricing(hospitalIds, hospitalMap));
+      console.warn('⚠️ API 호출 실패:', error.message);
+      return this.formatError('API_ERROR', error.message || '가격 정보 조회에 실패했습니다.');
     }
   }
 
@@ -104,8 +103,8 @@ class PricingAdapter extends BaseAdapter {
       const serviceKey = process.env.api_key || process.env.HIRA_PRICING_SERVICE_KEY || this.serviceKey;
       
       if (!serviceKey) {
-        console.warn('⚠️ Service Key가 없어 Mock 데이터를 반환합니다.');
-        return this.formatResponse(this.getMockPricing([hospitalId])[0]);
+        console.error('❌ Service Key가 없어 가격 정보를 조회할 수 없습니다.');
+        return this.formatError('MISSING_SERVICE_KEY', '공공데이터 API 키가 설정되지 않았습니다.');
       }
 
       // Service Key를 임시로 설정
@@ -126,9 +125,11 @@ class PricingAdapter extends BaseAdapter {
         
         if (!result.ok) {
           if (pageNo === 1) {
-            // 첫 페이지 실패 시 Mock 데이터 반환
-            console.warn('⚠️ API 호출 실패, Mock 데이터 반환');
-            return this.formatResponse(this.getMockPricing([hospitalId])[0]);
+            console.warn('⚠️ API 호출 실패');
+            return this.formatError(
+              'API_ERROR',
+              result.error?.message || '가격 정보 조회에 실패했습니다.'
+            );
           }
           // 이후 페이지 실패 시 기존 데이터 반환
           break;

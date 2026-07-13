@@ -23,7 +23,8 @@ export function ComparisonPageClient() {
   const { shareDone, shareError, shareLoading } = useComparisonShareHydration(
     searchParams,
     router,
-    setSelectedHospitals
+    setSelectedHospitals,
+    clearHospitals
   );
 
   const {
@@ -59,7 +60,7 @@ export function ComparisonPageClient() {
     );
   }
 
-  if (shareError && selectedHospitals.length === 0) {
+  if (shareError) {
     return (
       <div className="min-h-screen atmosphere">
         <Header onHomeClick={handleHomeClick} compact />

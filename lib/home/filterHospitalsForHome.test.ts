@@ -73,4 +73,36 @@ describe('filterHospitalsForHome', () => {
     });
     expect(out).toHaveLength(1);
   });
+
+  it('keeps only Sejong addresses when sido is 36', () => {
+    const all = [
+      h({ id: '1', name: 'A', address: '세종특별자치시 한누리대로 1' }),
+      h({ id: '2', name: 'B', address: '전라남도 목포시 1' }),
+    ];
+    const out = filterHospitalsForHome({
+      allHospitals: all,
+      sigunguList: [],
+      sido: '36',
+      nameForClientFilter: '',
+      clinicalFocus: 'none',
+    });
+    expect(out.map((x) => x.id)).toEqual(['1']);
+  });
+
+  it('strips 특별자치시 when matching sigungu labels', () => {
+    const sigunguList: Region[] = [{ code: '361100', name: '세종특별자치시' }];
+    const all = [
+      h({ id: '1', name: 'A', address: '세종특별자치시 보람동 1' }),
+      h({ id: '2', name: 'B', address: '충청남도 천안시 1' }),
+    ];
+    const out = filterHospitalsForHome({
+      allHospitals: all,
+      sigunguList,
+      sigungu: '361100',
+      sido: '36',
+      nameForClientFilter: '',
+      clinicalFocus: 'none',
+    });
+    expect(out.map((x) => x.id)).toEqual(['1']);
+  });
 });

@@ -266,6 +266,22 @@ export async function GET(request: NextRequest) {
 
     if (useSejongAddressFilter) {
       filtered = filtered.filter((h) => (h.address || '').includes('세종'));
+      // HIRA sidoCd=361000 이 비거나 주소 필터 후 0건이면 광역 폴백(시도 파라미터 없이 이름 검색 대신
+      // 충남·세종 주소 스캔은 비용이 커서, sido 없이 병원명 없을 때 세종 키워드로 재시도)
+      if (filtered.length === 0 && !hospitalName) {
+        const fallbackParams: Record<string, string | number> = {
+          ...baseParams,
+          yadmNm: '세종',
+        };
+        delete fallbackParams.sidoCd;
+        delete fallbackParams.sgguCd;
+        const { hospitals: fallbackHospitals, truncated } = await fetchHiraHospitalPages(
+          fallbackParams,
+          maxPagesForSigunguAddressFallback()
+        );
+        if (truncated) listTruncated = true;
+        filtered = fallbackHospitals.filter((h) => (h.address || '').includes('세종'));
+      }
     }
 
     recordOpendataRequest('hospitals', 200);
@@ -277,6 +293,7 @@ export async function GET(request: NextRequest) {
         fetchedAt: new Date().toISOString(),
         source: '공공데이터포털·건강보험심사평가원 병원 기본정보',
         appliedSigunguAddressFallback: useAddressSigunguFallback,
+        sejongAddressFilter: useSejongAddressFilter,
         listTruncated,
         ...(useAddressSigunguFallback && {
           addressFallbackTruncated: listTruncated,

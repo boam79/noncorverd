@@ -1271,3 +1271,68 @@ Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변�
 ### ✅ main 반영 (2026-07-13)
 - Fast-forward `c58900e..ab24f68` → `origin/main` 푸시 완료.
 - 커밋: `fix: 세종·전남 코드 충돌·가격 매핑·공유/부분실패 등 버그 일괄 수정`
+
+---
+
+## 🔍 Bug Re-Hunt (2026-07-13 #2) — Planner
+
+### Background and Motivation
+- 사용자: "버그를 다시 찾아" — 직전 스윕(ab24f68) 이후 잔여 버그 재조사.
+- 모드: Planner(조사·목록만). 수정은 Executor 지시 대기.
+
+### 검증
+- unit 100 passed (회귀 없음)
+- 코드 재확인으로 아래 항목 evidence 확보
+
+### 잔여 버그 (우선순위)
+
+#### P1 — Vercel 운영 경로(우선 수정 권장)
+1. **가격 날짜 YYYYMMDD vs UI `9999-12-31`** — `mapPricingItem`이 원문 유지 → "현재" 라벨·날짜 표시 깨짐 (`ComparisonTable.formatDateRange`)
+2. **만료 비급여 미필터** — Next BFF는 `adtEndDd` 과거 항목도 노출, Express `pricingAdapter`는 필터함
+3. **병원별 `ok:false` 무시** — `usePricingProgressive`가 HTTP만 실패로 봄 → 부분실패 UX 미발동, "0건 병원"으로 오인
+4. **공유 실패 + persist 선택 있음** — `shareError && selectedHospitals.length===0`만 에러 UI → 옛 선택으로 조용히 비교 화면
+5. **세종 0건 폴백 없음** — `361000` 실패 시 빈 목록만; 광역 주소 폴백 없음. 클라이언트 `세종` 가드도 없음
+6. **클라이언트 시군구명 정제 불일치** — `특별자치시` 미제거 (`cleanSigunguLabelForAddress`와 불일치)
+
+#### P0/P1 — Express backend(Render) 사용 시에만 치명
+7. 인천 시군구 `280xxx`(프론트는 `220xxx`)
+8. 광주 시군구 회전 오매핑
+9. API 실패 시 Mock을 `ok:true`로 반환
+10. clCd/세종/울주군/auth env 드리프트
+
+#### P2
+11. HospitalCardList grid vs list-row 스타일 충돌
+12. pricing `id`/`code` 미매핑 → trustScore·코드검색 약화
+13. InstitutionFilter 미연결
+14. 수량 input id에 항목명 그대로(공백·특수문자)
+15. CompareBar `onCompare` dead prop
+16. E2E 시군구 fixture 12자리 vs 실운영 6자리
+
+### High-level Task Breakdown (Executor용, 미착수)
+1. mapPricingItem 날짜 정규화 + 만료 필터 + id/code
+2. usePricingProgressive ok:false 처리
+3. 공유 실패 UX + 세종 폴백/클라이언트 가드 + cleanSigungu 공유
+4. (선택) backend adapter sync + mock 제거
+5. P2 UX/스타일
+
+### Project Status Board (re-hunt #2)
+- [x] 재조사·목록화
+- [ ] Executor 수정 (대기)
+
+---
+
+## ✅ Bugfix Round 2 Executor (2026-07-13)
+
+### 완료한 수정
+1. mapPricingItem: YYYY-MM-DD 정규화, id/code, isPricingItemActive 만료 필터
+2. usePricingProgressive: 병원별 ok:false → 부분실패
+3. 공유 실패 시 clearHospitals + 항상 에러 UI
+4. 세종 0건 시 yadmNm=세종 폴백 + 클라이언트 세종 가드 + cleanSigunguLabel 공유
+5. HospitalCardList divide-y 리스트, quantity input id 인덱스화
+6. backend: 인천 220xxx·광주 codeMap 동기화·울주 260100·Mock→에러·auth public token
+
+### 검증
+- unit 106, lint OK, build 진행
+
+### Project Status Board
+- [x] fix-pricing / share-sejong / backend / verify

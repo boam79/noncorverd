@@ -4,15 +4,25 @@ import {
   type ClinicalFocusId,
 } from '@/lib/constants/clinicalFocusBuckets';
 import { hospitalAddressMatchesSigungu } from '@/lib/utils/addressSigunguMatch';
+import { cleanSigunguLabelForAddress } from '@/lib/opendata/adminSigunguList';
 
 export function filterHospitalsForHome(options: {
   allHospitals: Hospital[];
   sigunguList: Region[];
   sigungu?: string;
+  /** 행정 시도 코드 — 세종(36)일 때 주소 가드 */
+  sido?: string;
   nameForClientFilter: string;
   clinicalFocus: ClinicalFocusId;
 }): Hospital[] {
-  const { allHospitals, sigunguList, sigungu, nameForClientFilter, clinicalFocus } = options;
+  const {
+    allHospitals,
+    sigunguList,
+    sigungu,
+    sido,
+    nameForClientFilter,
+    clinicalFocus,
+  } = options;
   let filtered = allHospitals;
 
   if (nameForClientFilter) {
@@ -21,6 +31,11 @@ export function filterHospitalsForHome(options: {
       const hospitalNameLower = hospital.name?.toLowerCase() || '';
       return hospitalNameLower.includes(searchTerm);
     });
+  }
+
+  const adminSido = sido ? String(sido).padStart(2, '0').substring(0, 2) : '';
+  if (adminSido === '36') {
+    filtered = filtered.filter((h) => (h.address || '').includes('세종'));
   }
 
   if (sigungu && filtered.length > 0) {
@@ -34,11 +49,7 @@ export function filterHospitalsForHome(options: {
       return [];
     }
     const sigunguName = sigunguData.name || '';
-    const cleanSigunguName = sigunguName
-      .replace(/.*?특별시\s*/, '')
-      .replace(/.*?광역시\s*/, '')
-      .replace(/.*?도\s*/, '')
-      .trim();
+    const cleanSigunguName = cleanSigunguLabelForAddress(sigunguName);
 
     if (cleanSigunguName) {
       filtered = filtered.filter((hospital) =>

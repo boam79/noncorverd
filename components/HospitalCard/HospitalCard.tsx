@@ -36,7 +36,7 @@ export function HospitalCard({
           handleActivate();
         }
       }}
-      className={`border-b border-line py-4 transition-colors duration-200 animate-fade-in last:border-b-0 ${
+      className={`border-b border-line py-4 transition-colors duration-200 animate-fade-in last:border-b-0 px-3 sm:px-4 ${
         isSelected ? 'bg-brand-50/50' : 'bg-transparent hover:bg-surface-muted/60'
       } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
     >
