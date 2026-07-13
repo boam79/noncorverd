@@ -20,6 +20,7 @@ export interface HomeSearchPanelProps {
   sido?: string;
   sigungu?: string;
   onRegionChange: (newSido?: string, newSigungu?: string) => void;
+  regionsDegraded?: boolean;
   clinicalFocus: ClinicalFocusId;
   onClinicalFocusChange: (value: ClinicalFocusId) => void;
   selectedTypes: MedicalInstitutionType[];
@@ -43,6 +44,7 @@ export function HomeSearchPanel({
   sido,
   sigungu,
   onRegionChange,
+  regionsDegraded = false,
   clinicalFocus,
   onClinicalFocusChange,
   selectedTypes,
@@ -116,7 +118,12 @@ export function HomeSearchPanel({
       )}
 
       <div id={HOME_SECTION_IDS.region}>
-        <RegionSelector onRegionChange={onRegionChange} sido={sido} sigungu={sigungu} />
+        <RegionSelector
+          onRegionChange={onRegionChange}
+          sido={sido}
+          sigungu={sigungu}
+          degraded={regionsDegraded}
+        />
       </div>
 
       <div id={HOME_SECTION_IDS.name}>

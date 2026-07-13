@@ -16,6 +16,7 @@ import {
 } from '@/lib/constants/clinicalFocusBuckets';
 import { isSejongAddress } from '@/lib/opendata/sejongAddress';
 import { normalizeHospitalType } from '@/lib/opendata/hospitalType';
+import { normalizeAdminSigunguCode } from '@/lib/opendata/normalizeAdminCode';
 import type { Hospital } from '@/types';
 
 const HOSPITAL_ENDPOINT = '/B551182/hospInfoServicev2/getHospBasisList';
@@ -218,7 +219,7 @@ export async function GET(request: NextRequest) {
     let cleanSigunguName = '';
     if (useAddressSigunguFallback) {
       const list = await getAdminSigunguList(adminSidoKey);
-      const normalizedSigungu = String(sigungu).padEnd(6, '0');
+      const normalizedSigungu = normalizeAdminSigunguCode(sigungu) ?? '';
       const row = list.find((r) => r.code === normalizedSigungu);
       officialSigunguName = row?.name ?? '';
       cleanSigunguName = cleanSigunguLabelForAddress(officialSigunguName);

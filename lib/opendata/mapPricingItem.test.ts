@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   averagePositivePrice,
+  comparisonItemKey,
   isPricingItemActive,
   mapPricingItem,
   normalizeHiraDate,
+  todayYmdKst,
 } from '@/lib/opendata/mapPricingItem';
 
 describe('normalizeHiraDate', () => {
@@ -17,6 +19,12 @@ describe('normalizeHiraDate', () => {
   });
 });
 
+describe('todayYmdKst', () => {
+  it('returns eight digits', () => {
+    expect(todayYmdKst()).toMatch(/^\d{8}$/);
+  });
+});
+
 describe('isPricingItemActive', () => {
   it('keeps open-ended and future end dates', () => {
     expect(isPricingItemActive({ adtEndDd: '99991231' }, '20260713')).toBe(true);
@@ -25,6 +33,25 @@ describe('isPricingItemActive', () => {
 
   it('drops expired items', () => {
     expect(isPricingItemActive({ adtEndDd: '20200101' }, '20260713')).toBe(false);
+  });
+
+  it('drops items that have not started yet', () => {
+    expect(
+      isPricingItemActive({ adtFrDd: '20270101', adtEndDd: '99991231' }, '20260713')
+    ).toBe(false);
+  });
+
+  it('keeps items within start and end', () => {
+    expect(
+      isPricingItemActive({ adtFrDd: '20260101', adtEndDd: '20261231' }, '20260713')
+    ).toBe(true);
+  });
+});
+
+describe('comparisonItemKey', () => {
+  it('prefers code over name', () => {
+    expect(comparisonItemKey({ name: '초음파', code: 'A1' })).toBe('code:A1');
+    expect(comparisonItemKey({ name: '초음파' })).toBe('name:초음파');
   });
 });
 

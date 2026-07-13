@@ -5,6 +5,7 @@ import { pushRecentSearch, loadRecentSearches, type RecentSearchEntry } from '@/
 export function useRecordRecentSearchOnHome(options: {
   sido?: string;
   sigungu?: string;
+  sidoList?: Region[];
   hospitalNameCommitted: string;
   apiHospitalName: string;
   sigunguList: Region[];
@@ -16,6 +17,7 @@ export function useRecordRecentSearchOnHome(options: {
   const {
     sido,
     sigungu,
+    sidoList = [],
     hospitalNameCommitted,
     apiHospitalName,
     sigunguList,
@@ -32,9 +34,11 @@ export function useRecordRecentSearchOnHome(options: {
     if (!sido && !hospitalNameCommitted.trim()) return;
     if (hospitalsResultCount === 0) return;
 
+    const sidoName = sidoList.find((s) => s.code === sido)?.name?.trim() ?? '';
     const sigunguName =
       sigunguList.find((s) => s.code === sigungu)?.name?.trim() ?? '';
     const label = [
+      sidoName || undefined,
       sigunguName || undefined,
       apiHospitalName || hospitalNameCommitted.trim() || undefined,
     ]
@@ -61,5 +65,6 @@ export function useRecordRecentSearchOnHome(options: {
     sigungu,
     sigunguList,
     sido,
+    sidoList,
   ]);
 }

@@ -42,4 +42,21 @@ describe('computeHomeSearchDerived', () => {
     });
     expect(d.searchActive).toBe(false);
   });
+
+  it('flags orphan sigungu separately from empty filters', () => {
+    const d = computeHomeSearchDerived({
+      clinicalFocus: 'none',
+      isLoading: false,
+      error: null,
+      allHospitalCount: 3,
+      filteredHospitalCount: 0,
+      sido: '11',
+      hospitalNameCommitted: '',
+      sigungu: '999999',
+      sigunguListLength: 5,
+      sigunguInList: false,
+    });
+    expect(d.orphanSigungu).toBe(true);
+    expect(d.noResultsAfterRegionOrNameFilter).toBe(false);
+  });
 });

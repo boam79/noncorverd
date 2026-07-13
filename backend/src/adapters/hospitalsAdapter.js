@@ -302,31 +302,24 @@ class HospitalsAdapter extends BaseAdapter {
       // clCd=21은 실제로 "병원"으로 분류됨
       // 실제 의원은 clCdNm으로 필터링해야 할 수 있음
       if (type) {
-        // Next BFF TYPE_CLCDS 와 동기화 (HIRA 실측)
-        // 종합병원: 01+11 / 병원: 21 / 요양병원: 28 / 치과: 41+51
-        const typeMap = {
-          '종합병원': '01',
-          '병원': '21',
-          '요양병원': '28',
-          '치과': '41',
+        // Next BFF TYPE_CLCDS 와 동기화. 다중 종별/복수 clCd 는 API 단일 clCd 제한으로
+        // 파라미터를 비우고 응답 후 clCdNm으로 필터한다.
+        const typeClCds = {
+          '종합병원': ['01', '11'],
+          '병원': ['21'],
+          '요양병원': ['28'],
+          '치과': ['41', '51'],
         };
-        
-        // 여러 종별이 쉼표로 구분된 경우 처리
-        if (type.includes(',')) {
-          const types = type.split(',').map(t => t.trim());
-          // HIRA API는 단일 clCd만 지원하므로, 첫 번째 종별만 사용
-          const firstType = types[0];
-          const clCd = typeMap[firstType];
-          if (clCd) {
-            params.clCd = clCd;
-          }
-          console.log(`📍 여러 종별 선택됨: ${types.join(', ')}, 첫 번째 종별만 적용: ${firstType}`);
-        } else {
-          const clCd = typeMap[type];
-          if (clCd) {
-            params.clCd = clCd;
-          }
+        const selectedTypes = type.split(',').map((t) => t.trim()).filter(Boolean);
+        const allClCds = selectedTypes.flatMap((t) => typeClCds[t] || []);
+        const uniqueClCds = [...new Set(allClCds)];
+        if (selectedTypes.length === 1 && uniqueClCds.length === 1) {
+          params.clCd = uniqueClCds[0];
         }
+        // 다중이면 clCd 미지정 → 아래에서 종별명 필터
+        this._pendingTypeFilter = selectedTypes;
+      } else {
+        this._pendingTypeFilter = null;
       }
 
       // 페이지네이션을 위한 데이터 수집 (API 호출 절약: 기본 2페이지만 수집)
@@ -408,42 +401,29 @@ class HospitalsAdapter extends BaseAdapter {
         }
       }
 
-      // 의원 필터링: clCdNm으로 필터링 (clCd=21은 실제로 "병원"이므로)
-      if (type === '의원' || (type && type.includes('의원'))) {
-        allHospitals = allHospitals.filter((h) => {
-          // clCdNm이 정확히 "의원"인 경우만 필터링
-          return h.clCdNm === '의원';
-        });
-        console.log(`📍 의원 필터링 적용: ${allHospitals.length}개 의원 (clCdNm="의원"만)`);
-      }
-      
-      // 한의원 필터링: clCd=51은 실제로 "치과의원"이므로 clCdNm으로 필터링
-      // clCd로 검색하지 않고 전체 검색 후 clCdNm으로 필터링
-      if (type === '한의원' || (type && type.includes('한의원'))) {
-        // clCd=51로 검색하지 않았으므로 (typeMap에서 null), 전체 검색 결과에서 필터링
+      // 종별 후처리 필터 (다중 선택·복수 clCd 대응)
+      const pendingTypes = this._pendingTypeFilter;
+      this._pendingTypeFilter = null;
+      if (pendingTypes && pendingTypes.length > 0) {
         const beforeCount = allHospitals.length;
         allHospitals = allHospitals.filter((h) => {
-          // clCdNm이 "한의원" 또는 "한방병원"인 경우 필터링
-          return h.clCdNm === '한의원' || h.clCdNm === '한방병원';
+          const nm = h.clCdNm || h.type || '';
+          return pendingTypes.some((t) => {
+            switch (t) {
+              case '종합병원':
+                return nm === '종합병원' || nm === '상급종합' || h.type === '종합병원';
+              case '병원':
+                return nm === '병원' || nm === '정신병원' || h.type === '병원';
+              case '요양병원':
+                return nm.includes('요양') || h.type === '요양병원';
+              case '치과':
+                return nm.includes('치과') || h.type === '치과';
+              default:
+                return nm.includes(t);
+            }
+          });
         });
-        if (beforeCount > 0) {
-          console.log(`📍 한의원 필터링 적용: ${allHospitals.length}개 한의원 (${beforeCount}개 → ${allHospitals.length}개, clCdNm="한의원" 또는 "한방병원")`);
-        }
-      }
-      
-      // 종합병원 필터링: clCd=01로 검색했을 때 결과가 없는 경우를 대비
-      // clCdNm으로 추가 필터링하여 정확도 향상 (clCd=01로 검색했어도 clCdNm 확인)
-      if (type === '종합병원' || (type && type.includes('종합병원'))) {
-        const beforeCount = allHospitals.length;
-        allHospitals = allHospitals.filter((h) => {
-          // clCdNm이 없으면 통과 (clCd=01로 이미 필터링됨)
-          if (!h.clCdNm) return true;
-          // clCdNm이 "종합병원" 또는 "상급종합"인 경우만 필터링
-          return h.clCdNm === '종합병원' || h.clCdNm === '상급종합';
-        });
-        if (beforeCount > 0 && beforeCount !== allHospitals.length) {
-          console.log(`📍 종합병원 필터링 적용: ${allHospitals.length}개 종합병원 (${beforeCount}개 → ${allHospitals.length}개)`);
-        }
+        console.log(`📍 종별 필터(${pendingTypes.join(',')}): ${beforeCount} → ${allHospitals.length}`);
       }
 
       // totalCount가 Infinity인 경우 (API에서 totalCount를 제공하지 않은 경우) 실제 수집된 개수 사용

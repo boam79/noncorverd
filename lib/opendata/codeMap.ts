@@ -72,13 +72,16 @@ export const SIGUNGU_CODE_MAP: Record<string, string> = {
   '501100': '390200', '501300': '390100',
 };
 
+import { normalizeAdminSigunguCode } from '@/lib/opendata/normalizeAdminCode';
+
 export function toHiraSido(code: string): string | null {
   const key = String(code).padStart(2, '0').substring(0, 2);
   return SIDO_CODE_MAP[key] ?? null;
 }
 
 export function toHiraSigungu(code: string): string | null {
-  const key = String(code).padEnd(6, '0');
+  const key = normalizeAdminSigunguCode(code);
+  if (!key) return null;
   return SIGUNGU_CODE_MAP[key] ?? null;
 }
 

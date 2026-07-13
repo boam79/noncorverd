@@ -56,23 +56,40 @@ class PricingAdapter extends BaseAdapter {
     this.serviceKey = serviceKey;
 
     try {
-      // 여러 병원의 가격 정보를 병렬로 조회
-      const promises = hospitalIds.map((hospitalId) =>
-        this.getHospitalPricing(hospitalId, false, hospitalMap.get(hospitalId))
+      const settled = await Promise.allSettled(
+        hospitalIds.map((hospitalId) =>
+          this.getHospitalPricing(hospitalId, false, hospitalMap.get(hospitalId))
+        )
       );
 
-      const results = await Promise.all(promises);
-      
-      // 성공한 결과만 필터링
-      const validResults = results
-        .filter((r) => r.ok && r.data)
-        .map((r) => r.data);
+      const data = hospitalIds.map((hospitalId, i) => {
+        const result = settled[i];
+        if (result.status === 'fulfilled' && result.value?.ok && result.value.data) {
+          const row = result.value.data;
+          return {
+            hospitalId: row.hospitalId || hospitalId,
+            hospitalName: row.hospitalName || hospitalMap.get(hospitalId) || '',
+            items: row.items || [],
+            averagePrice: row.averagePrice ?? 0,
+            totalItems: row.totalItems ?? (row.items?.length ?? 0),
+            ok: true,
+          };
+        }
+        return {
+          hospitalId,
+          hospitalName: hospitalMap.get(hospitalId) || '',
+          items: [],
+          averagePrice: 0,
+          totalItems: 0,
+          ok: false,
+        };
+      });
 
-      if (validResults.length === 0) {
+      if (data.every((row) => row.ok === false)) {
         return this.formatError('API_ERROR', '선택한 병원의 가격 정보를 불러오지 못했습니다.');
       }
 
-      return this.formatResponse(validResults);
+      return this.formatResponse(data);
     } catch (error) {
       console.warn('⚠️ API 호출 실패:', error.message);
       return this.formatError('API_ERROR', error.message || '가격 정보 조회에 실패했습니다.');

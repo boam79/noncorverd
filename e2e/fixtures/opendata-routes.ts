@@ -12,7 +12,7 @@ export async function installComparisonFlowMocks(page: Page): Promise<void> {
       sidoParam === '11'
         ? JSON.stringify({
             ok: true,
-            data: [{ code: '111100000000', name: '종로구' }],
+            data: [{ code: '111100', name: '서울특별시 종로구' }],
           })
         : JSON.stringify({
             ok: true,
@@ -94,7 +94,7 @@ export async function installObstetricsRecommendMocks(page: Page): Promise<void>
       sidoParam === '11'
         ? JSON.stringify({
             ok: true,
-            data: [{ code: '111100000000', name: '종로구' }],
+            data: [{ code: '111100', name: '서울특별시 종로구' }],
           })
         : JSON.stringify({
             ok: true,

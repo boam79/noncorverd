@@ -16,15 +16,27 @@ export interface HomeSearchDerived {
   showEmptySearchGuidance: boolean;
   noApiHospitalRows: boolean;
   noResultsAfterRegionOrNameFilter: boolean;
+  orphanSigungu: boolean;
 }
 
-export function computeHomeSearchDerived(input: HomeSearchDerivedInput): HomeSearchDerived {
+export function computeHomeSearchDerived(input: HomeSearchDerivedInput & {
+  sigungu?: string;
+  sigunguListLength?: number;
+  sigunguInList?: boolean;
+}): HomeSearchDerived & { orphanSigungu: boolean } {
+  const orphanSigungu = Boolean(
+    input.sigungu &&
+      (input.sigunguListLength ?? 0) > 0 &&
+      input.sigunguInList === false
+  );
+
   const clinicalFocusExcludedAll =
     input.clinicalFocus !== 'none' &&
     !input.isLoading &&
     !input.error &&
     input.allHospitalCount > 0 &&
-    input.filteredHospitalCount === 0;
+    input.filteredHospitalCount === 0 &&
+    !orphanSigungu;
 
   const searchActive =
     Boolean(input.sido) || Boolean(input.hospitalNameCommitted.trim());
@@ -36,12 +48,13 @@ export function computeHomeSearchDerived(input: HomeSearchDerivedInput): HomeSea
     input.filteredHospitalCount === 0;
 
   const noApiHospitalRows =
-    showEmptySearchGuidance && input.allHospitalCount === 0;
+    showEmptySearchGuidance && input.allHospitalCount === 0 && !orphanSigungu;
 
   const noResultsAfterRegionOrNameFilter =
     showEmptySearchGuidance &&
     input.allHospitalCount > 0 &&
-    !clinicalFocusExcludedAll;
+    !clinicalFocusExcludedAll &&
+    !orphanSigungu;
 
   return {
     clinicalFocusExcludedAll,
@@ -49,5 +62,6 @@ export function computeHomeSearchDerived(input: HomeSearchDerivedInput): HomeSea
     showEmptySearchGuidance,
     noApiHospitalRows,
     noResultsAfterRegionOrNameFilter,
+    orphanSigungu,
   };
 }

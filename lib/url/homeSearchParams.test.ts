@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parseClinicalFocusParam,
   parseHomeSearchParams,
+  parseTypesParam,
   serializeHomeSearchParams,
 } from '@/lib/url/homeSearchParams';
 
@@ -13,6 +14,10 @@ describe('homeSearchParams', () => {
     expect(parseClinicalFocusParam('orthopedics')).toBe('orthopedics');
   });
 
+  it('parseTypesParam keeps known institution types', () => {
+    expect(parseTypesParam('종합병원,치과,unknown')).toEqual(['종합병원', '치과']);
+  });
+
   it('parseHomeSearchParams trims and omits empty q', () => {
     const sp = new URLSearchParams('sido=11&q=%20%20&focus=plastic_surgery');
     expect(parseHomeSearchParams(sp)).toEqual({
@@ -20,7 +25,13 @@ describe('homeSearchParams', () => {
       sigungu: undefined,
       q: undefined,
       focus: 'plastic_surgery',
+      types: [],
     });
+  });
+
+  it('normalizes long sigungu codes to six digits', () => {
+    const sp = new URLSearchParams('sido=11&sigungu=111100000000');
+    expect(parseHomeSearchParams(sp).sigungu).toBe('111100');
   });
 
   it('serializeHomeSearchParams omits none focus and empty fields', () => {
@@ -29,10 +40,12 @@ describe('homeSearchParams', () => {
       sigungu: '111100',
       hospitalNameCommitted: '  삼성  ',
       clinicalFocus: 'none',
+      types: ['병원'],
     });
     expect(qs).toContain('sido=11');
     expect(qs).toContain('sigungu=111100');
     expect(qs).toContain('q=');
+    expect(qs).toContain('types=');
     expect(qs).not.toContain('focus=');
     expect(serializeHomeSearchParams({ clinicalFocus: 'none' })).toBe('');
   });

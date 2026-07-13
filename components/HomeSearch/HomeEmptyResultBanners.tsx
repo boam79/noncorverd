@@ -2,21 +2,46 @@ interface HomeEmptyResultBannersProps {
   noApiHospitalRows: boolean;
   clinicalFocusExcludedAll: boolean;
   noResultsAfterRegionOrNameFilter: boolean;
+  orphanSigungu?: boolean;
   clinicalFocusLabel: string;
   allHospitalCount: number;
   onClearClinicalFocus: () => void;
+  onClearSigungu?: () => void;
 }
 
 export function HomeEmptyResultBanners({
   noApiHospitalRows,
   clinicalFocusExcludedAll,
   noResultsAfterRegionOrNameFilter,
+  orphanSigungu = false,
   clinicalFocusLabel,
   allHospitalCount,
   onClearClinicalFocus,
+  onClearSigungu,
 }: HomeEmptyResultBannersProps) {
   return (
     <>
+      {orphanSigungu && (
+        <div
+          className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="status"
+        >
+          <p className="font-medium">선택한 시군구 코드가 목록에 없어요.</p>
+          <p className="mt-1 text-amber-900/90">
+            주소나 공유 링크의 시군구 값이 더 이상 유효하지 않을 수 있어요. 시군구를 다시
+            고르면 목록이 갱신됩니다.
+          </p>
+          {onClearSigungu && (
+            <button
+              type="button"
+              onClick={onClearSigungu}
+              className="mt-3 text-sm font-semibold text-amber-950 underline decoration-amber-600"
+            >
+              시군구 선택 지우기
+            </button>
+          )}
+        </div>
+      )}
       {noApiHospitalRows && (
         <div
           className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950"

@@ -64,6 +64,7 @@ export function HomePageContent() {
     setHospitalNameInput(q);
     setHospitalName(q);
     setClinicalFocus(parsed.focus);
+    setSelectedTypes(parsed.types);
     queueMicrotask(() => setHydratedFromUrl(true));
   }, []);
 
@@ -78,6 +79,7 @@ export function HomePageContent() {
       setHospitalNameInput(q);
       setHospitalName(q);
       setClinicalFocus(parsed.focus);
+      setSelectedTypes(parsed.types);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -91,10 +93,11 @@ export function HomePageContent() {
       sigungu,
       hospitalNameCommitted: hospitalName,
       clinicalFocus,
+      types: selectedTypes,
     });
     if (qs === searchParams.toString()) return;
     router.replace(qs ? `/?${qs}` : '/', { scroll: false });
-  }, [sido, sigungu, hospitalName, clinicalFocus, hydratedFromUrl, router, searchParams]);
+  }, [sido, sigungu, hospitalName, clinicalFocus, selectedTypes, hydratedFromUrl, router, searchParams]);
 
   const handleHomeClick = useCallback(() => {
     setSido(undefined);
@@ -108,6 +111,9 @@ export function HomePageContent() {
 
   const { data: sidoBundle } = useRegions();
   const sidoList = useMemo(() => sidoBundle?.regions ?? [], [sidoBundle]);
+  const regionsDegraded = Boolean(
+    (sidoBundle?.meta as { degraded?: boolean } | undefined)?.degraded
+  );
 
   const {
     apiHospitalName,
@@ -134,6 +140,7 @@ export function HomePageContent() {
   useRecordRecentSearchOnHome({
     sido,
     sigungu,
+    sidoList,
     hospitalNameCommitted: hospitalName,
     apiHospitalName,
     sigunguList,
@@ -165,6 +172,11 @@ export function HomePageContent() {
         filteredHospitalCount: hospitals.length,
         sido,
         hospitalNameCommitted: hospitalName,
+        sigungu,
+        sigunguListLength: sigunguList.length,
+        sigunguInList: sigungu
+          ? sigunguList.some((s) => s.code === sigungu)
+          : undefined,
       }),
     [
       clinicalFocus,
@@ -174,6 +186,8 @@ export function HomePageContent() {
       hospitals.length,
       sido,
       hospitalName,
+      sigungu,
+      sigunguList,
     ]
   );
 
@@ -181,6 +195,7 @@ export function HomePageContent() {
     clinicalFocusExcludedAll,
     noApiHospitalRows,
     noResultsAfterRegionOrNameFilter,
+    orphanSigungu,
   } = derived;
 
   const clinicalFocusLabel =
@@ -299,6 +314,7 @@ export function HomePageContent() {
             sido={sido}
             sigungu={sigungu}
             onRegionChange={handleRegionChange}
+            regionsDegraded={regionsDegraded}
             clinicalFocus={clinicalFocus}
             onClinicalFocusChange={setClinicalFocus}
             selectedTypes={selectedTypes}
@@ -334,9 +350,11 @@ export function HomePageContent() {
             noApiHospitalRows={noApiHospitalRows}
             clinicalFocusExcludedAll={clinicalFocusExcludedAll}
             noResultsAfterRegionOrNameFilter={noResultsAfterRegionOrNameFilter}
+            orphanSigungu={orphanSigungu}
             clinicalFocusLabel={clinicalFocusLabel}
             allHospitalCount={allHospitals.length}
             onClearClinicalFocus={() => setClinicalFocus('none')}
+            onClearSigungu={() => setSigungu(undefined)}
             hospitals={hospitals}
             selectedHospitals={selectedHospitals}
             onToggleHospital={toggleHospital}

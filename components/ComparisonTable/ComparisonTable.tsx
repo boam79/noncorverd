@@ -19,6 +19,7 @@ import {
   detectOutliers,
   getTopOutliersByHospital,
 } from '@/lib/utils/anomalyDetector';
+import { comparisonItemKey } from '@/lib/opendata/mapPricingItem';
 
 interface ComparisonTableProps {
   pricingData: HospitalPricing[];
@@ -41,16 +42,18 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
         url?: string;
         startDate?: string;
         endDate?: string;
+        displayName: string;
       }>
     >();
 
     pricingData.forEach((hospital) => {
       hospital.items.forEach((item) => {
-        if (!map.has(item.name)) {
-          map.set(item.name, []);
+        const key = comparisonItemKey(item);
+        if (!map.has(key)) {
+          map.set(key, []);
         }
 
-        map.get(item.name)!.push({
+        map.get(key)!.push({
           hospitalId: hospital.hospitalId,
           hospitalName: hospital.hospitalName,
           price: item.price,
@@ -59,11 +62,12 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           url: item.url,
           startDate: item.startDate,
           endDate: item.endDate,
+          displayName: item.name,
         });
       });
     });
 
-    return Array.from(map.entries()).map(([name, entries]) => {
+    return Array.from(map.entries()).map(([, entries]) => {
       const prices = entries.map((entry) => entry.price);
       const maxPrice = Math.max(...prices);
       const minPrice = Math.min(...prices);
@@ -72,18 +76,24 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           ? Math.round(prices.reduce((sum, value) => sum + value, 0) / prices.length)
           : 0;
 
-      // 모든 병원에 대한 레코드 초기화 (공통 항목일 경우 모든 병원이 있어야 함)
       const hospitalsRecord: Record<string, ComparisonHospitalEntry> = {};
 
-      // 실제 데이터가 있는 병원만 entries에 있으므로, 모든 pricingData의 병원을 확인
       pricingData.forEach((hospital) => {
+        // 동일 병원·동일 키에 여러 행이 있으면 첫 행만 사용(코드 키로 분리됨)
         const entry = entries.find((e) => e.hospitalId === hospital.hospitalId);
         if (entry) {
           const diff = entry.price - averagePrice;
           const percentDiff = averagePrice > 0 ? Math.round((diff / averagePrice) * 100) : 0;
 
           hospitalsRecord[hospital.hospitalId] = {
-            ...entry,
+            hospitalId: entry.hospitalId,
+            hospitalName: entry.hospitalName,
+            price: entry.price,
+            unit: entry.unit,
+            code: entry.code,
+            url: entry.url,
+            startDate: entry.startDate,
+            endDate: entry.endDate,
             diff,
             percentDiff,
             isHighest: entry.price === maxPrice,
@@ -93,13 +103,15 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
       });
 
       const exemplar = entries.find((entry) => entry.unit || entry.code || entry.url) ?? entries[0];
+      const name = exemplar?.displayName ?? entries[0]?.displayName ?? '';
+      const uniqueHospitalCount = new Set(entries.map((e) => e.hospitalId)).size;
 
       return {
         name,
         averagePrice,
         maxPrice,
         minPrice,
-        hospitalCount: entries.length,
+        hospitalCount: uniqueHospitalCount,
         unit: exemplar?.unit,
         code: exemplar?.code,
         url: exemplar?.url,

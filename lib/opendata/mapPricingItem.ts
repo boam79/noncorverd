@@ -32,6 +32,20 @@ export interface MappedPricingItem {
   url: string;
 }
 
+/** Asia/Seoul 기준 오늘 YYYYMMDD */
+export function todayYmdKst(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const y = parts.find((p) => p.type === 'year')?.value ?? '1970';
+  const m = parts.find((p) => p.type === 'month')?.value ?? '01';
+  const d = parts.find((p) => p.type === 'day')?.value ?? '01';
+  return `${y}${m}${d}`;
+}
+
 /** HIRA YYYYMMDD → YYYY-MM-DD (이미 하이픈이면 그대로) */
 export function normalizeHiraDate(value?: string): string {
   if (!value) return '';
@@ -43,14 +57,34 @@ export function normalizeHiraDate(value?: string): string {
   return str;
 }
 
-/** 오늘(YYYYMMDD) 기준 적용 종료일이 지나지 않았으면 true */
+function toYmdDigits(value?: string): string {
+  return String(value || '')
+    .replace(/-/g, '')
+    .replace(/\D/g, '')
+    .slice(0, 8);
+}
+
+/**
+ * 오늘(KST YYYYMMDD) 기준 적용 기간 안이면 true.
+ * - 종료일 없음/`99991231` → 종료 제한 없음
+ * - 시작일 없음 → 시작 제한 없음
+ */
 export function isPricingItemActive(raw: RawPricingItem, todayYmd?: string): boolean {
-  const end = String(raw.adtEndDd || '99991231').replace(/-/g, '').slice(0, 8);
+  const today = todayYmd || todayYmdKst();
+  const start = toYmdDigits(raw.adtFrDd);
+  const end = toYmdDigits(raw.adtEndDd) || '99991231';
+
+  if (start && start.length === 8 && start > today) return false;
   if (end === '99991231') return true;
-  const today =
-    todayYmd ||
-    new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  return end >= today;
+  if (end.length === 8 && end < today) return false;
+  return true;
+}
+
+/** 비교표 집계 키 — 코드가 있으면 코드 우선(동명 이종 항목 분리) */
+export function comparisonItemKey(item: { name: string; code?: string }): string {
+  const code = item.code?.trim();
+  if (code) return `code:${code}`;
+  return `name:${item.name}`;
 }
 
 export function mapPricingItem(raw: RawPricingItem): MappedPricingItem {

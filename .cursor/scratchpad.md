@@ -1378,3 +1378,39 @@ Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변�
 
 ### Status Board
 - [x] ex-p0 / ex-p1a / ex-p1b / verify
+
+---
+
+## 🔍 Bug Hunt #4 (2026-07-13) — Planner
+
+### 잔여 (Round3 이후)
+
+#### P0 (Express/Render 경로)
+1. 다중 종별 필터 시 첫 종별·단일 clCd만 적용
+2. Sejong/주소폴백/멀티 clCd Next 미패리티
+
+#### P1 (Vercel 포함)
+3. 비교표 항목명만 병합 → 동명 다른 코드 가격 유실
+4. isPricingItemActive UTC today (KST 오차)
+5. adtFrDd(시작일) 미검사
+6. Express pricing 부분실패 드롭
+7. rate-limit 공용 버킷
+8. orphan sigungu 빈 결과·안내 부재
+9. 12자리 sigungu 정규화 없음
+10. 최근검색 라벨에 시도명 없음
+11. InstitutionFilter URL 미동기화
+12. regions degraded UI 미표시
+
+#### P2
+CSP unsafe-inline, HSTS 로컬, E2E fixture, usePricing 미사용, mock 잔존, 세종시 붙여쓰기 엣지
+
+### Status: 조사만. Executor 대기.
+
+---
+
+## ✅ Bugfix Round 4 Executor (2026-07-13)
+
+- KST today + adtFrDd, comparisonItemKey(code|name), rate-limit per route
+- sigungu 6자리 정규화, orphan UX, types URL, regions degraded UI, 최근검색 시도명
+- Express 다중종별 후필터, pricing allSettled ok 플래그, E2E 6자리 fixture
+- unit 119, lint, build OK → main

@@ -20,9 +20,11 @@ export interface HomeSearchResultsSectionProps {
   noApiHospitalRows: boolean;
   clinicalFocusExcludedAll: boolean;
   noResultsAfterRegionOrNameFilter: boolean;
+  orphanSigungu?: boolean;
   clinicalFocusLabel: string;
   allHospitalCount: number;
   onClearClinicalFocus: () => void;
+  onClearSigungu?: () => void;
   hospitals: Hospital[];
   selectedHospitals: Hospital[];
   onToggleHospital: (hospital: Hospital) => void;
@@ -40,9 +42,11 @@ export function HomeSearchResultsSection({
   noApiHospitalRows,
   clinicalFocusExcludedAll,
   noResultsAfterRegionOrNameFilter,
+  orphanSigungu = false,
   clinicalFocusLabel,
   allHospitalCount,
   onClearClinicalFocus,
+  onClearSigungu,
   hospitals,
   selectedHospitals,
   onToggleHospital,
@@ -139,9 +143,11 @@ export function HomeSearchResultsSection({
             noApiHospitalRows={noApiHospitalRows}
             clinicalFocusExcludedAll={clinicalFocusExcludedAll}
             noResultsAfterRegionOrNameFilter={noResultsAfterRegionOrNameFilter}
+            orphanSigungu={orphanSigungu}
             clinicalFocusLabel={clinicalFocusLabel}
             allHospitalCount={allHospitalCount}
             onClearClinicalFocus={onClearClinicalFocus}
+            onClearSigungu={onClearSigungu}
           />
           <HospitalCardList
             hospitals={hospitals}

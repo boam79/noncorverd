@@ -43,7 +43,7 @@ export async function enforceOpendataRateLimit(
     request.headers.get('x-real-ip') ||
     'anon';
 
-  const { success, limit, remaining, reset } = await lim.limit(`api:${ip}`);
+  const { success, limit, remaining, reset } = await lim.limit(`api:${route}:${ip}`);
 
   if (!success) {
     recordOpendataRequest(route, 429);

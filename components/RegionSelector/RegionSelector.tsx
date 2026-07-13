@@ -7,6 +7,8 @@ interface RegionSelectorProps {
   onRegionChange: (sido?: string, sigungu?: string) => void;
   sido?: string;
   sigungu?: string;
+  /** 시도 목록이 fallback(degraded)일 때 안내 */
+  degraded?: boolean;
 }
 
 /**
@@ -18,6 +20,7 @@ export function RegionSelector({
   onRegionChange,
   sido: parentSido,
   sigungu: parentSigungu,
+  degraded = false,
 }: RegionSelectorProps) {
   const selectedSido = parentSido ?? '';
   const selectedSigungu = parentSigungu ?? '';
@@ -43,6 +46,11 @@ export function RegionSelector({
 
   return (
     <div className="space-y-4">
+      {degraded && (
+        <p className="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950" role="status">
+          시도 목록을 임시 내장 데이터로 표시 중입니다. 일부 지역명이 최신과 다를 수 있어요.
+        </p>
+      )}
       {(sidoError || sigunguError) && (
         <div className="rounded-lg border border-error-200 bg-error-50 p-3 text-sm text-error-700">
           {sidoError && (
