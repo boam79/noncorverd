@@ -195,6 +195,9 @@ export async function GET(request: NextRequest) {
     const hiraSido = adminSidoKey ? toHiraSido(adminSidoKey) : null;
     if (hiraSido) baseParams.sidoCd = hiraSido;
 
+    /** 세종: 전남(360000)과 분리된 코드(361000) 사용 + 주소에 '세종' 포함 병원만 유지 */
+    const useSejongAddressFilter = adminSidoKey === '36';
+
     const hiraSigungu = sigungu ? toHiraSigungu(sigungu) : null;
     const useAddressSigunguFallback =
       Boolean(sigungu) && !hiraSigungu && Boolean(hiraSido);
@@ -221,7 +224,7 @@ export async function GET(request: NextRequest) {
 
     let filtered: Hospital[];
     let hiraTotalCount = 0;
-    let addressFallbackTruncated = false;
+    let listTruncated = false;
 
     if (useAddressSigunguFallback && !cleanSigunguName) {
       filtered = [];
@@ -231,7 +234,7 @@ export async function GET(request: NextRequest) {
         maxPages
       );
       hiraTotalCount = totalCount;
-      addressFallbackTruncated = truncated;
+      listTruncated = truncated;
       filtered = useAddressSigunguFallback
         ? hospitals.filter((h) =>
             hospitalAddressMatchesSigungu(h.address, officialSigunguName, cleanSigunguName)
@@ -246,7 +249,7 @@ export async function GET(request: NextRequest) {
           typeName,
           maxPages
         );
-        if (truncated) addressFallbackTruncated = true;
+        if (truncated) listTruncated = true;
         for (const h of hospitals) {
           if (!seen.has(h.id)) {
             seen.add(h.id);
@@ -261,6 +264,10 @@ export async function GET(request: NextRequest) {
         : results;
     }
 
+    if (useSejongAddressFilter) {
+      filtered = filtered.filter((h) => (h.address || '').includes('세종'));
+    }
+
     recordOpendataRequest('hospitals', 200);
     return NextResponse.json({
       ok: true,
@@ -270,12 +277,19 @@ export async function GET(request: NextRequest) {
         fetchedAt: new Date().toISOString(),
         source: '공공데이터포털·건강보험심사평가원 병원 기본정보',
         appliedSigunguAddressFallback: useAddressSigunguFallback,
+        listTruncated,
         ...(useAddressSigunguFallback && {
-          addressFallbackTruncated,
+          addressFallbackTruncated: listTruncated,
           ...(typeNames.length === 0 && hiraTotalCount > 0
             ? { hiraSidoTotalCount: hiraTotalCount }
             : {}),
         }),
+        ...(!useAddressSigunguFallback &&
+          listTruncated &&
+          typeNames.length === 0 &&
+          hiraTotalCount > 0 && {
+            hiraSidoTotalCount: hiraTotalCount,
+          }),
       },
     });
   } catch (err) {

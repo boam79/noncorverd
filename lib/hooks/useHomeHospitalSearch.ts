@@ -33,7 +33,7 @@ export function useHomeHospitalSearch({
 
   const {
     data: hospitalsBundle,
-    isLoading,
+    isLoading: hospitalsLoading,
     error,
     refetch: refetchHospitals,
   } = useHospitals({
@@ -48,6 +48,10 @@ export function useHomeHospitalSearch({
     [hospitalsBundle]
   );
   const hospitalsMeta = hospitalsBundle?.meta as ApiResponse['meta'] | undefined;
+
+  // 시군구가 선택됐는데 목록이 아직 없으면 주소 필터 전 로딩으로 간주 (전체 시도 목록 깜빡임 방지)
+  const waitingForSigunguMeta = Boolean(sido && sigungu && sigunguList.length === 0);
+  const isLoading = hospitalsLoading || waitingForSigunguMeta;
 
   const hospitals = useMemo(
     () =>

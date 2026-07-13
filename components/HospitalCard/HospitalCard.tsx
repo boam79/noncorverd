@@ -15,12 +15,30 @@ export function HospitalCard({
   onToggle,
   maxSelectionReached,
 }: HospitalCardProps) {
+  const disabled = maxSelectionReached && !isSelected;
+
+  const handleActivate = () => {
+    if (!disabled) onToggle(hospital);
+  };
+
   return (
     <article
       data-testid="hospital-card"
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-pressed={isSelected}
+      aria-disabled={disabled || undefined}
+      aria-label={`${hospital.name} ${isSelected ? '선택 해제' : '선택'}`}
+      onClick={handleActivate}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleActivate();
+        }
+      }}
       className={`border-b border-line py-4 transition-colors duration-200 animate-fade-in last:border-b-0 ${
         isSelected ? 'bg-brand-50/50' : 'bg-transparent hover:bg-surface-muted/60'
-      } ${maxSelectionReached && !isSelected ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+      } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
     >
       <div className="flex items-start justify-between gap-3 px-1">
         <div className="min-w-0 flex-1">
@@ -57,25 +75,17 @@ export function HospitalCard({
             <p className="mt-1 text-sm tabular-nums text-ink-soft">{hospital.phone}</p>
           )}
         </div>
-        <label className="flex items-center touch-target">
-          <button
-            type="button"
+        <span className="flex items-center touch-target pointer-events-none" aria-hidden>
+          <input
+            type="checkbox"
             data-testid="hospital-select-button"
-            onClick={() => onToggle(hospital)}
-            disabled={maxSelectionReached && !isSelected}
-            className="flex h-6 w-6 items-center justify-center rounded border-line text-brand-600 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={`${hospital.name} ${isSelected ? '선택 해제' : '선택'}`}
-          >
-            <input
-              type="checkbox"
-              checked={isSelected}
-              readOnly
-              disabled={maxSelectionReached && !isSelected}
-              className="pointer-events-none h-6 w-6 rounded border-line text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label={`${hospital.name} ${isSelected ? '선택 해제' : '선택'}`}
-            />
-          </button>
-        </label>
+            checked={isSelected}
+            readOnly
+            tabIndex={-1}
+            disabled={disabled}
+            className="h-6 w-6 rounded border-line text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </span>
       </div>
     </article>
   );

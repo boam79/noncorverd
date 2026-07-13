@@ -48,4 +48,29 @@ describe('filterHospitalsForHome', () => {
     });
     expect(out.map((x) => x.id)).toEqual(['1']);
   });
+
+  it('returns empty when sigungu code is unknown after list loaded', () => {
+    const sigunguList: Region[] = [{ code: '116800', name: '서울특별시 강남구' }];
+    const all = [h({ id: '1', name: 'A', address: '서울특별시 강남구 테헤란로 1' })];
+    const out = filterHospitalsForHome({
+      allHospitals: all,
+      sigunguList,
+      sigungu: '999999',
+      nameForClientFilter: '',
+      clinicalFocus: 'none',
+    });
+    expect(out).toHaveLength(0);
+  });
+
+  it('skips address filter while sigungu list is still empty (loading)', () => {
+    const all = [h({ id: '1', name: 'A', address: '서울특별시 종로구 1' })];
+    const out = filterHospitalsForHome({
+      allHospitals: all,
+      sigunguList: [],
+      sigungu: '111100',
+      nameForClientFilter: '',
+      clinicalFocus: 'none',
+    });
+    expect(out).toHaveLength(1);
+  });
 });

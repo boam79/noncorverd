@@ -17,16 +17,22 @@ const isVercelDeployment = () => {
   return false;
 };
 
-// API Base URL 결정 함수
+/**
+ * API Base URL 결정.
+ * - Vercel / 브라우저 동일 출처: Next BFF `/api/opendata`
+ * - 명시적 NEXT_PUBLIC_API_BASE_URL (예: Render Express) 만 외부 백엔드로 분기
+ * - localhost:3001 하드코딩 폴백 제거(비-Vercel 호스트에서 잘못된 호출 방지)
+ */
 const getApiBaseUrl = () => {
-  // Vercel 배포인 경우 무조건 프록시 사용 (환경변수 무시)
   if (isVercelDeployment()) {
     return '/api/opendata';
   }
-  
-  // 로컬 개발 또는 다른 환경
-  // 환경변수가 설정되어 있으면 사용, 없으면 기본값
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/opendata';
+
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+
+  return '/api/opendata';
 };
 
 // 런타임에 동적으로 결정 (클라이언트 사이드에서만)
@@ -36,13 +42,19 @@ const getRuntimeApiBaseUrl = () => {
     if (hostname.includes('vercel.app') || hostname.includes('vercel.com')) {
       return '/api/opendata';
     }
+    // 커스텀 도메인·프리뷰 등: 명시 env 없으면 동일 출처 BFF
+    if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+      return '/api/opendata';
+    }
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
   return null; // 서버 사이드에서는 null 반환
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
-const CLIENT_TOKEN = process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || process.env.CLIENT_OPENDATA_TOKEN || "";
+/** 브라우저에는 NEXT_PUBLIC_ 만 주입됨. 서버 전용 CLIENT_OPENDATA_TOKEN 은 클라이언트에서 비어 있음 */
+const CLIENT_TOKEN = process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || "";
 
 /**
  * 공공데이터 API 클라이언트
@@ -175,4 +187,3 @@ export class ApiClient {
 
 // 싱글톤 인스턴스
 export const apiClient = new ApiClient();
-

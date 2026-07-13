@@ -51,6 +51,7 @@ export function HomeSearchResultsSection({
     | (ApiResponse['meta'] & {
         appliedSigunguAddressFallback?: boolean;
         addressFallbackTruncated?: boolean;
+        listTruncated?: boolean;
         hiraSidoTotalCount?: number;
       })
     | undefined;
@@ -102,7 +103,18 @@ export function HomeSearchResultsSection({
             {metaExtra?.appliedSigunguAddressFallback && (
               <span className="ml-1 text-amber-800">
                 · 시군구 코드 폴백(주소 필터) 적용
-                {metaExtra.addressFallbackTruncated ? ' · 일부만 수집됨' : ''}
+                {metaExtra.addressFallbackTruncated || metaExtra.listTruncated
+                  ? ' · 일부만 수집됨'
+                  : ''}
+              </span>
+            )}
+            {!metaExtra?.appliedSigunguAddressFallback && metaExtra?.listTruncated && (
+              <span className="ml-1 text-amber-800">
+                · 시도 내 병원이 많아 일부만 표시됩니다. 시군구를 고르거나 병원명으로
+                좁혀 보세요
+                {metaExtra.hiraSidoTotalCount
+                  ? ` (전체 약 ${metaExtra.hiraSidoTotalCount.toLocaleString()}곳)`
+                  : ''}
               </span>
             )}
           </p>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api';
+import { useComparisonStore } from '@/lib/stores/comparisonStore';
 
 /** 공유 복원 시 `router.replace`만 사용 */
 export type ComparisonShareRouter = {
@@ -9,8 +10,20 @@ import { decodeSharePayload, SHARE_PARAM } from '@/lib/utils/shareLink';
 import { COMPARISON_QUANTITIES_STORAGE_KEY } from '@/components/ComparisonTable/types';
 import type { Hospital, HospitalPricing } from '@/types';
 
+function waitForPersistHydration(): Promise<void> {
+  const api = useComparisonStore.persist;
+  if (api.hasHydrated()) return Promise.resolve();
+  return new Promise((resolve) => {
+    const unsub = api.onFinishHydration(() => {
+      unsub();
+      resolve();
+    });
+  });
+}
+
 /**
  * URL `s` 공유 페이로드 복원: 가격 API로 병원 목록 채운 뒤 스토어 반영·URL 정리.
+ * persist rehydrate가 끝난 뒤에 적용해 localStorage 선택이 공유 목록을 덮어쓰지 않게 합니다.
  */
 export function useComparisonShareHydration(
   searchParams: URLSearchParams,
@@ -56,6 +69,9 @@ export function useComparisonShareHydration(
 
     (async () => {
       try {
+        await waitForPersistHydration();
+        if (cancelled) return;
+
         const response = await apiClient.getNonCoveredPricing(
           decodedPreview.i,
           decodedPreview.i.map((id) => ({ id, name: '' }))

@@ -12,11 +12,11 @@ describe('shareLink', () => {
     expect(decodeSharePayload('not-valid')).toBeNull();
   });
 
-  it('caps ids and accepts optional q', () => {
+  it('caps ids to max comparison selection (5) and accepts optional q', () => {
     const ids = Array.from({ length: 12 }, (_, i) => `id${i}`);
     const encoded = encodeSharePayload({ v: 1, i: ids, q: { 초음파: 2 } });
     const decoded = decodeSharePayload(encoded);
-    expect(decoded?.i.length).toBeLessThanOrEqual(8);
+    expect(decoded?.i.length).toBeLessThanOrEqual(5);
     expect(decoded?.q?.초음파).toBe(2);
   });
 });

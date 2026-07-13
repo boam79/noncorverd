@@ -31,6 +31,7 @@ export function ComparisonPageClient() {
     isLoading,
     isFetching,
     error,
+    partialFailureCount,
     refetch,
     fetchedAt,
     progress,
@@ -112,6 +113,7 @@ export function ComparisonPageClient() {
           progressTotal={progress.total}
           isLoading={isLoading}
           error={error}
+          partialFailureCount={partialFailureCount}
           onRetryPricing={() => {
             void refetch();
           }}

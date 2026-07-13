@@ -4,34 +4,19 @@ import { opendataRoutePrelude } from '@/lib/opendata/opendataRoutePrelude';
 import { pricingBodySchema } from '@/lib/validation/opendataSchemas';
 import { recordOpendataRequest } from '@/lib/observability/opendataMetrics';
 import { logRouteError } from '@/lib/observability/safeServerLog';
+import {
+  averagePositivePrice,
+  mapPricingItem,
+  type RawPricingItem,
+} from '@/lib/opendata/mapPricingItem';
 
 const PRICING_ENDPOINT = '/B551182/nonPaymentDamtInfoService/getNonPaymentItemHospDtlList';
 
-interface PricingItem {
-  npayKorNm?: string;
-  curAmt?: string;
-  maxAmt?: string;
-  minAmt?: string;
-  npayClsNm?: string;
-  yadmNpayCdNm?: string;
-  adtFrDd?: string;
-  adtEndDd?: string;
-  urlAddr?: string;
-  [key: string]: string | undefined;
-}
-
-function mapPricingItem(raw: PricingItem) {
-  return {
-    name: raw.npayKorNm ?? raw.yadmNpayCdNm ?? '',
-    price: Number(raw.curAmt ?? 0),
-    maxPrice: Number(raw.maxAmt ?? 0),
-    minPrice: Number(raw.minAmt ?? 0),
-    category: raw.npayClsNm ?? '',
-    unit: raw.yadmNpayCdNm ?? '',
-    validFrom: raw.adtFrDd ?? '',
-    validTo: raw.adtEndDd ?? '',
-    url: raw.urlAddr ?? '',
-  };
+/** 병원당 최대 페이지(100건×N). 환경변수로 조절 가능 */
+function maxPricingPages(): number {
+  const raw = Number(process.env.PRICING_MAX_PAGES ?? 15);
+  if (!Number.isFinite(raw) || raw < 1) return 1;
+  return Math.min(Math.floor(raw), 50);
 }
 
 export async function POST(request: NextRequest) {
@@ -64,15 +49,31 @@ export async function POST(request: NextRequest) {
 
   try {
     const results = await Promise.allSettled(
-      hospitalIds.map((id) => fetchHospitalPricing(id, hospitalMap.get(id) ?? ''))
+      hospitalIds.map((id) => fetchHospitalPricing(id))
     );
 
-    const data = results.map((r, i) => ({
-      hospitalId: hospitalIds[i],
-      hospitalName: hospitalMap.get(hospitalIds[i]) ?? '',
-      items: r.status === 'fulfilled' ? r.value : [],
-      ok: r.status === 'fulfilled',
-    }));
+    const data = results.map((r, i) => {
+      const hospitalId = hospitalIds[i];
+      const hospitalName = hospitalMap.get(hospitalId) ?? '';
+      if (r.status === 'fulfilled') {
+        return {
+          hospitalId,
+          hospitalName,
+          items: r.value.items,
+          averagePrice: r.value.averagePrice,
+          totalItems: r.value.totalItems,
+          ok: true,
+        };
+      }
+      return {
+        hospitalId,
+        hospitalName,
+        items: [],
+        averagePrice: 0,
+        totalItems: 0,
+        ok: false,
+      };
+    });
 
     recordOpendataRequest('pricing', 200);
     return NextResponse.json({
@@ -94,12 +95,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function fetchHospitalPricing(ykiho: string, _hospitalName: string) {
-  const { items } = await fetchPublicData(PRICING_ENDPOINT, {
-    ykiho,
-    numOfRows: 100,
-    pageNo: 1,
-    _cache: 600,
-  });
-  return (items as PricingItem[]).map(mapPricingItem);
+async function fetchHospitalPricing(ykiho: string) {
+  const mapped = [];
+  let total = 0;
+  const maxPages = maxPricingPages();
+
+  for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
+    const { items, total: t } = await fetchPublicData(PRICING_ENDPOINT, {
+      ykiho,
+      numOfRows: 100,
+      pageNo,
+      _cache: 600,
+    });
+    if (pageNo === 1) total = Number(t) || 0;
+
+    const batch = (items as RawPricingItem[]).map(mapPricingItem);
+    if (batch.length === 0) break;
+    mapped.push(...batch);
+
+    if (total > 0 && mapped.length >= total) break;
+    if (batch.length < 100) break;
+  }
+
+  return {
+    items: mapped,
+    averagePrice: averagePositivePrice(mapped),
+    totalItems: mapped.length,
+  };
 }

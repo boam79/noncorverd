@@ -13,7 +13,7 @@ export interface PricingProgressMeta {
 
 /**
  * 병원별로 가격 API를 나눠 호출해, 일부가 먼저 도착하면 표에 반영할 수 있습니다.
- * (공공 API 호출 횟수는 병원 수만큼 증가합니다.)
+ * 일부 병원만 실패해도 성공분 비교 UI는 유지합니다.
  */
 export function usePricingProgressive(hospitals: Hospital[], enabled: boolean) {
   const queries = useQueries({
@@ -82,7 +82,13 @@ export function usePricingProgressive(hospitals: Hospital[], enabled: boolean) {
     return latest;
   }, [queries]);
 
-  const error = queries.find((q) => q.error)?.error ?? null;
+  const successCount = queries.filter((q) => q.isSuccess).length;
+  const failedQueries = queries.filter((q) => q.isError);
+  // 전부 실패할 때만 치명적 에러 — 일부 성공 시에는 표 + 부분 실패 경고
+  const error =
+    successCount === 0 ? (failedQueries[0]?.error ?? null) : null;
+  const partialFailureCount =
+    successCount > 0 ? failedQueries.length : 0;
 
   const refetch = () => {
     void Promise.all(queries.map((q) => q.refetch()));
@@ -93,6 +99,7 @@ export function usePricingProgressive(hospitals: Hospital[], enabled: boolean) {
     isLoading,
     isFetching,
     error,
+    partialFailureCount,
     refetch,
     fetchedAt,
     progress,

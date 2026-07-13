@@ -9,14 +9,14 @@ interface UseServerReadyOptions {
   showBannerAfterMs?: number;
   /** 준비 완료 배너를 자동으로 숨길 시간 (ms) */
   autoDismissMs?: number;
-  /** health check URL */
+  /** health check URL (무인증 liveness 권장) */
   healthUrl?: string;
 }
 
 export function useServerReady({
   showBannerAfterMs = 2000,
   autoDismissMs = 4000,
-  healthUrl = '/api/opendata/regions',
+  healthUrl = '/api/health',
 }: UseServerReadyOptions = {}) {
   const [status, setStatus] = useState<ServerStatus>('idle');
   const [showBanner, setShowBanner] = useState(false);
@@ -43,7 +43,6 @@ export function useServerReady({
 
     fetch(healthUrl, {
       method: 'GET',
-      headers: { 'X-Client-Token': process.env.NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN || 'dev-client-token-12345' },
       signal: controller.signal,
     })
       .then((res) => {

@@ -23,7 +23,9 @@ export async function fetchPublicData(
   qs.append('numOfRows', String(params.numOfRows ?? 100));
   qs.append('pageNo', String(params.pageNo ?? 1));
   for (const [k, v] of Object.entries(params)) {
-    if (k !== 'numOfRows' && k !== 'pageNo') qs.append(k, String(v));
+    // `_cache` 는 Next fetch revalidate 힌트용 — 공공 API 쿼리에 넣지 않음
+    if (k === 'numOfRows' || k === 'pageNo' || k === '_cache') continue;
+    qs.append(k, String(v));
   }
 
   const url = `${API_BASE}${endpoint}?${qs.toString()}`;

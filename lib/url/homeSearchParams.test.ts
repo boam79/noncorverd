@@ -36,4 +36,15 @@ describe('homeSearchParams', () => {
     expect(qs).not.toContain('focus=');
     expect(serializeHomeSearchParams({ clinicalFocus: 'none' })).toBe('');
   });
+
+  it('drops orphan sigungu when sido is missing', () => {
+    const sp = new URLSearchParams('sigungu=111100&q=병원');
+    expect(parseHomeSearchParams(sp).sigungu).toBeUndefined();
+    expect(
+      serializeHomeSearchParams({
+        sigungu: '111100',
+        clinicalFocus: 'none',
+      })
+    ).toBe('');
+  });
 });

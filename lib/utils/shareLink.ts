@@ -39,7 +39,12 @@ function base64UrlToUtf8(b64url: string): string {
 }
 
 export function encodeSharePayload(payload: SharePayload): string {
-  return utf8ToBase64Url(JSON.stringify(payload));
+  const normalized: SharePayloadV1 = {
+    v: 1,
+    i: payload.i.slice(0, 5),
+  };
+  if (payload.q) normalized.q = payload.q;
+  return utf8ToBase64Url(JSON.stringify(normalized));
 }
 
 export function decodeSharePayload(raw: string): SharePayload | null {
@@ -52,7 +57,7 @@ export function decodeSharePayload(raw: string): SharePayload | null {
     if (obj.v !== 1 || !Array.isArray(obj.i)) return null;
     const ids = obj.i.filter((x): x is string => typeof x === 'string' && x.length > 0);
     if (ids.length === 0) return null;
-    const out: SharePayloadV1 = { v: 1, i: ids.slice(0, 8) };
+    const out: SharePayloadV1 = { v: 1, i: ids.slice(0, 5) };
     if (obj.q && typeof obj.q === 'object' && obj.q !== null) {
       const q: Record<string, number> = {};
       for (const [k, v] of Object.entries(obj.q as Record<string, unknown>)) {

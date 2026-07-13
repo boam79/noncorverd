@@ -1232,3 +1232,38 @@ Playwright E2E(chromium, 53개 중 46개 실패)로 실제로 재현했고, 변�
 - `backend/` 완전 폐기 여부는 되돌리기 어려운 결정이라 임의로 삭제하지 않고 "유지하되 보조 경로로 격하"로 처리했습니다. 완전 폐기를 원하시면 알려주시면 후속 커밋으로 정리하겠습니다.
 - Sentry는 실제로 붙여봤다가 번들 크기 문제로 되돌렸습니다(위 근거 참고). 모니터링이 꼭 필요하시면 번들 비용을 감수할지, 더 가벼운 대안(예: 자체 에러 로그 API + 외부 알림)을 쓸지 방향을 알려주시면 진행하겠습니다.
 
+
+---
+
+## 🐛 Bugfix Sweep (2026-07-13) — Planner/Executor
+
+### Background and Motivation
+- 사용자: "버그를 모두 찾아서 개선래" — 전수 조사 후 P0/P1 수정.
+
+### Key Challenges and Analysis
+- 세종(36)·전남(46) HIRA sido 충돌(둘 다 360000)
+- pricing이 validFrom/validTo만 매핑 → UI startDate/endDate·averagePrice 공백
+- 가격 1페이지(100건)만 조회
+- progressive pricing 1건 실패 시 전체 UI 차단
+- 공유 링크 vs zustand persist 레이스
+- HospitalCard button>checkbox 잘못된 HTML
+- API base URL localhost 폴백, useServerReady 하드코딩 토큰
+- share 8 vs store 5, orphan sigungu, 시군구 로딩 깜빡임, 시도 목록 잘림 UX
+
+### High-level Task Breakdown
+1. 코드맵·가격 매핑·페이지네이션·부분 실패·공유·카드·URL·토큰·목록 truncated UX 수정
+2. 단위 테스트 보강 후 lint/unit/build/e2e
+3. 브랜치 푸시·PR·(가능 시 main)
+
+### Project Status Board (2026-07-13 bugfix)
+- [x] hunt: 버그 전수 조사
+- [x] fix: P0/P1 수정 + 테스트
+- [ ] verify: e2e + push/PR
+
+### Executor's Feedback
+- 세종 HIRA 코드는 `361000`으로 분리 + 주소에 '세종' 포함 필터. 실측 API 키 없이 확정 불가 — 배포 후 세종 검색 스모크 권장.
+- unit 100 passed, lint/build OK.
+
+### Lessons
+- `_cache` 를 공공 API 쿼리에 넣지 말 것 (Next revalidate 전용).
+- 클라이언트 토큰은 `NEXT_PUBLIC_CLIENT_OPENDATA_TOKEN`만 브라우저에 존재.

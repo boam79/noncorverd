@@ -15,6 +15,8 @@ export interface ComparisonPricingPanelProps {
   progressTotal: number;
   isLoading: boolean;
   error: unknown;
+  /** 일부 병원만 가격 조회 실패했을 때 건수 (전체 실패는 error 로 처리) */
+  partialFailureCount?: number;
   onRetryPricing: () => void;
   hospitalsWithNoItems: HospitalPricing[];
   excludeZeroItemHospitals: boolean;
@@ -32,6 +34,7 @@ export function ComparisonPricingPanel({
   progressTotal,
   isLoading,
   error,
+  partialFailureCount = 0,
   onRetryPricing,
   hospitalsWithNoItems,
   excludeZeroItemHospitals,
@@ -70,6 +73,22 @@ export function ComparisonPricingPanel({
         <p className="text-sm text-gray-600 mb-3" role="status">
           병원별 가격을 받는 중입니다 ({progressDone}/{progressTotal})…
         </p>
+      )}
+
+      {!isLoading && !error && partialFailureCount > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p>
+            {partialFailureCount}곳의 가격 정보를 불러오지 못했습니다. 성공한 병원만
+            비교에 표시합니다.
+          </p>
+          <button
+            type="button"
+            onClick={onRetryPricing}
+            className="mt-2 text-sm font-medium text-amber-950 underline underline-offset-2"
+          >
+            실패한 병원 다시 시도
+          </button>
+        </div>
       )}
 
       {!isLoading && !error && hospitalsWithNoItems.length > 0 && (

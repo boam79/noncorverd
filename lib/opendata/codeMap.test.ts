@@ -10,6 +10,12 @@ describe('toHiraSido', () => {
     expect(toHiraSido('41')).toBe('310000');
   });
 
+  it('maps Sejong and Jeonnam to distinct HIRA codes', () => {
+    expect(toHiraSido('36')).toBe('361000');
+    expect(toHiraSido('46')).toBe('360000');
+    expect(toHiraSido('36')).not.toBe(toHiraSido('46'));
+  });
+
   it('returns null for unknown code', () => {
     expect(toHiraSido('99')).toBeNull();
   });
