@@ -1436,7 +1436,8 @@ CSP unsafe-inline, HSTS 로컬, E2E fixture, usePricing 미사용, mock 잔존, 
 ### Project Status Board
 - [x] us-hunt
 - [x] us-fix
-- [ ] us-push (커밋·PR·main)
+- [x] us-push (main `0e18f40`, PR #4)
 
 ### Executor's Feedback
 - Prod 배포 후 hospitals 200 재확인 필요. Vercel에 최신 main 반영되면 P0 해소.
+- Planner 확인 후 전체 완료 선언 요청.
