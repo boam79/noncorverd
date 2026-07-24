@@ -118,7 +118,7 @@ test.describe('병원 비교 핵심 플로우', () => {
     expect(after).not.toEqual(before);
   });
 
-  test('추천 병원 불러오기 버튼 동작', async ({ page }) => {
+  test('추천 병원 보기 버튼 동작', async ({ page }) => {
     await installComparisonFlowMocks(page);
     await page.goto('/');
     await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
@@ -140,7 +140,7 @@ test.describe('병원 비교 핵심 플로우', () => {
     await page.waitForTimeout(1200);
 
     await expandHomeRecommendIfCollapsed(page);
-    const recommendButton = page.getByRole('button', { name: /추천 병원 불러오기/ });
+    const recommendButton = page.getByRole('button', { name: /추천 병원 보기/ });
     await expect(recommendButton).toBeVisible();
     await recommendButton.click();
 
@@ -180,7 +180,7 @@ test.describe('병원 비교 핵심 플로우', () => {
     ).toBeVisible();
   });
 
-  test('관심 분야 선택 후 추천 병원 불러오기', async ({ page }) => {
+  test('관심 분야 선택 후 추천 병원 보기', async ({ page }) => {
     await installObstetricsRecommendMocks(page);
     await page.goto('/');
     await expect(page).toHaveTitle(/비급여비교|비급여 비교|의료기관/);
@@ -207,7 +207,7 @@ test.describe('병원 비교 핵심 플로우', () => {
     await page.waitForTimeout(200);
 
     await expandHomeRecommendIfCollapsed(page);
-    const recommendButton = page.getByRole('button', { name: /추천 병원 불러오기/ });
+    const recommendButton = page.getByRole('button', { name: /추천 병원 보기/ });
     await expect(recommendButton).toBeEnabled({ timeout: 15000 });
     await recommendButton.click();
 

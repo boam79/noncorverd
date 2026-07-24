@@ -61,7 +61,16 @@
 - [x] `npm run build`
 - [x] `npx playwright test e2e/hospital-comparison.spec.ts --project=chromium`
 
+## UI v3 고도화 (2026-07)
+
+- **토큰 통일**: Blue/Violet/Sky/Gray admin 스타일 제거 → `brand` / `ink` / `surface` / `line` / semantic 토큰.
+- **검색 패널**: 단일 surface 카드, 관심 분야·종별 **칩(가로 스크롤)**, 추천 CTA `추천 병원 보기`(brand).
+- **결과**: 병원 **2열 카드 그리드**, 선택 ring 강조.
+- **비교 패널**: brand 헤더·버튼, 최저=`brand`, 최고=`error`/`warning`.
+- **모바일 비교**: 병원 탭 스위처 + 터치 스와이프 전환.
+- **Empty/Error/Loading**: 이모지 제거, SVG 아이콘·brand 스피너.
+
 ## 다음 Executor 제안
 
-- 메인·비교 외 화면에 동일 토큰 적용.
 - `q`와 입력창 미확정 값 분리 UX(디바운스 반영 여부)를 기획과 합의 후 문서·URL 규칙에 명시.
+- 비교 표 요약 인사이트 카드(절감액·최저가 병원) 데이터 바인딩.

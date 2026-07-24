@@ -67,7 +67,7 @@ export function HomeSearchPanel({
 
   return (
     <div
-      className="space-y-6 border-t border-line pt-8"
+      className="space-y-6 rounded-2xl border border-line bg-surface p-5 shadow-sm md:p-8"
       role="search"
       aria-labelledby="search-heading"
     >
@@ -86,18 +86,18 @@ export function HomeSearchPanel({
       </div>
 
       {recentList.length > 0 && (
-        <div id={HOME_SECTION_IDS.recent} className="text-sm text-gray-600">
+        <div id={HOME_SECTION_IDS.recent} className="text-sm text-ink-muted">
           <button
             type="button"
             data-testid="home-recent-toggle"
-            className="mb-2 flex w-full items-center justify-between rounded-control border border-line bg-surface-muted px-3 py-2 text-left text-sm font-medium text-gray-900 md:hidden"
+            className="mb-2 flex w-full items-center justify-between rounded-control border border-line bg-surface-muted px-3 py-2 text-left text-sm font-medium text-ink md:hidden"
             onClick={() => setRecentOpen((o) => !o)}
             aria-expanded={recentOpen}
           >
             <span>최근 검색 ({recentList.length})</span>
-            <span className="text-xs text-gray-500">{recentOpen ? '접기' : '펼치기'}</span>
+            <span className="text-xs text-ink-soft">{recentOpen ? '접기' : '펼치기'}</span>
           </button>
-          <p className="mb-2 hidden font-medium text-gray-800 md:block">최근 검색</p>
+          <p className="mb-2 hidden font-medium text-ink md:block">최근 검색</p>
           <ul
             className={`flex flex-wrap gap-2 ${recentOpen ? '' : 'max-md:hidden'} md:flex`}
             aria-label="최근 검색 조건"
@@ -107,7 +107,7 @@ export function HomeSearchPanel({
                 <button
                   type="button"
                   onClick={() => onApplyRecent(r)}
-                  className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="rounded-full border border-line bg-surface-muted px-3 py-1.5 text-xs text-ink hover:bg-brand-50 hover:border-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   {r.label}
                 </button>
@@ -129,7 +129,7 @@ export function HomeSearchPanel({
       <div id={HOME_SECTION_IDS.name}>
         <label
           htmlFor="hospital-name-search"
-          className="mb-2 block text-sm font-medium text-gray-800"
+          className="mb-2 block text-sm font-medium text-ink"
         >
           의료기관명 검색
         </label>
@@ -146,15 +146,15 @@ export function HomeSearchPanel({
               }
             }}
             placeholder="의료기관명을 입력하세요 (예: 서울대학교병원)"
-            className="w-full rounded-control border border-gray-300 bg-surface px-4 py-3.5 pr-36 text-base text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
+            className="w-full rounded-control border border-line bg-surface px-4 py-3.5 pr-36 text-base text-ink outline-none transition-all placeholder:text-ink-soft focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
           />
           <button
             type="button"
             onClick={onSearchSubmit}
-            className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+            className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-control bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
             aria-label="검색 적용"
           >
-            <kbd className="rounded border border-primary-800 bg-primary-700 px-1.5 py-0.5 font-mono text-xs text-white">
+            <kbd className="rounded border border-brand-800 bg-brand-700 px-1.5 py-0.5 font-mono text-xs text-white">
               Enter
             </kbd>
             <span>검색</span>
@@ -162,16 +162,16 @@ export function HomeSearchPanel({
         </div>
         {namePending && (
           <p
-            className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+            className="mt-2 rounded-control border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-950"
             role="status"
           >
             <span className="font-semibold">적용 전 입력이 있어요.</span> 목록에 반영하려면
-            오른쪽 <strong>검색</strong> 또는 <kbd className="rounded bg-amber-100 px-1 font-mono text-xs">Enter</kbd>
+            오른쪽 <strong>검색</strong> 또는 <kbd className="rounded bg-warning-100 px-1 font-mono text-xs">Enter</kbd>
             를 눌러 주세요.
           </p>
         )}
         {!sido && hospitalNameInput.trim() && (
-          <p className="mt-2 text-sm text-amber-700">
+          <p className="mt-2 text-sm text-warning-700">
             시도를 선택하면 더 정확한 검색이 가능합니다.
           </p>
         )}
@@ -189,13 +189,13 @@ export function HomeSearchPanel({
           type="button"
           data-testid="home-clinical-toggle"
           onClick={() => setClinicalMobileOpen((o) => !o)}
-          className="mb-2 flex w-full items-center justify-between gap-2 rounded-control border border-line bg-surface-muted px-4 py-3 text-left text-sm font-medium text-gray-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 md:hidden"
+          className="mb-2 flex w-full items-center justify-between gap-2 rounded-control border border-line bg-surface-muted px-4 py-3 text-left text-sm font-medium text-ink outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 md:hidden"
           aria-expanded={clinicalMobileOpen}
         >
           <span>
-            관심 분야: <span className="font-semibold text-primary-800">{clinicalFocusLabel}</span>
+            관심 분야: <span className="font-semibold text-brand-800">{clinicalFocusLabel}</span>
           </span>
-          <span className="shrink-0 text-xs text-gray-500">
+          <span className="shrink-0 text-xs text-ink-soft">
             {clinicalMobileOpen ? '접기' : '펼치기'}
           </span>
         </button>
@@ -208,13 +208,13 @@ export function HomeSearchPanel({
         <button
           type="button"
           data-testid="home-recommend-toggle"
-          className="mb-2 flex w-full items-center justify-between rounded-control border border-line bg-surface-muted px-4 py-3 text-left text-sm font-medium text-gray-900 md:hidden"
+          className="mb-2 flex w-full items-center justify-between rounded-control border border-line bg-surface-muted px-4 py-3 text-left text-sm font-medium text-ink md:hidden"
           onClick={() => setRecommendOpen((o) => !o)}
           aria-expanded={recommendOpen}
           aria-controls="home-recommend-panel"
         >
           <span>추천·자동 선택</span>
-          <span className="text-xs text-gray-500">{recommendOpen ? '접기' : '펼치기'}</span>
+          <span className="text-xs text-ink-soft">{recommendOpen ? '접기' : '펼치기'}</span>
         </button>
         <div
           id="home-recommend-panel"
@@ -226,27 +226,27 @@ export function HomeSearchPanel({
                 type="button"
                 onClick={onAutoRecommend}
                 disabled={isRecommending || filteredHospitalCount === 0}
-                className="rounded-control bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className="rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-line-strong disabled:text-ink-soft"
               >
-                {isRecommending ? '추천 계산 중...' : '추천 병원 불러오기'}
+                {isRecommending ? '추천 계산 중...' : '추천 병원 보기'}
               </button>
-              {recommendMessage && <p className="text-sm text-gray-600">{recommendMessage}</p>}
+              {recommendMessage && <p className="text-sm text-ink-muted">{recommendMessage}</p>}
               {recommendBreakdown && recommendBreakdown.length > 0 && (
-                <details className="w-full max-w-2xl rounded-lg border border-violet-100 bg-violet-50/40 px-3 py-2 text-sm text-gray-700">
-                  <summary className="cursor-pointer font-medium text-violet-900">
+                <details className="w-full max-w-2xl rounded-control border border-brand-100 bg-brand-50/50 px-3 py-2 text-sm text-ink-muted">
+                  <summary className="cursor-pointer font-medium text-brand-900">
                     추천 점수 상세 (완전성·항목수·가격 안정성)
                   </summary>
                   <ul className="mt-2 list-none space-y-2 p-0">
                     {recommendBreakdown.map((row) => (
                       <li
                         key={row.hospitalId}
-                        className="rounded-md border border-violet-100 bg-white/80 px-3 py-2"
+                        className="rounded-control border border-brand-100 bg-surface/80 px-3 py-2"
                       >
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-ink">
                           {row.hospitalName}{' '}
-                          <span className="text-violet-700">종합 {row.score}점</span>
+                          <span className="text-brand-700">종합 {row.score}점</span>
                         </div>
-                        <div className="mt-1 grid gap-1 text-xs text-gray-600 sm:grid-cols-3">
+                        <div className="mt-1 grid gap-1 text-xs text-ink-soft sm:grid-cols-3">
                           <span>완전성 {row.completenessScore}점</span>
                           <span>상대 항목수 {row.itemCountScore}점</span>
                           <span>가격 안정성 {row.stabilityScore}점</span>
@@ -258,7 +258,7 @@ export function HomeSearchPanel({
               )}
             </div>
             {clinicalFocusExcludedAll && (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-warning-800">
                 지금 선택하신 「{clinicalFocusLabel}」에 맞는 병원이 목록에 없어 추천을 준비하지
                 못했어요. 관심 분야를 잠시 내려두거나, 지역·병원 이름을 바꿔 다시 찾아보시면
                 어떨까요.
@@ -268,7 +268,7 @@ export function HomeSearchPanel({
         </div>
       </div>
 
-      <p className="border-t border-line pt-4 text-xs text-gray-500">
+      <p className="border-t border-line pt-4 text-xs text-ink-soft">
         공공데이터에 등록된 의료기관·항목에 따라 결과가 달라질 수 있습니다. 진료과·이름 매칭은
         참고용 추정입니다.
       </p>

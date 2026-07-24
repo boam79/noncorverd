@@ -78,17 +78,20 @@ export function CompareBar({
   return (
     <div
       id="compare-bar"
-      className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up border-t border-line bg-surface-glass backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up border-t border-brand-100 bg-surface-glass shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur-md"
     >
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3.5 md:py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-4">
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-ink-muted hover:text-ink"
+              className="rounded-control border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-brand-200 hover:text-ink"
             >
-              {isExpanded ? '접기' : '펼치기'} ({selectedHospitals.length}/{maxSelection})
+              {isExpanded ? '접기' : '펼치기'}{' '}
+              <span className="font-semibold text-brand-800">
+                {selectedHospitals.length}/{maxSelection}
+              </span>
             </button>
             {isExpanded && (
               <div className="flex flex-wrap gap-2">

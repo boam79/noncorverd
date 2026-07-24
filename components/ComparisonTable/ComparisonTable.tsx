@@ -294,8 +294,8 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               onClick={() => setViewMode('common')}
               className={`px-3 py-1.5 rounded-full text-sm border ${
                 viewMode === 'common'
-                  ? 'border-primary-500 text-primary-600 bg-primary-50'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                  ? 'border-brand-500 text-brand-700 bg-brand-50'
+                  : 'border-line text-ink-muted hover:bg-surface-muted'
               }`}
             >
               공통 항목 ({commonItemCount})
@@ -305,8 +305,8 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               onClick={() => setViewMode('all')}
               className={`px-3 py-1.5 rounded-full text-sm border ${
                 viewMode === 'all'
-                  ? 'border-primary-500 text-primary-600 bg-primary-50'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                  ? 'border-brand-500 text-brand-700 bg-brand-50'
+                  : 'border-line text-ink-muted hover:bg-surface-muted'
               }`}
             >
               전체 항목 ({totalUniqueItems})
@@ -320,8 +320,8 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               }
               className={`px-3 py-1.5 rounded-full text-sm border ${
                 densityMode === 'compact'
-                  ? 'border-primary-500 text-primary-600 bg-primary-50'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                  ? 'border-brand-500 text-brand-700 bg-brand-50'
+                  : 'border-line text-ink-muted hover:bg-surface-muted'
               }`}
               aria-pressed={densityMode === 'compact'}
               aria-label="표 밀도 전환"
@@ -330,14 +330,14 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
             </button>
           </div>
           <div className="flex flex-wrap gap-2 md:items-center">
-            <label className="text-sm text-gray-600" htmlFor="pricing-sort">
+            <label className="text-sm text-ink-muted" htmlFor="pricing-sort">
               정렬
             </label>
             <select
               id="pricing-sort"
               value={sortMode}
               onChange={(event) => setSortMode(event.target.value as SortMode)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-1.5 border border-line rounded-control text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-surface text-ink"
             >
               <option value="popularity">공통도 순</option>
               <option value="priceDesc">평균가 높은 순</option>
@@ -350,17 +350,17 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="항목명 또는 코드 검색"
-                className="pl-3 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="pl-3 pr-3 py-1.5 border border-line rounded-control text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-surface text-ink"
               />
             </div>
           </div>
         </div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-ink-soft">
           총 {totalUniqueItems}개 항목 중{' '}
-          <span className="font-semibold text-gray-700">{filteredItems.length}</span>개
+          <span className="font-semibold text-ink">{filteredItems.length}</span>개
           를 표시 중입니다. 현재 선택된 병원 수: {pricingData.length}곳.
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-ink-soft">
           평균 대비 {DEFAULT_OUTLIER_THRESHOLD_PERCENT}% 이상 높은 주의 항목 {outliers.length}건
           {pricingData.length > 0 && (
             <span>
@@ -395,65 +395,65 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
 
       {/* 데스크톱 뷰 */}
       <div className="hidden md:block overflow-x-auto custom-scrollbar">
-        <table className="min-w-full divide-y divide-gray-200 tabular-nums">
-          <thead className="sticky top-0 z-10 border-b border-line bg-gray-50/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-gray-50/80">
+        <table className="min-w-full divide-y divide-line tabular-nums">
+          <thead className="sticky top-0 z-10 border-b border-line bg-surface-muted/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-surface-muted/80">
             <tr>
               <th
-                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12`}
+                className={`${headPad} text-left text-xs font-medium text-ink-soft uppercase tracking-wider w-12`}
               >
                 핀
               </th>
               <th
-                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider`}
+                className={`${headPad} text-left text-xs font-medium text-ink-soft uppercase tracking-wider`}
               >
                 항목
               </th>
               {pricingData.map((hospital) => (
                 <th
                   key={hospital.hospitalId}
-                  className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[170px]`}
+                  className={`${headPad} text-left text-xs font-medium text-ink-soft uppercase tracking-wider min-w-[170px]`}
                 >
-                  <div className="font-semibold text-gray-900">{hospital.hospitalName}</div>
+                  <div className="font-semibold text-ink">{hospital.hospitalName}</div>
                   {(() => {
                     const t = trustByHospitalId[hospital.hospitalId];
                     return t ? (
                       <div
-                        className="mt-1 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700"
+                        className="mt-1 inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] text-ink-muted"
                         title={t.hints.join(' · ')}
                       >
                         데이터 신뢰도{' '}
-                        <span className="font-semibold text-primary-700">
+                        <span className="font-semibold text-brand-700">
                           {t.score}점 ({t.label})
                         </span>
                       </div>
                     ) : null;
                   })()}
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-ink-soft mt-1">
                     항목 수: {hospital.items.length.toLocaleString()}개
                   </div>
-                  <div className="text-xs text-primary-700 font-semibold mt-1">
+                  <div className="text-xs text-brand-700 font-semibold mt-1">
                     예상 총비용: {(estimatedTotalsByHospitalId[hospital.hospitalId] ?? 0).toLocaleString()}원
                   </div>
                   {hospital.averagePrice && (
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-ink-soft mt-1">
                       평균: {hospital.averagePrice.toLocaleString()}원
                     </div>
                   )}
                 </th>
               ))}
               <th
-                className={`${headPad} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]`}
+                className={`${headPad} text-left text-xs font-medium text-ink-soft uppercase tracking-wider min-w-[140px]`}
               >
                 평균가
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {visibleItems.length === 0 && (
               <tr>
                 <td
                   colSpan={pricingData.length + 3}
-                  className="px-4 py-6 text-center text-sm text-gray-500"
+                  className="px-4 py-6 text-center text-sm text-ink-soft"
                 >
                   조건에 맞는 비급여 항목이 없습니다. 검색어나 필터를 변경해보세요.
                 </td>
@@ -465,15 +465,15 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
               const quantityInputId = `quantity-${itemIndex}`;
 
               return (
-                <tr key={item.itemKey} className="hover:bg-gray-50 align-top">
-                  <td className={`${cellPad} text-sm text-gray-500 align-middle`}>
+                <tr key={item.itemKey} className="hover:bg-surface-muted/60 align-top">
+                  <td className={`${cellPad} text-sm text-ink-soft align-middle`}>
                     <button
                       type="button"
                       onClick={() => togglePinItem(item.itemKey)}
                       className={`rounded-md border px-2 py-1 text-xs font-medium touch-target ${
                         pinnedItemKeys.includes(item.itemKey)
                           ? 'border-amber-300 bg-amber-50 text-amber-900'
-                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                          : 'border-line bg-surface text-ink-muted hover:bg-surface-muted'
                       }`}
                       aria-pressed={pinnedItemKeys.includes(item.itemKey)}
                       aria-label={
@@ -485,11 +485,11 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                       {pinnedItemKeys.includes(item.itemKey) ? '★' : '☆'}
                     </button>
                   </td>
-                  <td className={`${cellPad} text-sm text-gray-900`}>
+                  <td className={`${cellPad} text-sm text-ink`}>
                     <div className="font-medium">{item.name}</div>
-                    <div className="mt-1 text-xs text-gray-500 space-y-1">
+                    <div className="mt-1 text-xs text-ink-soft space-y-1">
                       <div className="flex items-center gap-2">
-                        <label htmlFor={quantityInputId} className="text-gray-600">
+                        <label htmlFor={quantityInputId} className="text-ink-muted">
                           횟수
                         </label>
                         <input
@@ -508,7 +508,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                               [item.itemKey]: nextValue,
                             }));
                           }}
-                          className="w-20 rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          className="w-20 rounded-md border border-line px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 bg-surface"
                         />
                       </div>
                       <div>
@@ -519,10 +519,10 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                         범위 {item.minPrice.toLocaleString()}원 ~ {item.maxPrice.toLocaleString()}원
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {item.unit && <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">단위 {item.unit}</span>}
-                        {item.code && <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">코드 {item.code}</span>}
+                        {item.unit && <span className="bg-surface-muted text-ink-muted px-2 py-0.5 rounded-full">단위 {item.unit}</span>}
+                        {item.code && <span className="bg-surface-muted text-ink-muted px-2 py-0.5 rounded-full">코드 {item.code}</span>}
                         {dateLabel && (
-                          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          <span className="bg-surface-muted text-ink-muted px-2 py-0.5 rounded-full">
                             적용 {dateLabel}
                           </span>
                         )}
@@ -532,7 +532,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                           href={item.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 underline"
+                          className="inline-flex items-center gap-1 text-brand-700 hover:text-brand-800 underline"
                         >
                           상세보기
                           <span aria-hidden="true">↗</span>
@@ -547,7 +547,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                       return (
                         <td
                           key={`${item.itemKey}-${hospital.hospitalId}`}
-                          className={`${cellPad} text-sm text-gray-400 text-center`}
+                          className={`${cellPad} text-sm text-ink-soft text-center`}
                         >
                           -
                         </td>
@@ -559,10 +559,10 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                         key={`${item.itemKey}-${hospital.hospitalId}`}
                         className={`${cellPad} text-sm ${
                           entry.isHighest
-                            ? 'text-red-600 font-semibold'
+                            ? 'text-error-600 font-semibold'
                             : entry.isLowest
-                            ? 'text-blue-600 font-semibold'
-                            : 'text-gray-900'
+                            ? 'text-brand-700 font-semibold'
+                            : 'text-ink'
                         }`}
                       >
                         <div className="flex flex-col gap-1">
@@ -582,8 +582,8 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                               <span
                                 className={`text-xs font-semibold px-2 py-0.5 rounded ${
                                   entry.diff > 0
-                                    ? 'text-red-700 bg-red-50'
-                                    : 'text-blue-700 bg-blue-50'
+                                    ? 'text-error-700 bg-error-50'
+                                    : 'text-brand-700 bg-brand-50'
                                 }`}
                                 title={`평균 대비 ${entry.diff > 0 ? '+' : ''}${entry.diff.toLocaleString()}원 (${entry.diff > 0 ? '+' : ''}${entry.percentDiff}%)`}
                               >
@@ -591,9 +591,9 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            {entry.isHighest && <span className="font-semibold text-red-600">최고</span>}
-                            {entry.isLowest && <span className="font-semibold text-blue-600">최저</span>}
+                          <div className="flex items-center gap-2 text-xs text-ink-soft">
+                            {entry.isHighest && <span className="font-semibold text-error-600">최고</span>}
+                            {entry.isLowest && <span className="font-semibold text-brand-700">최저</span>}
                             {entry.unit && <span>{entry.unit} 기준</span>}
                           </div>
                         </div>
@@ -601,7 +601,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
                     );
                   })}
                   <td
-                    className={`${cellPad} whitespace-nowrap text-sm font-medium text-gray-900`}
+                    className={`${cellPad} whitespace-nowrap text-sm font-medium text-ink`}
                   >
                     {item.averagePrice.toLocaleString()}원
                   </td>
@@ -617,7 +617,7 @@ export function ComparisonTable({ pricingData }: ComparisonTableProps) {
           <button
             type="button"
             onClick={() => setVisibleCount((prev) => prev + 30)}
-            className="px-4 py-2 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50"
+            className="px-4 py-2 text-sm font-medium text-brand-700 border border-brand-200 rounded-control hover:bg-brand-50"
           >
             더 보기 ({sortedWithPins.length - visibleCount}개 남음)
           </button>

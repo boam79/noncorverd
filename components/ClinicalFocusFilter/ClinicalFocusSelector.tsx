@@ -17,10 +17,10 @@ export function ClinicalFocusSelector({
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-0.5">
-        <span id="clinical-focus-label" className="text-sm font-medium text-gray-800">
+        <span id="clinical-focus-label" className="text-sm font-medium text-ink">
           관심 분야 (선택)
         </span>
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs leading-relaxed text-ink-soft">
           병원명·기관 종별·공공데이터 진료과목 코드를 조합한 추정 필터입니다. 행정
           구분과 다를 수 있습니다.
         </p>
@@ -28,37 +28,39 @@ export function ClinicalFocusSelector({
       <div
         role="radiogroup"
         aria-labelledby="clinical-focus-label"
-        className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
+        className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar swipeable"
       >
-        {CLINICAL_FOCUS_OPTIONS.map((opt) => (
-          <label
-            key={opt.id}
-            className={`flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors touch-target min-h-[48px] sm:min-w-[140px] ${
-              value === opt.id
-                ? 'border-primary-400 bg-primary-50 shadow-sm'
-                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <input
-              type="radio"
-              name="clinical-focus"
-              value={opt.id}
-              checked={value === opt.id}
-              onChange={() => onChange(opt.id)}
-              className="mt-0.5 h-4 w-4 shrink-0 border-gray-300 text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
-              aria-label={opt.label}
-            />
-            <span>
-              <span className="font-medium text-gray-900">{opt.label}</span>
-              {opt.id !== 'none' && (
-                <span className="mt-0.5 block text-xs font-normal text-gray-500">
-                  {opt.description}
-                </span>
-              )}
-            </span>
-          </label>
-        ))}
+        {CLINICAL_FOCUS_OPTIONS.map((opt) => {
+          const selected = value === opt.id;
+          return (
+            <label
+              key={opt.id}
+              title={opt.id === 'none' ? opt.label : opt.description}
+              className={`inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-colors touch-target ${
+                selected
+                  ? 'border-brand-500 bg-brand-50 text-brand-900 shadow-sm ring-1 ring-brand-200'
+                  : 'border-line bg-surface text-ink-muted hover:border-line-strong hover:bg-surface-muted'
+              }`}
+            >
+              <input
+                type="radio"
+                name="clinical-focus"
+                value={opt.id}
+                checked={selected}
+                onChange={() => onChange(opt.id)}
+                className="sr-only"
+                aria-label={opt.label}
+              />
+              <span className="whitespace-nowrap font-medium">{opt.label}</span>
+            </label>
+          );
+        })}
       </div>
+      {value !== 'none' && (
+        <p className="text-xs text-ink-soft" role="status">
+          {CLINICAL_FOCUS_OPTIONS.find((o) => o.id === value)?.description}
+        </p>
+      )}
     </div>
   );
 }

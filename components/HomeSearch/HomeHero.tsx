@@ -48,13 +48,13 @@ export function HomeHero({ onStart }: { onStart: () => void }) {
             onClick={onStart}
             className="touch-target rounded-control bg-white px-6 py-3 text-sm font-semibold text-brand-800 transition-colors hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"
           >
-            지역부터 정하기
+            지역으로 찾기
           </button>
           <a
             href="#search-heading"
             className="touch-target rounded-control border border-white/35 px-5 py-3 text-sm font-medium text-white/90 transition-colors hover:border-white/60 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            검색으로 이동
+            검색하기
           </a>
         </div>
       </div>

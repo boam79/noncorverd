@@ -235,7 +235,7 @@ Content-Type: application/json
 ### 4. 추천 병원 자동 선택 플로우
 
 ```
-사용자 → 추천 병원 불러오기 버튼
+사용자 → 추천 병원 보기 버튼
   → features/home/HomePageContent.tsx (후보 병원 8개 선별)
     → lib/api.ts (getNonCoveredPricing)
       → /opendata/pricing
@@ -354,7 +354,7 @@ node scripts/test-pricing-integration.js --sido 11 --type 종합병원 --count 3
 
 ### 신규 회귀 시나리오 (Q-1)
 - 비용 시뮬레이터 횟수 변경 시 총비용 갱신
-- 추천 병원 불러오기 버튼 동작
+- 추천 병원 보기 버튼 동작
 - 이상치 기준 안내/주의 항목 노출
 - 파일: `e2e/hospital-comparison.spec.ts`
 

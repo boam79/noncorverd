@@ -69,43 +69,43 @@ export function HomeSearchResultsSection({
   return (
     <section
       id={HOME_SECTION_IDS.results}
-      className="min-h-[260px] rounded-2xl border border-gray-200 bg-surface p-6 shadow-md md:p-8"
+      className="min-h-[260px] rounded-2xl border border-line bg-surface-muted/40 p-5 md:p-8"
       aria-labelledby="results-heading"
     >
-      <header className="border-b border-gray-200 pb-4 mb-4">
+      <header className="mb-4 border-b border-line pb-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2 gap-y-1">
           <h2
             id="results-heading"
-            className="text-lg font-semibold tracking-tight text-gray-900 md:text-xl"
+            className="font-display text-lg font-semibold tracking-tight text-ink md:text-xl"
           >
             검색 결과
             {!isLoading && !error && (
-              <span className="ml-2 font-semibold text-primary-800"> {filteredCount}곳</span>
+              <span className="ml-2 font-semibold text-brand-800"> {filteredCount}곳</span>
             )}
           </h2>
           {isLoading && (
-            <span className="text-sm font-medium text-primary-700" aria-live="polite">
+            <span className="text-sm font-medium text-brand-700" aria-live="polite">
               불러오는 중…
             </span>
           )}
         </div>
         {statusLine && !error && (
-          <p className="mt-2 text-sm text-gray-600" id="results-summary">
+          <p className="mt-2 text-sm text-ink-muted" id="results-summary">
             {statusLine}
           </p>
         )}
         {selectedCount > 0 && !isLoading && !error && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-ink-soft">
             선택된 {selectedCount}곳은 목록과 별도로 유지되며, 하단 비교 바에서 이어갈 수
             있어요 (최대 {maxSelection}곳).
           </p>
         )}
         {hospitalsMeta?.fetchedAt && !isLoading && !error && (
-          <p className="mt-2 text-xs text-gray-500" role="status">
+          <p className="mt-2 text-xs text-ink-soft" role="status">
             조회 시각 {new Date(hospitalsMeta.fetchedAt).toLocaleString('ko-KR')}
             {hospitalsMeta.source ? ` · ${hospitalsMeta.source}` : ''}
             {metaExtra?.appliedSigunguAddressFallback && (
-              <span className="ml-1 text-amber-800">
+              <span className="ml-1 text-warning-800">
                 · 시군구 코드 폴백(주소 필터) 적용
                 {metaExtra.addressFallbackTruncated || metaExtra.listTruncated
                   ? ' · 일부만 수집됨'
@@ -113,7 +113,7 @@ export function HomeSearchResultsSection({
               </span>
             )}
             {!metaExtra?.appliedSigunguAddressFallback && metaExtra?.listTruncated && (
-              <span className="ml-1 text-amber-800">
+              <span className="ml-1 text-warning-800">
                 · 시도 내 병원이 많아 일부만 표시됩니다. 시군구를 고르거나 병원명으로
                 좁혀 보세요
                 {metaExtra.hiraSidoTotalCount
@@ -128,7 +128,7 @@ export function HomeSearchResultsSection({
       {isLoading ? (
         <div className="space-y-3 py-2" aria-busy="true" aria-label="검색 결과 로딩 중">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-card bg-gray-200/70" />
+            <div key={i} className="h-28 animate-pulse rounded-card bg-line/60" />
           ))}
         </div>
       ) : error ? (
